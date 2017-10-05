@@ -1,0 +1,1 @@
+{"jsonrpc": "2.0", "method": "class.method2", "params": [42, "value"], "id": 1}

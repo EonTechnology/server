@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	<bean name="Service" class="com.exscudo.eon.jsonrpc.JrpcService">
+		<constructor-arg>
+			<map key-type="java.lang.String">
+				<entry key="transactions">
+					<!-- Transaction Service -->
+					<bean class="com.exscudo.eon.bot.TransactionService">
+						<constructor-arg ref="executionContext" />
+					</bean>
+				</entry>
+				<entry key="accounts">
+					<!-- IAccount Service -->
+					<bean class="com.exscudo.eon.bot.AccountService">
+						<constructor-arg ref="storage"/>
+					</bean>
+				</entry>
+				<entry key="history">
+					<!-- History Service -->
+					<bean class="com.exscudo.eon.bot.TransactionHistoryService">
+						<constructor-arg ref="storage"/>
+					</bean>
+				</entry>
+				<entry key="time">
+					<!-- Time Service -->
+					<bean class="com.exscudo.eon.bot.TimeService">
+						<constructor-arg ref="timeProvider" />
+					</bean>
+				</entry>
+			</map>
+		</constructor-arg>
+	</bean>
+
+</beans>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	<bean name="Service" class="com.exscudo.eon.jsonrpc.JrpcService">
+		<constructor-arg>
+			<map key-type="java.lang.String">
+				<entry key="transactions">
+					<!-- Transaction Synchronization Service -->
+					<bean class="com.exscudo.peer.eon.stubs.SyncTransactionService">
+						<constructor-arg ref="executionContext" />
+					</bean>
+				</entry>
+				<entry key="metadata">
+					<!-- Metadata Synchronization Service -->
+					<bean class="com.exscudo.peer.eon.stubs.SyncMetadataService" >
+						<constructor-arg ref="executionContext" />
+					</bean>
+				</entry>
+				<entry key="blocks">
+					<!-- Block Synchronization Service -->
+					<bean class="com.exscudo.peer.eon.stubs.SyncBlockService">
+						<constructor-arg ref="executionContext" />
+					</bean>
+				</entry>
+			</map>
+		</constructor-arg>
+	</bean>
+
+</beans>
