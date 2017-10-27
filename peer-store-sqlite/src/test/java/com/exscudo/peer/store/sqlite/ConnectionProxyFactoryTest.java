@@ -7,7 +7,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 
 import org.junit.Test;
-import org.mockito.internal.verification.VerificationModeFactory;
 
 public class ConnectionProxyFactoryTest {
 
@@ -15,13 +14,16 @@ public class ConnectionProxyFactoryTest {
 	public void createConnectionProxy() throws Exception {
 
 		Connection mockConnection = mock(Connection.class);
+		when(mockConnection.isClosed()).thenReturn(false);
 		PreparedStatement mockStatement = mock(PreparedStatement.class);
 		String sql = "Some sql";
 		when(mockConnection.prepareStatement(sql)).thenReturn(mockStatement);
 		ConnectionProxy proxy = new ConnectionProxy(mockConnection);
+
 		PreparedStatement statement1 = proxy.prepareStatement(sql);
 		PreparedStatement statement2 = proxy.prepareStatement(sql);
-		verify(mockConnection, VerificationModeFactory.only()).prepareStatement(any(String.class));
+
+		verify(mockConnection, times(1)).prepareStatement(any(String.class));
 		assertTrue(statement1 == statement2);
 
 	}

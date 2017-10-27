@@ -133,7 +133,7 @@ public class GenerationTestIT {
 		Assert.assertEquals(ctx.context.getInstance().getBlockchainService().getLastBlock().getID(),
 				difficulty.getLastBlockID());
 		Assert.assertEquals(ctx.context.getInstance().getBlockchainService().getLastBlock().getID(),
-				lastBlocks[2].getID());
+				lastBlocks[1].getID());
 	}
 
 	@Test

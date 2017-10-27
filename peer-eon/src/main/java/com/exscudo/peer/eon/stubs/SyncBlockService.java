@@ -66,16 +66,19 @@ public class SyncBlockService implements IBlockSynchronizationService {
 			ArrayList<Block> nextBlocks = new ArrayList<>();
 			long id = commonBlockID;
 			Block block = blockchain.getBlock(id);
-			while (nextBlocks.size() <= BLOCK_LIMIT && block != null) {
+			while (nextBlocks.size() < BLOCK_LIMIT && block.getNextBlock() != 0) {
+
+				block = blockchain.getBlock(block.getNextBlock());
+
+				if (block == null) {
+					break;
+				}
+
 				if (lastBlockID != blockchain.getLastBlock().getID()) {
 					break;
 				}
-				nextBlocks.add(block);
 
-				id = block.getNextBlock();
-				if (id == 0)
-					break;
-				block = blockchain.getBlock(id);
+				nextBlocks.add(block);
 			}
 			return nextBlocks.toArray(new Block[0]);
 

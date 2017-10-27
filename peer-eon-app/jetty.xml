@@ -67,7 +67,6 @@
 	</Call>
 
 	<!-- HTTP connector -->
-	<!--
 	<Call name="addConnector">
 		<Arg>
 			<New class="org.eclipse.jetty.server.ServerConnector">
@@ -87,5 +86,4 @@
 			</New>
 		</Arg>
 	</Call>
-	-->
 </Configure>

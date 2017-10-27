@@ -27,12 +27,12 @@ mvn package
 
 Run embedded server:
 ```bash
-mvn tomcat7:run
+mvn jetty:run
 ```
 
 Run with setting generation account:
 ```bash
-mvn tomcat7:run -DSECRET_SEED=...
+mvn jetty:run -DSECRET_SEED=...
 ```
 
 Or build and run docker-image

@@ -309,10 +309,10 @@ public final class SyncBlockListTask implements Runnable {
 		IBlockchainService blockchain = context.getInstance().getBlockchainService();
 
 		for (Block block : items) {
-			int height = blockchain.getBlockHeight(block.getID());
+			int height = blockchain.getBlockHeight(block.getPreviousBlock());
 			if (height > commonHeight) {
 				commonHeight = height;
-				commonBlockID = block.getID();
+				commonBlockID = block.getPreviousBlock();
 			}
 		}
 

@@ -1,7 +1,9 @@
 package com.exscudo.eon.bot;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Transaction;
@@ -20,6 +22,8 @@ import com.exscudo.peer.store.sqlite.utils.TransactionHelper;
 public class TransactionHistoryService {
 	private final Storage storage;
 
+	private final static int PAGE_SIZE = 20;
+
 	public TransactionHistoryService(Storage state) {
 		this.storage = state;
 	}
@@ -34,6 +38,21 @@ public class TransactionHistoryService {
 	 * @throws IOException
 	 */
 	public List<Transaction> getCommitted(String id) throws RemotePeerException, IOException {
+		return getCommittedPage(id, 0);
+	}
+
+	/**
+	 * Get committed transactions
+	 *
+	 * @param id
+	 *            account ID
+	 * @param page
+	 *            page number
+	 * @return
+	 * @throws RemotePeerException
+	 * @throws IOException
+	 */
+	public List<Transaction> getCommittedPage(String id, int page) throws RemotePeerException, IOException {
 		long accID;
 		try {
 			accID = Format.ID.accountId(id);
@@ -42,15 +61,7 @@ public class TransactionHistoryService {
 		}
 		ConnectionProxy connection = storage.getConnection();
 
-		Map<Long, Transaction> byRecipient = TransactionHelper.findByRecipient(connection, accID);
-		Map<Long, Transaction> bySender = TransactionHelper.findBySender(connection, accID);
-
-		HashMap<Long, Transaction> map = new HashMap<>();
-
-		map.putAll(byRecipient);
-		map.putAll(bySender);
-
-		List<Transaction> list = new ArrayList<>(map.values());
+		List<Transaction> list = TransactionHelper.findByAccount(connection, accID, page * PAGE_SIZE, PAGE_SIZE);
 
 		return list;
 	}

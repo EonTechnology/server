@@ -186,8 +186,7 @@ public class BlockchainDecorator implements IBlockchainService {
 				throw new IllegalSignatureException("The field Generation Signature is incorrect.");
 			}
 
-			TransactionContext context = new TransactionContext(newBlock.getTimestamp() + Constant.BLOCK_PERIOD,
-					generator.getID());
+			TransactionContext context = new TransactionContext(newBlock.getTimestamp(), generator.getID());
 
 			ISandbox sandbox = uow.getLastBlock().createSandbox(handler);
 

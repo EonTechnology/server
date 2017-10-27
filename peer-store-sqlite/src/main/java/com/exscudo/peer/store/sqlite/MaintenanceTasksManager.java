@@ -31,8 +31,9 @@ public class MaintenanceTasksManager {
 
 	public void destroy() {
 
-		final ConnectionProxy connection = connector.getConnection();
-		DatabaseHelper.commitTransaction(connection, "TaskManager");
+		// TODO: run before DB closing
+		// final ConnectionProxy connection = connector.getConnection();
+		// DatabaseHelper.commitTransaction(connection, "TaskManager");
 		scheduledThreadPool.shutdownNow();
 
 	}

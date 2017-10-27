@@ -29,6 +29,10 @@ public class ConnectionProxy {
 
 	public PreparedStatement prepareStatement(String sql) throws SQLException {
 
+		if (connection.isClosed()) {
+			return null;
+		}
+
 		PreparedStatement statement = cachedStatements.get(sql);
 		if (statement == null) {
 			statement = connection.prepareStatement(sql);

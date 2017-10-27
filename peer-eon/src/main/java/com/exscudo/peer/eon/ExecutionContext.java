@@ -26,7 +26,7 @@ public class ExecutionContext extends AbstractContext<Peer, Instance> {
 	 * @return
 	 */
 	public String getVersion() {
-		return "0.5.0";
+		return "0.5.2";
 	}
 
 	/**

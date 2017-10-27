@@ -3,7 +3,7 @@ package com.exscudo.peer.store.sqlite;
 import static org.junit.Assert.*;
 
 import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 import org.junit.After;
 import org.junit.Before;
@@ -32,7 +32,7 @@ public class TransactionHelperTest {
 	@Test
 	public void get() throws Exception {
 
-		Transaction tx = TransactionHelper.get(connection, 4381492504715849993L);
+		Transaction tx = TransactionHelper.get(connection, 4381492504715849996L);
 		assertEquals(Format.ID.accountId(tx.getSenderID()), "EON-GKQXZ-7DMS8-QL65R");
 		assertEquals(tx.getBlock(), 0);
 		assertEquals(tx.getDeadline(), 60);
@@ -42,7 +42,7 @@ public class TransactionHelperTest {
 		assertEquals(tx.getData().get("amount"), 50L);
 		assertEquals(tx.getReference(), 0);
 		assertEquals(tx.getType(), 2);
-		assertEquals(tx.getTimestamp(), 1503654153);
+		assertEquals(tx.getTimestamp(), 1503654156);
 	}
 
 	@Test
@@ -87,19 +87,40 @@ public class TransactionHelperTest {
 	}
 
 	@Test
-	public void findByRecipient() throws Exception {
+	public void findByAccount() throws Exception {
 		long accountID = 4085011828883941788L;
-		Map<Long, Transaction> map = TransactionHelper.findByRecipient(connection, accountID);
-		assertTrue(map.size() == 2);
-		assertTrue(map.containsKey(4381492504715849993L));
-		assertTrue(map.containsKey(6265336001932030217L));
+		List<Transaction> list = TransactionHelper.findByAccount(connection, accountID, 0, 100);
+		assertEquals(3, list.size());
+
+		assertEquals(4381492504715849996L, list.get(0).getID());
+		assertEquals(6265336001932030219L, list.get(1).getID());
+		assertEquals(2641518845407277113L, list.get(2).getID());
+
+		assertTrue(list.get(0).getTimestamp() > list.get(1).getTimestamp());
+		assertTrue(list.get(1).getTimestamp() > list.get(2).getTimestamp());
 	}
 
 	@Test
-	public void findBySender() throws Exception {
+	public void findByAccountLimit() throws Exception {
 		long accountID = 4085011828883941788L;
-		Map<Long, Transaction> map = TransactionHelper.findBySender(connection, accountID);
-		assertTrue(map.size() == 1);
-		assertTrue(map.containsKey(2641518845407277113L));
+		List<Transaction> list = TransactionHelper.findByAccount(connection, accountID, 0, 2);
+		assertEquals(2, list.size());
+
+		assertEquals(4381492504715849996L, list.get(0).getID());
+		assertEquals(6265336001932030219L, list.get(1).getID());
+
+		assertTrue(list.get(0).getTimestamp() > list.get(1).getTimestamp());
+	}
+
+	@Test
+	public void findByAccountLimitFrom() throws Exception {
+		long accountID = 4085011828883941788L;
+		List<Transaction> list = TransactionHelper.findByAccount(connection, accountID, 1, 2);
+		assertEquals(2, list.size());
+
+		assertEquals(6265336001932030219L, list.get(0).getID());
+		assertEquals(2641518845407277113L, list.get(1).getID());
+
+		assertTrue(list.get(0).getTimestamp() > list.get(1).getTimestamp());
 	}
 }

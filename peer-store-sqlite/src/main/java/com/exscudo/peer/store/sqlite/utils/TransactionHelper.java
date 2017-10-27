@@ -3,7 +3,8 @@ package com.exscudo.peer.store.sqlite.utils;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import com.dampcake.bencode.Bencode;
@@ -219,7 +220,7 @@ public class TransactionHelper {
 	}
 
 	/**
-	 * Find all transactions sent out to account
+	 * Find all transactions for account
 	 *
 	 * @param db
 	 *            data connection
@@ -230,45 +231,18 @@ public class TransactionHelper {
 	 * @throws DataAccessException
 	 *             problems with the DB
 	 */
-	public static Map<Long, Transaction> findByRecipient(ConnectionProxy db, long accountId)
+	public static List<Transaction> findByAccount(ConnectionProxy db, long accountId, long from, int limit)
 			throws DataAccessException {
 
 		try {
 
-			PreparedStatement statement = db
-					.prepareStatement(SELECT_TRANSACTIONS_SQL + " where \"recipient\" = ?1 and type != 1");
+			PreparedStatement statement = db.prepareStatement(SELECT_TRANSACTIONS_SQL
+					+ " where \"recipient\" = ?1 or sender = ?1 order by \"timestamp\" desc, \"id\" LIMIT ?2 OFFSET ?3");
 			synchronized (statement) {
 
 				statement.setLong(1, accountId);
-
-				return readTransactionSet(statement);
-			}
-		} catch (Exception e) {
-
-			throw new DataAccessException(e);
-		}
-	}
-
-	/**
-	 * Find all transactions sent out from account
-	 *
-	 * @param db
-	 *            data connection
-	 * @param accountId
-	 *            account id
-	 * @return transaction map. Empty if user does not exist or has not sent any
-	 *         transaction.
-	 * @throws DataAccessException
-	 *             problems with the DB
-	 */
-	public static Map<Long, Transaction> findBySender(ConnectionProxy db, long accountId) throws DataAccessException {
-
-		try {
-
-			PreparedStatement statement = db.prepareStatement(SELECT_TRANSACTIONS_SQL + " where \"sender\" = ?1");
-			synchronized (statement) {
-
-				statement.setLong(1, accountId);
+				statement.setLong(2, limit);
+				statement.setLong(3, from);
 
 				return readTransactionSet(statement);
 			}
@@ -287,14 +261,14 @@ public class TransactionHelper {
 	 * @throws SQLException
 	 *             problems with the DB
 	 */
-	private static Map<Long, Transaction> readTransactionSet(PreparedStatement statement) throws SQLException {
+	private static List<Transaction> readTransactionSet(PreparedStatement statement) throws SQLException {
 		ResultSet set = statement.executeQuery();
 
-		HashMap<Long, Transaction> map = new HashMap<>();
+		List<Transaction> map = new ArrayList<>();
 
 		while (set.next()) {
 			Transaction transaction = getTransactionFromRow(set);
-			map.put(set.getLong("id"), transaction);
+			map.add(transaction);
 		}
 
 		set.close();

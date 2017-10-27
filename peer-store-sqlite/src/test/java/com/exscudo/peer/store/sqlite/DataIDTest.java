@@ -33,8 +33,8 @@ public class DataIDTest {
 	@Test
 	public void transactions_test_sql() throws Exception {
 		ConnectionProxy connection = ConnectionUtils.create("/com/exscudo/eon/sqlite/transactions_test.sql");
-		long ids[] = new long[]{2641518845407277113L, -1036124464445656823L, -1240188797449146103L,
-				6265336001932030217L, 4381492504715849993L};
+		long ids[] = new long[]{2641518845407277113L, -1036124464445656823L, -1240188797449146102L,
+				6265336001932030219L, 4381492504715849996L};
 
 		for (long id : ids) {
 			Transaction tx = TransactionHelper.get(connection, id);

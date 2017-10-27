@@ -27,7 +27,7 @@
 		<property name="backlog" ref="backlog"/>
 	</bean>
 	<bean class="com.exscudo.peer.store.sqlite.MaintenanceTasksManager"
-		  factory-method="run" destroy-method="destroy">
+		  factory-method="run" destroy-method="destroy" depends-on="storage">
 		<constructor-arg ref="storage"/>
 	</bean>
 
