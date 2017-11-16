@@ -125,15 +125,14 @@ public class InstanceConnectTestIT {
 		ctx.peerRemoveTask.run();
 
 		Assert.assertEquals("Connected 0 peers", 0, ctx.context.getConnectedPoolSize());
-		Assert.assertTrue("IInstance is disconnected",
-				peer.getPeerInfo().getState() == PeerInfo.State.STATE_DISCONNECTED);
+		Assert.assertTrue("IInstance is disconnected", peer.getPeerInfo().getState() == PeerInfo.STATE_DISCONNECTED);
 
 		ctx.context.connectPeer(peer);
 
 		ctx.peerRemoveTask.run();
 
 		Assert.assertEquals("Connected 1 peers", 1, ctx.context.getConnectedPoolSize());
-		Assert.assertTrue("IInstance is connected", peer.getPeerInfo().getState() == PeerInfo.State.STATE_CONNECTED);
+		Assert.assertTrue("IInstance is connected", peer.getPeerInfo().getState() == PeerInfo.STATE_CONNECTED);
 	}
 
 	@Test
@@ -160,5 +159,21 @@ public class InstanceConnectTestIT {
 
 		Assert.assertNull("IInstance not connected", ctx.context.getAnyConnectedPeer());
 		Assert.assertNotNull("IInstance to connect", ctx.context.getAnyPeerToConnect());
+	}
+
+	@Test
+	public void step_6_remove_old_connected() throws Exception {
+		PeerContext ctx = new PeerContext(GENERATOR_1, mockTimeProvider);
+
+		ctx.context.addPublicPeer("2");
+		Assert.assertEquals("Peer updated", 2, ctx.context.getPeers().getPeersList().length);
+
+		Peer peer = ctx.context.getAnyPeerToConnect();
+		peer.getPeerInfo().setConnectingTime(1);
+
+		ctx.peerRemoveTask.run();
+
+		Assert.assertEquals("Peer list cleared", 1, ctx.context.getPeers().getPeersList().length);
+
 	}
 }

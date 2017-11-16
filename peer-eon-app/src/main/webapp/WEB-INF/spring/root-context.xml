@@ -57,8 +57,8 @@
 				<constructor-arg type="java.lang.String" value=";"/>
 				<constructor-arg>
 					<list>
-						<value type="java.io.File">WEB-INF/spring/inner-peer.list</value>
-						<value type="java.io.File">WEB-INF/spring/inner-peer-debug.list</value>
+						<value type="java.io.File">WEB-INF/spring/type-peer.list</value>
+						<value type="java.io.File">WEB-INF/spring/type-peer-debug.list</value>
 					</list>
 				</constructor-arg>
 			</bean>

@@ -9,15 +9,12 @@ import com.exscudo.peer.store.sqlite.core.Blockchain;
 
 public class BlockchainTest {
 
-	private ConnectionProxy connection;
 	private Blockchain blockchain;
 
 	@Before
 	public void setUp() throws Exception {
-		connection = ConnectionUtils.create("/com/exscudo/eon/sqlite/blocks_test.sql");
-		Storage storage = new Storage(connection);
+		Storage storage = new Storage(ConnectionUtils.create("/com/exscudo/peer/store/sqlite/blocks_test.sql"));
 		blockchain = new Blockchain(storage);
-
 	}
 
 	@Test

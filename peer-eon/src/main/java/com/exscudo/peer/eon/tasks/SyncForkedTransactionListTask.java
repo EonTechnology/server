@@ -65,7 +65,8 @@ public final class SyncForkedTransactionListTask extends BaseTask implements Run
 					IMetadataService metadataService = peer.getMetadataService();
 
 					SalientAttributes attributes = metadataService.getAttributes();
-					if (attributes.getFork() == context.getCurrentFork().getNumber(lastBlock.getTimestamp())) {
+					int forkNumber = context.getCurrentFork().getNumber(lastBlock.getTimestamp());
+					if (attributes.getFork() == forkNumber && forkNumber != -1) {
 
 						IBlockSynchronizationService blockService = peer.getBlockSynchronizationService();
 

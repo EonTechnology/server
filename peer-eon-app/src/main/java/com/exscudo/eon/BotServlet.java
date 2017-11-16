@@ -53,7 +53,7 @@ public class BotServlet extends FrameworkServlet {
 		String responseBody = service.doRequest(byteArrayOutputStream.toString("UTF-8"));
 		byte[] responseBytes = responseBody.getBytes("UTF-8");
 
-		response.setContentType("text/plain; charset=UTF-8");
+		response.setContentType("application/json; charset=UTF-8");
 		response.addHeader("Access-Control-Allow-Origin", "*");
 		ServletOutputStream servletOutputStream = response.getOutputStream();
 		servletOutputStream.write(responseBytes);

@@ -1,5 +1,6 @@
 package com.exscudo.peer.eon.transactions.handlers;
 
+import com.exscudo.peer.core.Constant;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.exceptions.ValidateException;
 import com.exscudo.peer.core.services.ILedger;
@@ -30,7 +31,7 @@ public class BaseHandler implements ITransactionHandler {
 
 		// update sender and broker balances
 		AccountBalance.withdraw(ledger.getAccount(tx.getSenderID()), tx.getFee());
-		AccountBalance.refill(ledger.getAccount(context.brokerID), tx.getFee());
+		AccountBalance.refill(ledger.getAccount(Constant.DUMMY_ACCOUNT_ID), tx.getFee());
 
 	}
 

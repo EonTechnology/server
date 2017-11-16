@@ -15,7 +15,7 @@ import com.exscudo.peer.eon.ExecutionContext;
  * Basic implementation of the {@code IBlockSynchronizationService} interface
  *
  */
-public class SyncBlockService implements IBlockSynchronizationService {
+public class SyncBlockService extends BaseService implements IBlockSynchronizationService {
 	/**
 	 * The maximum number of blocks transmitted during synchronization.
 	 */

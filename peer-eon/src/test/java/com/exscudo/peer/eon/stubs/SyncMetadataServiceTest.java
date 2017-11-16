@@ -5,18 +5,17 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.junit.Before;
-import org.junit.Test;
-
 import com.exscudo.peer.core.Fork;
 import com.exscudo.peer.core.ForkProvider;
+import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.services.IBlockchainService;
-import com.exscudo.peer.core.services.LinkedBlock;
 import com.exscudo.peer.eon.ExecutionContext;
 import com.exscudo.peer.eon.Instance;
 import com.exscudo.peer.eon.PeerInfo;
 import com.exscudo.peer.eon.PeerRegistry;
 import com.exscudo.peer.eon.services.SalientAttributes;
+import org.junit.Before;
+import org.junit.Test;
 
 public class SyncMetadataServiceTest {
 
@@ -49,10 +48,10 @@ public class SyncMetadataServiceTest {
 		when(ctx.getVersion()).thenReturn(version);
 		when(ctx.getCurrentFork()).thenReturn(fork);
 
-		LinkedBlock linkedBlock = mock(LinkedBlock.class);
+		Block block = mock(Block.class);
 
 		IBlockchainService blockchain = mock(IBlockchainService.class);
-		when(blockchain.getLastBlock()).thenReturn(linkedBlock);
+		when(blockchain.getLastBlock()).thenReturn(block);
 
 		Instance peer = mock(Instance.class);
 		when(peer.getBlockchainService()).thenReturn(blockchain);
@@ -81,7 +80,7 @@ public class SyncMetadataServiceTest {
 		peerRegistry = mock(PeerRegistry.class);
 		peer1Addr = "addr1.com";
 		peer2Addr = "addr2.tech";
-		peerAddresses = new String[]{peer1Addr, peer2Addr};
+		peerAddresses = new String[] { peer1Addr, peer2Addr };
 		peer1 = mock(PeerInfo.class);
 		peer2 = mock(PeerInfo.class);
 
@@ -90,12 +89,12 @@ public class SyncMetadataServiceTest {
 		when(peerRegistry.getPeerByAddress(peer1Addr)).thenReturn(peer1);
 		when(peerRegistry.getPeerByAddress(peer2Addr)).thenReturn(peer2);
 
-		when(peer1.getState()).thenReturn(PeerInfo.State.STATE_CONNECTED);
+		when(peer1.getState()).thenReturn(PeerInfo.STATE_CONNECTED);
 		when(peer1.getBlacklistingTime()).thenReturn(0L);
 		when(peer1.getAddress()).thenReturn(peer1Addr);
 		when(peer1.isInner()).thenReturn(false);
 
-		when(peer2.getState()).thenReturn(PeerInfo.State.STATE_CONNECTED);
+		when(peer2.getState()).thenReturn(PeerInfo.STATE_CONNECTED);
 		when(peer2.getBlacklistingTime()).thenReturn(0L);
 		when(peer2.getAddress()).thenReturn(peer2Addr);
 		when(peer2.isInner()).thenReturn(false);
@@ -112,8 +111,8 @@ public class SyncMetadataServiceTest {
 
 	@Test
 	public void getWellKnownNodes_shouldnt_return_notconnected_peers() throws Exception {
-		when(peer1.getState()).thenReturn(PeerInfo.State.STATE_AMBIGUOUS);
-		when(peer2.getState()).thenReturn(PeerInfo.State.STATE_DISCONNECTED);
+		when(peer1.getState()).thenReturn(PeerInfo.STATE_AMBIGUOUS);
+		when(peer2.getState()).thenReturn(PeerInfo.STATE_DISCONNECTED);
 
 		SyncMetadataService sms = new SyncMetadataService(ctx);
 		String[] wkn = sms.getWellKnownNodes();

@@ -11,6 +11,11 @@ public class SettingName {
 	public static final String dbVersion = "DB_VERSION";
 
 	/**
+	 * Step when database is updating
+	 */
+	public static final String dbUpdateStep = "DB_UPDATE_STEP";
+
+	/**
 	 * Genesis block ID
 	 */
 	public static final String genesisBlockID = "GENESIS_BLOCK_ID";
@@ -29,4 +34,14 @@ public class SettingName {
 	 * End time of current fork
 	 */
 	public static final String forkEnd = "FORK_END";
+
+	/**
+	 * Supported transactions in last fork
+	 */
+	public static final String prevTranVersions = "PREV_TRAN_VERSIONS";
+
+	/**
+	 * Supported transactions in current fork
+	 */
+	public static final String targetTranVersions = "TARGET_TRAN_VERSIONS";
 }

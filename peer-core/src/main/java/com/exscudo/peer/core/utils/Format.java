@@ -7,7 +7,7 @@ import java.security.NoSuchAlgorithmException;
 public class Format {
 
 	/**
-	 * 0x10000000000000000 = 2*0xFFFFFFFFFFFFFFFF
+	 * 0x10000000000000000 = 0xFFFFFFFFFFFFFFFF + 1
 	 */
 	public static final BigInteger two64 = new BigInteger("18446744073709551616");
 	public static final String alphabet = "0123456789abcdefghijklmnopqrstuvwxyz";

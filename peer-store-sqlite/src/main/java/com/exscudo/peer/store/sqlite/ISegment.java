@@ -1,15 +1,23 @@
 package com.exscudo.peer.store.sqlite;
 
 /**
- * Interface for caching changes
- * 
- * @param <T>
- *            base type of cached objects
+ * Interface for key-value table
+ *
+ * @param <TKey>
+ *            type of keys.
+ * @param <TValue>
+ *            base type of objects
  */
-public interface ISegment<T> {
-	T get(long id);
-	void put(T instance);
-	void remove(long id);
-	boolean contains(long id);
-	void commit();
+public interface ISegment<TKey, TValue> {
+
+	TValue get(TKey id);
+
+	void put(TKey id, TValue instance);
+
+	void remove(TKey id);
+
+	default boolean contains(TKey key) {
+		return get(key) != null;
+	}
+
 }

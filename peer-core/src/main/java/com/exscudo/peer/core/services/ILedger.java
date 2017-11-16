@@ -13,8 +13,8 @@ public interface ILedger {
 		return getAccount(accountID) != null;
 	}
 
-	default IAccount newAccount(long accountID) {
-		throw new UnsupportedOperationException();
-	}
+	void putAccount(IAccount account);
+
+	byte[] getHash();
 
 }

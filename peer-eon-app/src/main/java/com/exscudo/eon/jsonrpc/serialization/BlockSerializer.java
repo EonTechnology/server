@@ -45,6 +45,10 @@ public class BlockSerializer extends StdSerializer<Block> {
 			gen.writeEndArray();
 		}
 
+		if (value.getVersion() >= 2) {
+			gen.writeStringField(StringConstant.snapshot, Format.convert(value.getSnapshot()));
+		}
+
 		gen.writeEndObject();
 	}
 }

@@ -4,7 +4,10 @@ import java.util.Iterator;
 
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.exceptions.ValidateException;
-import com.exscudo.peer.core.services.*;
+import com.exscudo.peer.core.services.IAccount;
+import com.exscudo.peer.core.services.IBacklogService;
+import com.exscudo.peer.core.services.IBlockchainService;
+import com.exscudo.peer.core.services.ITransactionMapper;
 
 /**
  * Pre-validation of transactions before putting in Backlog.
@@ -13,37 +16,30 @@ public class BacklogDecorator implements IBacklogService {
 	private final IBacklogService backlog;
 	private final IBlockchainService blockchain;
 
-	private ITransactionHandler handler;
-
-	public BacklogDecorator(IBacklogService backlog, IBlockchainService blockchain, ITransactionHandler handler) {
+	public BacklogDecorator(IBacklogService backlog, IBlockchainService blockchain) {
 		this.backlog = backlog;
 		this.blockchain = blockchain;
-
-		this.handler = handler;
 	}
 
 	@Override
 	public boolean put(Transaction transaction) throws ValidateException {
 
-		TransactionContext context = new TransactionContext(blockchain.getLastBlock().getTimestamp());
-
 		long accountID = transaction.getSenderID();
-		ILedger state = blockchain.getLastBlock().getState();
-		IAccount account = state.getAccount(accountID);
 
-		ISandbox sandbox = blockchain.getLastBlock().createSandbox(handler);
+		Sandbox sandbox = Sandbox.getInstance(blockchain);
+		IAccount account = sandbox.getLedger().getAccount(accountID);
 		if (account != null) {
 			Iterator<Long> indexes = backlog.iterator();
 			while (indexes.hasNext()) {
 				long id = indexes.next();
 				Transaction tx = backlog.get(id);
 				if (tx != null && tx.getSenderID() == accountID) {
-					sandbox.execute(tx, context);
+					sandbox.execute(tx);
 				}
 			}
 		}
 
-		sandbox.execute(transaction, context);
+		sandbox.execute(transaction);
 
 		ITransactionMapper mapper = blockchain.transactionMapper();
 		long id = transaction.getID();

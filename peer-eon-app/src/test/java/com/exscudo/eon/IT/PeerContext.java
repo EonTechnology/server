@@ -16,7 +16,11 @@ import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.exceptions.RemotePeerException;
 import com.exscudo.peer.core.services.IBlockSynchronizationService;
 import com.exscudo.peer.core.tasks.SyncBlockListTask;
-import com.exscudo.peer.eon.*;
+import com.exscudo.peer.eon.EngineConfigurator;
+import com.exscudo.peer.eon.ExecutionContext;
+import com.exscudo.peer.eon.IServiceProxyFactory;
+import com.exscudo.peer.eon.PeerInfo;
+import com.exscudo.peer.eon.TimeProvider;
 import com.exscudo.peer.eon.crypto.Ed25519SignatureVerifier;
 import com.exscudo.peer.eon.crypto.Ed25519Signer;
 import com.exscudo.peer.eon.crypto.ISigner;
@@ -26,7 +30,11 @@ import com.exscudo.peer.eon.services.SalientAttributes;
 import com.exscudo.peer.eon.stubs.SyncBlockService;
 import com.exscudo.peer.eon.stubs.SyncMetadataService;
 import com.exscudo.peer.eon.stubs.SyncTransactionService;
-import com.exscudo.peer.eon.tasks.*;
+import com.exscudo.peer.eon.tasks.GenerateBlockTask;
+import com.exscudo.peer.eon.tasks.PeerConnectTask;
+import com.exscudo.peer.eon.tasks.PeerRemoveTask;
+import com.exscudo.peer.eon.tasks.SyncPeerListTask;
+import com.exscudo.peer.eon.tasks.SyncTransactionListTask;
 import com.exscudo.peer.store.sqlite.Backlog;
 import com.exscudo.peer.store.sqlite.Storage;
 import com.exscudo.peer.store.sqlite.core.Blockchain;
@@ -64,13 +72,12 @@ class PeerContext {
 
 		EngineConfigurator configurator = new EngineConfigurator();
 		configurator.setHost(new ExecutionContext.Host("0"));
-		configurator.setPublicPeers(new String[]{"1"});
-		configurator.setInnerPeers(new String[]{});
+		configurator.setPublicPeers(new String[] { "1" });
+		configurator.setInnerPeers(new String[] {});
 		configurator.setTimeProvider(timeProvider);
 		configurator.setSigner(signer);
 
-		Storage connector = Storage.create("jdbc:sqlite:",
-				new String[]{"/com/exscudo/eon/data/sqlite/DBv1.sql", "/com/exscudo/eon/IT/init.sql"});
+		Storage connector = Storage.create("jdbc:sqlite:", new TestInitializer());
 		connector.setBacklog(new Backlog());
 		configurator.setBlockchain(new Blockchain(connector));
 		configurator.setBacklog(connector.getBacklog());
@@ -85,6 +92,7 @@ class PeerContext {
 		syncTransactionPeerService = new ITransactionSynchronizationService() {
 
 			private SyncTransactionService inner = new SyncTransactionService(context);
+
 			@Override
 			public Transaction[] getTransactions(String lastBlockId, String[] ignoreList)
 					throws RemotePeerException, IOException {
@@ -98,6 +106,7 @@ class PeerContext {
 		syncBlockPeerService = new IBlockSynchronizationService() {
 
 			private SyncBlockService inner = new SyncBlockService(context);
+
 			@Override
 			public Difficulty getDifficulty() throws RemotePeerException, IOException {
 				Difficulty value = inner.getDifficulty();
@@ -139,6 +148,11 @@ class PeerContext {
 				String valueStr = mapper.writeValueAsString(value);
 
 				return mapper.readValue(valueStr, String[].class);
+			}
+
+			@Override
+			public boolean addPeer(long peerID, String address) throws RemotePeerException, IOException {
+				return inner.addPeer(peerID, address);
 			}
 
 		};

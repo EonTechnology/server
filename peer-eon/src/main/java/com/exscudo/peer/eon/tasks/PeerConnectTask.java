@@ -51,13 +51,14 @@ public final class PeerConnectTask extends BaseTask implements Runnable {
 				} catch (IOException | RemotePeerException e) {
 
 					context.disablePeer(peer);
-					Loggers.trace(SyncPeerListTask.class, "Failed to execute a request. Target: " + peer, e);
-					Loggers.info(SyncPeerListTask.class, "The node is disconnected. \"{}\".", peer);
+					Loggers.trace(PeerConnectTask.class, "Failed to execute a request. Target: " + peer, e);
+					Loggers.info(PeerConnectTask.class, "The node is disconnected. \"{}\".", peer);
 					return;
 
 				}
 
 				if (remoteAttributes == null) {
+					Loggers.info(PeerConnectTask.class, "RemoteAttributes is null. \"{}\".", peer);
 					return;
 				}
 
@@ -65,13 +66,16 @@ public final class PeerConnectTask extends BaseTask implements Runnable {
 				// has different genesis-blocks.
 				Fork hardFork = context.getCurrentFork();
 				if (!Format.ID.blockId(hardFork.getGenesisBlockID()).equals(remoteAttributes.getNetworkID())) {
+					Loggers.info(PeerConnectTask.class, "Different NetworkID. \"{}\".", peer);
 					return;
 				}
 
 				// Connects only a nodes with known hard-forks.
 				int forkNumber = hardFork.getNumber(instance.getBlockchainService().getLastBlock().getTimestamp());
 				int forkNumberReal = hardFork.getNumber(context.getCurrentTime());
-				if (forkNumber != remoteAttributes.getFork() && forkNumberReal != remoteAttributes.getFork()) {
+				if (!((forkNumber == remoteAttributes.getFork() && forkNumber != -1)
+						|| (forkNumberReal == remoteAttributes.getFork() && forkNumberReal != -1))) {
+					Loggers.info(PeerConnectTask.class, "Incorrect fork. \"{}\".", peer);
 					return;
 				}
 
@@ -86,13 +90,13 @@ public final class PeerConnectTask extends BaseTask implements Runnable {
 
 				// Mark the node as accessible to the connection.
 				context.connectPeer(peer);
-				Loggers.info(SyncPeerListTask.class, "The node is connected. \"{}\".", peer);
+				Loggers.info(PeerConnectTask.class, "The node is connected. \"{}\".", peer);
 
 			}
 
 		} catch (Exception e) {
 
-			Loggers.error(SyncPeerListTask.class, e);
+			Loggers.error(PeerConnectTask.class, e);
 		}
 
 	}

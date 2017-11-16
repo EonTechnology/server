@@ -1,6 +1,8 @@
 package com.exscudo.peer.store.sqlite;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -12,7 +14,6 @@ import org.junit.Test;
 
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Transaction;
-import com.exscudo.peer.core.services.AccountProperty;
 import com.exscudo.peer.store.sqlite.utils.BlockHelper;
 
 public class BlockHelperTest {
@@ -20,7 +21,7 @@ public class BlockHelperTest {
 
 	@Before
 	public void setUp() throws Exception {
-		connection = ConnectionUtils.create("/com/exscudo/eon/sqlite/blocks_test.sql");
+		connection = new ConnectionProxy(ConnectionUtils.create("/com/exscudo/peer/store/sqlite/blocks_test.sql"));
 	}
 
 	@After
@@ -51,9 +52,6 @@ public class BlockHelperTest {
 		assertEquals(transactions[1].getID(), -5790597521193566208L);
 		assertEquals(transactions[2].getID(), 8715428717435813888L);
 
-		AccountProperty[] accProps = block.getAccProps();
-		assertNotNull(accProps);
-		assertEquals(4, accProps.length);
 	}
 
 	@Test
@@ -67,14 +65,13 @@ public class BlockHelperTest {
 		block.setSenderID(12345L);
 		block.setSignature(new byte[64]);
 		block.setCumulativeDifficulty(new BigInteger("0"));
-		block.setAccProps(new AccountProperty[0]);
+		block.setSnapshot(new byte[64]);
 
 		long id = block.getID();
 		assertNull(BlockHelper.get(connection, id));
 		BlockHelper.save(connection, block);
 		Block b = BlockHelper.get(connection, id);
 		assertNotNull(b);
-		assertNotNull(b.getAccProps());
 	}
 
 	@Test

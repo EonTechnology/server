@@ -5,14 +5,13 @@ import java.math.BigInteger;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
-import com.dampcake.bencode.Bencode;
-import com.dampcake.bencode.Type;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.exceptions.DataAccessException;
-import com.exscudo.peer.core.services.AccountProperty;
 import com.exscudo.peer.core.utils.Format;
 import com.exscudo.peer.store.sqlite.ConnectionProxy;
 
@@ -24,21 +23,18 @@ public class BlockHelper {
 
 	/**
 	 * Read block from DB
-	 * 
-	 * @param db
-	 *            data connection
-	 * @param id
-	 *            block id to read
+	 *
+	 * @param db data connection
+	 * @param id block id to read
 	 * @return block from DB
-	 * @throws DataAccessException
-	 *             problems with the DB
+	 * @throws DataAccessException problems with the DB
 	 */
 	public static Block get(ConnectionProxy db, final long id) throws DataAccessException {
 
 		try {
 
 			PreparedStatement getStatement = db.prepareStatement(
-					"select \"version\", \"timestamp\", \"previousBlock\", \"generator\", \"generationSignature\", \"blockSignature\", \"height\", \"nextBlock\", \"cumulativeDifficulty\" from \"block\" where \"id\" = ?");
+					"select \"version\", \"timestamp\", \"previousBlock\", \"generator\", \"generationSignature\", \"blockSignature\", \"height\", \"nextBlock\", \"cumulativeDifficulty\", \"snapshot\" from \"block\" where \"id\" = ?");
 
 			ResultSet set;
 
@@ -47,27 +43,8 @@ public class BlockHelper {
 				set = getStatement.executeQuery();
 
 				if (set.next()) {
-
-					int version = set.getInt("version");
-					int timestamp = set.getInt("timestamp");
-					long previousBlock = set.getLong("previousBlock");
-					long generator = set.getLong("generator");
-					byte[] generationSignature = Format.convert(set.getString("generationSignature"));
-					byte[] signature = Format.convert(set.getString("blockSignature"));
-
-					Block block = new DbBlock(db);
-					block.setVersion(version);
-					block.setTimestamp(timestamp);
-					block.setPreviousBlock(previousBlock);
-					block.setGenerationSignature(generationSignature);
-					block.setSenderID(generator);
-					block.setSignature(signature);
-
-					block.setHeight(set.getInt("height"));
-					block.setNextBlock(set.getLong("nextBlock"));
-					block.setCumulativeDifficulty(new BigInteger(set.getString("cumulativeDifficulty")));
+					Block block = getBlockFromRow(db, set);
 					set.close();
-
 					return block;
 				}
 			}
@@ -83,19 +60,16 @@ public class BlockHelper {
 	/**
 	 * Save block to DB
 	 *
-	 * @param db
-	 *            data connection
-	 * @param block
-	 *            Block to save
-	 * @throws DataAccessException
-	 *             problems with the DB
+	 * @param db    data connection
+	 * @param block Block to save
+	 * @throws DataAccessException problems with the DB
 	 */
 	public static void save(ConnectionProxy db, final Block block) throws DataAccessException {
 
 		try {
 
 			PreparedStatement saveStatement = db.prepareStatement(
-					"INSERT OR REPLACE INTO \"block\" (\"id\", \"version\", \"timestamp\", \"previousBlock\", \"generator\", \"generationSignature\", \"blockSignature\", \"height\", \"nextBlock\", \"cumulativeDifficulty\")\n VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
+					"INSERT OR REPLACE INTO \"block\" (\"id\", \"version\", \"timestamp\", \"previousBlock\", \"generator\", \"generationSignature\", \"blockSignature\", \"height\", \"nextBlock\", \"cumulativeDifficulty\", \"snapshot\")\n VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
 			synchronized (saveStatement) {
 
 				saveStatement.setLong(1, block.getID());
@@ -108,30 +82,9 @@ public class BlockHelper {
 				saveStatement.setInt(8, block.getHeight());
 				saveStatement.setLong(9, block.getNextBlock());
 				saveStatement.setString(10, block.getCumulativeDifficulty().toString());
+				saveStatement.setString(11, Format.convert(block.getSnapshot()));
 				saveStatement.executeUpdate();
 
-				PreparedStatement savePropsStatement = db.prepareStatement(
-						"INSERT OR REPLACE INTO \"property\"(\"type\", \"account\", \"value\", \"blockid\", \"height\")\n VALUES(?, ?, ?, ?, ?);");
-				synchronized (savePropsStatement) {
-
-					if (!(block instanceof DbBlock) || ((DbBlock) block).isAccPropsLoaded()) {
-						for (AccountProperty i : block.getAccProps()) {
-							String data = "";
-							if (i.getData() != null) {
-								Bencode bencode = new Bencode();
-								byte[] encoded = bencode.encode(i.getData());
-								data = new String(encoded, bencode.getCharset());
-							}
-
-							savePropsStatement.setString(1, i.getType().toString());
-							savePropsStatement.setLong(2, i.getAccountID());
-							savePropsStatement.setString(3, data);
-							savePropsStatement.setLong(4, block.getID());
-							savePropsStatement.setInt(5, i.getHeight());
-							savePropsStatement.executeUpdate();
-						}
-					}
-				}
 			}
 
 		} catch (Exception e) {
@@ -141,13 +94,10 @@ public class BlockHelper {
 
 	/**
 	 * Remove block from DB
-	 * 
-	 * @param db
-	 *            data connection
-	 * @param id
-	 *            block id to remove
-	 * @throws DataAccessException
-	 *             problems with the DB
+	 *
+	 * @param db data connection
+	 * @param id block id to remove
+	 * @throws DataAccessException problems with the DB
 	 */
 	public static void remove(ConnectionProxy db, final long id) throws DataAccessException {
 
@@ -159,20 +109,6 @@ public class BlockHelper {
 				removeStatement.setLong(1, id);
 				removeStatement.executeUpdate();
 
-				PreparedStatement removePropsStatement = db
-						.prepareStatement("delete from \"property\" where \"blockid\" = ?");
-				synchronized (removePropsStatement) {
-					removePropsStatement.setLong(1, id);
-					removePropsStatement.executeUpdate();
-				}
-
-				PreparedStatement removeTransStatement = db
-						.prepareStatement("delete from \"transaction\" where \"block\" = ?");
-
-				synchronized (removeTransStatement) {
-					removeTransStatement.setLong(1, id);
-					removeTransStatement.executeUpdate();
-				}
 			}
 
 		} catch (Exception e) {
@@ -182,16 +118,12 @@ public class BlockHelper {
 
 	/**
 	 * Read block history from DB
-	 * 
-	 * @param db
-	 *            data connection
-	 * @param begin
-	 *            begin block height
-	 * @param end
-	 *            end block height
+	 *
+	 * @param db    data connection
+	 * @param begin begin block height
+	 * @param end   end block height
 	 * @return sorted by height list of block id
-	 * @throws DataAccessException
-	 *             problems with the DB
+	 * @throws DataAccessException problems with the DB
 	 */
 	public static long[] getBlockLinkedList(ConnectionProxy db, int begin, int end) throws DataAccessException {
 
@@ -230,15 +162,11 @@ public class BlockHelper {
 	/**
 	 * Read block history from DB generated by specified account
 	 *
-	 * @param db
-	 *            data connection
-	 * @param peerAccountID
-	 *            generator id
-	 * @param time
-	 *            time limit for read from history
+	 * @param db            data connection
+	 * @param peerAccountID generator id
+	 * @param time          time limit for read from history
 	 * @return sorted by height list of block id
-	 * @throws DataAccessException
-	 *             problems with the DB
+	 * @throws DataAccessException problems with the DB
 	 */
 	public static long[] getBlockListByPeerAccount(ConnectionProxy db, long peerAccountID, int time)
 			throws DataAccessException {
@@ -278,13 +206,10 @@ public class BlockHelper {
 	/**
 	 * Get block position in blockchain
 	 *
-	 * @param db
-	 *            data connection
-	 * @param id
-	 *            block id
+	 * @param db data connection
+	 * @param id block id
 	 * @return block height or -1 if block not exist
-	 * @throws DataAccessException
-	 *             problems with the DB
+	 * @throws DataAccessException problems with the DB
 	 */
 	public static int getHeight(ConnectionProxy db, final long id) {
 		try {
@@ -313,13 +238,10 @@ public class BlockHelper {
 	/**
 	 * Read transactions for block
 	 *
-	 * @param db
-	 *            data connection
-	 * @param id
-	 *            block id
+	 * @param db data connection
+	 * @param id block id
 	 * @return Transaction list
-	 * @throws DataAccessException
-	 *             problems with the DB
+	 * @throws DataAccessException problems with the DB
 	 */
 	static List<Transaction> getTransactions(ConnectionProxy db, final long id) throws SQLException, EOFException {
 
@@ -348,44 +270,63 @@ public class BlockHelper {
 
 	}
 
-	/**
-	 * Read account properties for block
-	 *
-	 * @param db
-	 *            data connection
-	 * @param id
-	 *            block id
-	 * @return properties list
-	 * @throws DataAccessException
-	 *             problems with the DB
-	 */
-	static AccountProperty[] findAccProps(ConnectionProxy db, long id) throws SQLException {
+	public static Block getByHeight(ConnectionProxy db, int height) {
+		try {
 
-		PreparedStatement statement = db.prepareStatement(
-				"select \"type\", \"account\", \"value\", \"blockid\", \"height\" from \"property\" where \"blockid\" = ?");
-		synchronized (statement) {
+			PreparedStatement getStatement = db.prepareStatement(
+					"select \"version\", \"timestamp\", \"previousBlock\", \"generator\", \"generationSignature\", \"blockSignature\", \"height\", \"nextBlock\", \"cumulativeDifficulty\", \"snapshot\" from \"block\" where \"height\" = ?");
 
-			ArrayList<AccountProperty> list = new ArrayList<>();
-			statement.setLong(1, id);
-			ResultSet set = statement.executeQuery();
-			while (set.next()) {
-				String value = set.getString("value");
+			ResultSet set;
 
-				Map<String, Object> map = new HashMap<>();
-				if (value != null && value.length() != 0) {
-					Bencode bencode = new Bencode();
-					map = bencode.decode(value.getBytes(), Type.DICTIONARY);
+			Block block = null;
+			synchronized (getStatement) {
+
+				getStatement.setInt(1, height);
+				set = getStatement.executeQuery();
+				try {
+					while (set.next()) {
+						if (block != null) {
+							throw new DataAccessException("Uncertain state.");
+						}
+						block = getBlockFromRow(db, set);
+					}
+				} finally {
+					set.close();
 				}
-				AccountProperty si = new AccountProperty(set.getLong("account"), UUID.fromString(set.getString("type")),
-						map);
 
-				si.setHeight(set.getInt("height"));
-				list.add(si);
 			}
-			set.close();
-			return list.toArray(new AccountProperty[0]);
+			return block;
 
+		} catch (Exception e) {
+			throw new DataAccessException(e);
 		}
+	}
+
+	private static Block getBlockFromRow(ConnectionProxy db, ResultSet set) throws SQLException {
+
+		int version = set.getInt("version");
+		int timestamp = set.getInt("timestamp");
+		long previousBlock = set.getLong("previousBlock");
+		long generator = set.getLong("generator");
+		byte[] generationSignature = Format.convert(set.getString("generationSignature"));
+		byte[] signature = Format.convert(set.getString("blockSignature"));
+		byte[] snapshot = Format.convert(set.getString("snapshot"));
+
+		DbBlock block = new DbBlock(db);
+		block.setVersion(version);
+		block.setTimestamp(timestamp);
+		block.setPreviousBlock(previousBlock);
+		block.setGenerationSignature(generationSignature);
+		block.setSenderID(generator);
+		block.setSignature(signature);
+		block.setSnapshot(snapshot);
+
+		block.setHeight(set.getInt("height"));
+		block.setNextBlock(set.getLong("nextBlock"));
+		block.setCumulativeDifficulty(new BigInteger(set.getString("cumulativeDifficulty")));
+
+		return block;
 
 	}
+
 }

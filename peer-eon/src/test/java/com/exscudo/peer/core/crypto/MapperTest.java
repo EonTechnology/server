@@ -7,9 +7,6 @@ import static org.mockito.Mockito.when;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
-
 import com.exscudo.peer.MockSigner;
 import com.exscudo.peer.core.Fork;
 import com.exscudo.peer.core.ForkProvider;
@@ -18,6 +15,8 @@ import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.eon.transactions.Deposit;
 import com.exscudo.peer.eon.transactions.Payment;
 import com.exscudo.peer.eon.transactions.Registration;
+import org.junit.Before;
+import org.junit.Test;
 
 @SuppressWarnings("SpellCheckingInspection")
 public class MapperTest {
@@ -34,6 +33,7 @@ public class MapperTest {
 
 		Transaction tran = new Transaction();
 		tran.setSenderID(13245L);
+		tran.setVersion(1);
 		byte[] bytes = BencodeMessage.getBytes(tran);
 		String s = new String(bytes);
 
@@ -43,10 +43,24 @@ public class MapperTest {
 	}
 
 	@Test
+	public void transaction_v2_bencode() throws Exception {
+
+		Transaction tran = new Transaction();
+		tran.setSenderID(13245L);
+		tran.setVersion(2);
+		byte[] bytes = BencodeMessage.getBytes(tran);
+		String s = new String(bytes);
+
+		assertEquals(
+				"D10:ATTACHMENTDE8:DEADLINEI0E3:FEEI0E7:NETWORK23:EON-B-22222-22222-2222J6:SENDER21:EON-XXE22-22222-22JSY9:TIMESTAMPI0E4:TYPEI0E7:VERSIONI2EE",
+				s);
+	}
+
+	@Test
 	public void transaction_bencode_payment() throws Exception {
 		MockSigner signer = new MockSigner(123L);
 
-		Transaction tran = Payment.newPayment(100L).forFee(1L).to(12345L).validity(12345, (short) 60).build(signer);
+		Transaction tran = Payment.newPayment(100L, 12345L).forFee(1L).validity(12345, 60, 1).build(signer);
 
 		byte[] bytes = BencodeMessage.getBytes(tran);
 		String s = new String(bytes);
@@ -60,14 +74,13 @@ public class MapperTest {
 	public void transaction_bencode_register() throws Exception {
 		MockSigner signer = new MockSigner(123L);
 
-		Transaction tran = Registration.newAccount(signer.getPublicKey()).validity(12345 + 60, (short) 60)
-				.build(signer);
+		Transaction tran = Registration.newAccount(signer.getPublicKey()).validity(12345 + 60, 60, 1).build(signer);
 
 		byte[] bytes = BencodeMessage.getBytes(tran);
 		String s = new String(bytes);
 
 		assertEquals(
-				"D10:ATTACHMENTD21:EON-RMNF4-KLGQ7-9Y65X64:DDF121B99504BC3CD18CABFDAAF0334D16D1D7403226FA924557DA9B3A0F4642E8:DEADLINEI60E3:FEEI0E7:NETWORK23:EON-B-22222-22222-2222J6:SENDER21:EON-RMNF4-KLGQ7-9Y65X9:TIMESTAMPI12405E4:TYPEI100EE",
+				"D10:ATTACHMENTD21:EON-RMNF4-KLGQ7-9Y65X64:DDF121B99504BC3CD18CABFDAAF0334D16D1D7403226FA924557DA9B3A0F4642E8:DEADLINEI60E3:FEEI1E7:NETWORK23:EON-B-22222-22222-2222J6:SENDER21:EON-RMNF4-KLGQ7-9Y65X9:TIMESTAMPI12405E4:TYPEI100EE",
 				s);
 	}
 
@@ -75,7 +88,7 @@ public class MapperTest {
 	public void transaction_bencode_deposit() throws Exception {
 		MockSigner signer = new MockSigner(123L);
 
-		Transaction tran = Deposit.refill(999L).validity(12345, (short) 60).build(signer);
+		Transaction tran = Deposit.refill(999L).validity(12345, 60, 1).build(signer);
 
 		byte[] bytes = BencodeMessage.getBytes(tran);
 		String s = new String(bytes);
@@ -89,7 +102,7 @@ public class MapperTest {
 	public void transaction_bencode_deposit_issue() throws Exception {
 		MockSigner signer = new MockSigner(123L);
 
-		Transaction tran = Deposit.withdraw(999L).validity(12345, (short) 60).build(signer);
+		Transaction tran = Deposit.withdraw(999L).validity(12345, 60, 1).build(signer);
 
 		byte[] bytes = BencodeMessage.getBytes(tran);
 		String s = new String(bytes);
@@ -104,12 +117,12 @@ public class MapperTest {
 
 		Block bl = new Block();
 		bl.setSenderID(12345L);
-		bl.setGenerationSignature(new byte[]{4, 5, 6});
+		bl.setGenerationSignature(new byte[] { 4, 5, 6 });
 
 		List<Transaction> rxSet = new ArrayList<>();
 		for (byte i = 0; i < 10; i++) {
 			Transaction tx = new Transaction();
-			tx.setSignature(new byte[]{i});
+			tx.setSignature(new byte[] { i });
 
 			rxSet.add(tx);
 		}

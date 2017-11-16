@@ -5,11 +5,11 @@
 	<parent>
 		<groupId>com.exscudo</groupId>
 		<artifactId>peer-all</artifactId>
-		<version>0.5.2-SNAPSHOT</version>
+		<version>0.6.0-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>peer-store-sqlite</artifactId>
-	<version>0.5.2-SNAPSHOT</version>
+	<version>0.6.0-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>peer-store-sqlite</name>
@@ -22,7 +22,13 @@
 		<dependency>
 			<groupId>com.exscudo</groupId>
 			<artifactId>peer-core</artifactId>
-			<version>0.5.2-SNAPSHOT</version>
+			<version>0.6.0-SNAPSHOT</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.exscudo</groupId>
+			<artifactId>peer-eon</artifactId>
+			<version>0.6.0-SNAPSHOT</version>
 		</dependency>
 
 		<!-- SQLite -->
@@ -33,6 +39,7 @@
 			<version>3.20.1</version>
 		</dependency>
 
-	</dependencies>
+
+    </dependencies>
 
 </project>

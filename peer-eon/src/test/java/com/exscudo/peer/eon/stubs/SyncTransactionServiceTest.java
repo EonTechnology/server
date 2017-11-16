@@ -5,18 +5,19 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.junit.Before;
-import org.junit.Test;
-
 import com.exscudo.peer.DefaultBacklog;
 import com.exscudo.peer.core.Fork;
 import com.exscudo.peer.core.ForkProvider;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.exceptions.RemotePeerException;
-import com.exscudo.peer.core.services.*;
+import com.exscudo.peer.core.services.IBacklogService;
+import com.exscudo.peer.core.services.IBlockchainService;
+import com.exscudo.peer.core.services.ITransactionMapper;
 import com.exscudo.peer.eon.ExecutionContext;
 import com.exscudo.peer.eon.Instance;
+import org.junit.Before;
+import org.junit.Test;
 
 public class SyncTransactionServiceTest {
 
@@ -52,12 +53,8 @@ public class SyncTransactionServiceTest {
 		Block mockBlock = mock(Block.class);
 		when(mockBlock.getID()).thenReturn(lastBlockIdLong);
 
-		LinkedBlock linkedBlock = mock(LinkedBlock.class);
-		when(linkedBlock.getState()).thenReturn(mock(ILedger.class));
-		when(linkedBlock.getID()).thenReturn(lastBlockIdLong);
-
 		IBlockchainService blockchain = mock(IBlockchainService.class);
-		when(blockchain.getLastBlock()).thenReturn(linkedBlock);
+		when(blockchain.getLastBlock()).thenReturn(mockBlock);
 		when(blockchain.transactionMapper()).thenReturn(mock(ITransactionMapper.class));
 
 		Fork mockFork = mock(Fork.class);
@@ -83,7 +80,7 @@ public class SyncTransactionServiceTest {
 	@Test(expected = RemotePeerException.class)
 	public void getTransactions_with_bad_ignorelist_should_throw() throws Exception {
 		SyncTransactionService sts = new SyncTransactionService(mockContext);
-		sts.getTransactions(lastBlockIdStr, new String[]{"bad_tr_id"});
+		sts.getTransactions(lastBlockIdStr, new String[] { "bad_tr_id" });
 	}
 
 	@Test
@@ -106,7 +103,7 @@ public class SyncTransactionServiceTest {
 	@Test
 	public void getTransactions_shouldnt_return_ignore_trs() throws Exception {
 		SyncTransactionService sts = new SyncTransactionService(mockContext);
-		Transaction[] trs = sts.getTransactions(lastBlockIdStr, new String[]{ignoreTrIdStr});
+		Transaction[] trs = sts.getTransactions(lastBlockIdStr, new String[] { ignoreTrIdStr });
 		assertEquals(2, trs.length);
 		assertEquals(unconfTr1, trs[0]);
 		assertEquals(unconfTr2, trs[1]);

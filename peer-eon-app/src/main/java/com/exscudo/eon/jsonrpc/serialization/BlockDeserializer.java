@@ -68,6 +68,11 @@ public class BlockDeserializer extends StdDeserializer<Block> {
 				block.setTransactions(new ArrayList<>());
 			}
 
+			if (block.getVersion() >= 2) {
+				byte[] snapshot = Format.convert(node.get(StringConstant.snapshot).asText());
+				block.setSnapshot(snapshot);
+			}
+
 			return block;
 
 		} catch (IllegalArgumentException e) {

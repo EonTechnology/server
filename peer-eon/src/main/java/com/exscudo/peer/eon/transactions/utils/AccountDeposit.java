@@ -14,12 +14,10 @@ import com.exscudo.peer.eon.EonConstant;
 public class AccountDeposit {
 	public static final UUID ID = UUID.fromString("256d84f8-b272-4dcc-a7de-e36b7b8a0da6");
 
-	private final long accountID;
 	private long deposit;
 	private int height;
 
-	public AccountDeposit(long accountID, long deposit, int height) {
-		this.accountID = accountID;
+	public AccountDeposit(long deposit, int height) {
 		this.deposit = deposit;
 		this.height = height;
 	}
@@ -32,33 +30,36 @@ public class AccountDeposit {
 		return height;
 	}
 
-	public void refill(long amount) {
+	public void refill(long amount, int height) {
 		long newDeposit = deposit + amount;
 		if (amount <= 0 || newDeposit < 0 || newDeposit > EonConstant.MAX_MONEY) {
 			throw new IllegalArgumentException();
 		}
 		deposit = newDeposit;
+		this.height = height;
 	}
 
-	public void withdraw(long amount) {
+	public void withdraw(long amount, int height) {
 		long newDeposit = deposit - amount;
 		if (deposit <= 0 || amount <= 0 || newDeposit < 0 || amount > EonConstant.MAX_MONEY) {
 			throw new IllegalArgumentException();
 		}
 		deposit = newDeposit;
+		this.height = height;
 	}
 
 	public AccountProperty asProperty() {
 		HashMap<String, Object> data = new HashMap<String, Object>();
 		data.put("amount", deposit);
+		data.put("height", height);
 
-		return new AccountProperty(accountID, ID, data);
+		return new AccountProperty(ID, data);
 	}
 
 	public static AccountDeposit parse(IAccount account) {
 		AccountProperty prop = account.getProperty(ID);
 		if (prop == null) {
-			return new AccountDeposit(account.getID(), 0L, 0);
+			return new AccountDeposit(0L, 0);
 		}
 
 		long value = 0;
@@ -67,18 +68,20 @@ public class AccountDeposit {
 		if (amountObj instanceof Long || amountObj instanceof Integer) {
 			value = Long.parseLong(amountObj.toString());
 		}
-		return new AccountDeposit(account.getID(), value, prop.getHeight());
+
+		int height = Integer.parseInt(data.get("height").toString());
+		return new AccountDeposit(value, height);
 	}
 
-	public static void refill(IAccount account, long amount) {
+	public static void refill(IAccount account, long amount, int height) {
 		AccountDeposit deposit = AccountDeposit.parse(account);
-		deposit.refill(amount);
+		deposit.refill(amount, height);
 		account.putProperty(deposit.asProperty());
 	}
 
-	public static void withdraw(IAccount account, long amount) {
+	public static void withdraw(IAccount account, long amount, int height) {
 		AccountDeposit deposit = AccountDeposit.parse(account);
-		deposit.withdraw(amount);
+		deposit.withdraw(amount, height);
 		account.putProperty(deposit.asProperty());
 	}
 
@@ -90,7 +93,7 @@ public class AccountDeposit {
 		if (deposit < 0 || deposit > EonConstant.MAX_MONEY) {
 			throw new IllegalArgumentException("Illegal balance.");
 		}
-		account.putProperty(new AccountDeposit(account.getID(), deposit, height).asProperty());
+		account.putProperty(new AccountDeposit(deposit, height).asProperty());
 	}
 
 }

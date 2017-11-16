@@ -68,10 +68,10 @@ public class SyncForkedTransactionListTestIT {
 		lastBlock = ctx1.context.getInstance().getBlockchainService().getLastBlock();
 		Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + Constant.BLOCK_PERIOD + 1);
 
-		Transaction tx1 = Payment.newPayment(10000L).to(Format.MathID.pick(ctx2.getSigner().getPublicKey())).forFee(1L)
-				.validity(lastBlock.getTimestamp() + 150, (short) 60).build(ctx1.getSigner());
-		Transaction tx2 = Payment.newPayment(10000L).to(Format.MathID.pick(ctx2.getSigner().getPublicKey())).forFee(1L)
-				.validity(lastBlock.getTimestamp() + 100, (short) 60).build(ctx1.getSigner());
+		Transaction tx1 = Payment.newPayment(10000L, Format.MathID.pick(ctx2.getSigner().getPublicKey())).forFee(1L)
+				.validity(lastBlock.getTimestamp() + 150, 3600).build(ctx1.getSigner());
+		Transaction tx2 = Payment.newPayment(10000L, Format.MathID.pick(ctx2.getSigner().getPublicKey())).forFee(1L)
+				.validity(lastBlock.getTimestamp() + 100, 3600).build(ctx1.getSigner());
 
 		ctx1.transactionBotService.putTransaction(tx1);
 		ctx2.transactionBotService.putTransaction(tx2);

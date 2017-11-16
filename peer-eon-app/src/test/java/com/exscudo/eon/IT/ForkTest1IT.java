@@ -1,21 +1,27 @@
 package com.exscudo.eon.IT;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
-import org.junit.runners.MethodSorters;
-import org.mockito.Mockito;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 import com.exscudo.peer.core.Constant;
 import com.exscudo.peer.core.Fork;
 import com.exscudo.peer.core.ForkProvider;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Transaction;
+import com.exscudo.peer.core.services.ITransactionHandler;
 import com.exscudo.peer.core.utils.Format;
 import com.exscudo.peer.eon.Peer;
 import com.exscudo.peer.eon.TimeProvider;
+import com.exscudo.peer.eon.TransactionHandlerDecorator;
+import com.exscudo.peer.eon.TransactionType;
 import com.exscudo.peer.eon.transactions.Payment;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.FixMethodOrder;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.junit.runners.MethodSorters;
+import org.mockito.Mockito;
 
 @SuppressWarnings("WeakerAccess")
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -48,20 +54,40 @@ public class ForkTest1IT {
 
 		long genesisBlockID = ForkProvider.getInstance().getGenesisBlockID();
 
-		forkState1 = new Fork(genesisBlockID, "2017-10-01T00:00:00.00Z", "2017-10-03T12:00:00.00Z") {
+		ITransactionHandler txHandler = new TransactionHandlerDecorator(new HashMap<Integer, ITransactionHandler>() {
+			private static final long serialVersionUID = 3518338953704623292L;
+
 			{
-				BEGIN = (lastBlock.getTimestamp() + ForkTest1IT.BEGIN) * 1000L; // in ms
-				END = (lastBlock.getTimestamp() + ForkTest1IT.END) * 1000L; // in ms
-				FORK = ForkTest1IT.FORK;
+				put(TransactionType.AccountRegistration,
+						new com.exscudo.peer.eon.transactions.handlers.AccountRegistrationHandler());
+				put(TransactionType.OrdinaryPayment,
+						new com.exscudo.peer.eon.transactions.handlers.OrdinaryPaymentHandler());
+				put(TransactionType.DepositRefill,
+						new com.exscudo.peer.eon.transactions.handlers.DepositRefillHandler());
+				put(TransactionType.DepositWithdraw,
+						new com.exscudo.peer.eon.transactions.handlers.DepositWithdrawHandler());
 			}
-		};
-		forkState2 = new Fork(genesisBlockID, "2017-10-01T00:00:00.00Z", "2017-10-03T12:00:00.00Z") {
+		});
+
+		forkState1 = new Fork(genesisBlockID, new ArrayList<Fork.Item>() {
+			private static final long serialVersionUID = 1L;
 			{
-				BEGIN = (lastBlock.getTimestamp() + ForkTest1IT.END) * 1000L; // in ms
-				END = (lastBlock.getTimestamp() + ForkTest1IT.END2) * 1000L; // in ms
-				FORK = ForkTest1IT.FORK + 1;
+				add(new Fork.Item(ForkTest1IT.FORK - 1, (lastBlock.getTimestamp() - 1) * 1000L,
+						(lastBlock.getTimestamp() + ForkTest1IT.BEGIN) * 1000L, new int[] { 1 }, txHandler, 1));
+				add(new Fork.Item(ForkTest1IT.FORK, (lastBlock.getTimestamp() + ForkTest1IT.BEGIN) * 1000L,
+						(lastBlock.getTimestamp() + ForkTest1IT.END) * 1000L, new int[] { 1, 2 }, txHandler, 1));
 			}
-		};
+		});
+
+		forkState2 = new Fork(genesisBlockID, new ArrayList<Fork.Item>() {
+			private static final long serialVersionUID = 1L;
+			{
+				add(new Fork.Item(ForkTest1IT.FORK, (lastBlock.getTimestamp() + ForkTest1IT.BEGIN - 1) * 1000L,
+						(lastBlock.getTimestamp() + ForkTest1IT.END) * 1000L, new int[] { 1 }, txHandler, 1));
+				add(new Fork.Item(ForkTest1IT.FORK + 1, (lastBlock.getTimestamp() + ForkTest1IT.END) * 1000L,
+						(lastBlock.getTimestamp() + ForkTest1IT.END2) * 1000L, new int[] { 1, 2 }, txHandler, 1));
+			}
+		});
 
 		Mockito.when(ctx1.context.getCurrentFork()).thenReturn(forkState1);
 		Mockito.when(ctx2.context.getCurrentFork()).thenReturn(forkState2);
@@ -188,7 +214,7 @@ public class ForkTest1IT {
 		ctx1.setPeerToConnect(ctx2);
 
 		Block lastBlock = ctx1.context.getInstance().getBlockchainService().getLastBlock();
-		int time = lastBlock.getTimestamp() + Constant.BLOCK_PERIOD * END_H2 * 2 + 1;
+		int time = lastBlock.getTimestamp() + END2 * 2 + 1;
 		Mockito.when(mockTimeProvider.get()).thenReturn(time);
 
 		ctx2.generateBlockForNow();
@@ -217,10 +243,10 @@ public class ForkTest1IT {
 
 			Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 1);
 
-			Transaction tx1 = Payment.newPayment(100L).to(Format.MathID.pick(ctx2.getSigner().getPublicKey()))
-					.forFee(1L).validity(lastBlock.getTimestamp(), (short) 60).build(ctx1.getSigner());
-			Transaction tx2 = Payment.newPayment(100L).to(Format.MathID.pick(ctx2.getSigner().getPublicKey()))
-					.forFee(1L).validity(lastBlock.getTimestamp() + 1, (short) 60).build(ctx1.getSigner());
+			Transaction tx1 = Payment.newPayment(100L, Format.MathID.pick(ctx2.getSigner().getPublicKey())).forFee(1L)
+					.validity(lastBlock.getTimestamp(), 3600).build(ctx1.getSigner());
+			Transaction tx2 = Payment.newPayment(100L, Format.MathID.pick(ctx2.getSigner().getPublicKey())).forFee(1L)
+					.validity(lastBlock.getTimestamp() + 1, 3600).build(ctx1.getSigner());
 
 			ctx1.transactionBotService.putTransaction(tx1);
 			ctx2.transactionBotService.putTransaction(tx2);
@@ -260,6 +286,7 @@ public class ForkTest1IT {
 
 	}
 
+	@Ignore
 	@Test
 	public void step_5_CheckPeerConnected() throws Exception {
 
@@ -315,6 +342,57 @@ public class ForkTest1IT {
 				ctx1.context.getInstance().getBlockchainService().getLastBlock().getHeight());
 		Assert.assertEquals("Blockchain max possible height", END2 / Constant.BLOCK_PERIOD,
 				ctx2.context.getInstance().getBlockchainService().getLastBlock().getHeight());
+
+	}
+
+	@Test
+	public void step_6_tran_version_checked() throws Exception {
+
+		ForkProvider.init(forkState1);
+
+		Block lastBlock = ctx1.context.getInstance().getBlockchainService().getLastBlock();
+
+		int time = lastBlock.getTimestamp();
+		Mockito.when(mockTimeProvider.get()).thenReturn(time);
+
+		Transaction tx1 = Payment.newPayment(100L, Format.MathID.pick(ctx2.getSigner().getPublicKey())).forFee(1L)
+				.validity(mockTimeProvider.get(), 60, 1).build(ctx1.getSigner());
+		Transaction tx2 = Payment.newPayment(100L, Format.MathID.pick(ctx2.getSigner().getPublicKey())).forFee(1L)
+				.validity(mockTimeProvider.get(), 3600, 2).build(ctx1.getSigner());
+
+		try {
+			ctx1.transactionBotService.putTransaction(tx1);
+		} catch (Exception ignored) {
+		}
+		try {
+			ctx1.transactionBotService.putTransaction(tx2);
+		} catch (Exception ignored) {
+		}
+
+		Assert.assertTrue(ctx1.context.getInstance().getBacklogService().contains(tx1.getID()));
+		Assert.assertFalse(ctx1.context.getInstance().getBacklogService().contains(tx2.getID()));
+
+		time = lastBlock.getTimestamp() + BEGIN + Constant.BLOCK_PERIOD + 1;
+		Mockito.when(mockTimeProvider.get()).thenReturn(time);
+
+		ctx1.generateBlockForNow();
+
+		Transaction tx1p = Payment.newPayment(100L, Format.MathID.pick(ctx2.getSigner().getPublicKey())).forFee(1L)
+				.validity(mockTimeProvider.get(), 60, 1).build(ctx1.getSigner());
+		Transaction tx2p = Payment.newPayment(100L, Format.MathID.pick(ctx2.getSigner().getPublicKey())).forFee(1L)
+				.validity(mockTimeProvider.get(), 3600, 2).build(ctx1.getSigner());
+
+		try {
+			ctx1.transactionBotService.putTransaction(tx1p);
+		} catch (Exception ignored) {
+		}
+		try {
+			ctx1.transactionBotService.putTransaction(tx2p);
+		} catch (Exception ignored) {
+		}
+
+		Assert.assertTrue(ctx1.context.getInstance().getBacklogService().contains(tx1p.getID()));
+		Assert.assertTrue(ctx1.context.getInstance().getBacklogService().contains(tx2p.getID()));
 
 	}
 

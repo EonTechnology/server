@@ -12,21 +12,6 @@ import com.exscudo.peer.core.exceptions.ValidateException;
 public interface IUnitOfWork {
 
 	/**
-	 * Returns the current tail of the chain.
-	 * 
-	 * @return
-	 */
-	LinkedBlock getLastBlock();
-
-	/**
-	 * Returns a block with the specified {@code blockID}
-	 * 
-	 * @param blockID
-	 * @return block or null
-	 */
-	LinkedBlock getBlock(long blockID);
-
-	/**
 	 * Adds the passed {@code block} to the tail of the chain
 	 * 
 	 * @param block

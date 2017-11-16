@@ -6,30 +6,29 @@ import java.io.PrintWriter;
 import java.util.Iterator;
 
 import com.exscudo.peer.core.data.Transaction;
-import com.exscudo.peer.core.events.IPeerEventListener;
-import com.exscudo.peer.core.events.PeerEvent;
+import com.exscudo.peer.core.events.BlockEvent;
+import com.exscudo.peer.core.events.IBlockEventListener;
 import com.exscudo.peer.core.exceptions.ValidateException;
-import com.exscudo.peer.core.services.*;
+import com.exscudo.peer.core.services.IBacklogService;
+import com.exscudo.peer.core.services.IBlockchainService;
 import com.exscudo.peer.core.utils.Loggers;
+import com.exscudo.peer.eon.Sandbox;
 
 /**
  * Performs the task of removing expired transaction, duplicate transactions,
  * transactions with invalid signatures
- *
  */
-public class BacklogCleaner implements IPeerEventListener {
+public class BacklogCleaner implements IBlockEventListener {
 	private static final boolean LOGGING = true;
 
 	private final IBacklogService backlog;
 	private final IBlockchainService blockchain;
-	private final ITransactionHandler validator;
 
-	public BacklogCleaner(IBacklogService backlog, IBlockchainService blockchain, ITransactionHandler validator) {
+	public BacklogCleaner(IBacklogService backlog, IBlockchainService blockchain) {
 
 		this.backlog = backlog;
 		this.blockchain = blockchain;
 
-		this.validator = validator;
 	}
 
 	public void removeInvalidTransaction() {
@@ -41,10 +40,8 @@ public class BacklogCleaner implements IPeerEventListener {
 			// Therefore the buffer of the Unconfirmed Transactions can
 			// gradually be filled if the node is not involved in the network.
 			// Because new blocks will no longer be created.
-			int curTime = blockchain.getLastBlock().getTimestamp();
 
-			TransactionContext ctx = new TransactionContext(curTime);
-			ISandbox sandbox = blockchain.getLastBlock().createSandbox(validator);
+			Sandbox sandbox = Sandbox.getInstance(blockchain);
 
 			Iterator<Long> indexes = backlog.iterator();
 			while (indexes.hasNext()) {
@@ -60,7 +57,7 @@ public class BacklogCleaner implements IPeerEventListener {
 				boolean duplicate = blockchain.transactionMapper().containsTransaction(id);
 
 				try {
-					sandbox.execute(tx, ctx);
+					sandbox.execute(tx);
 				} catch (ValidateException e) {
 
 					if (!duplicate && LOGGING) {
@@ -87,8 +84,12 @@ public class BacklogCleaner implements IPeerEventListener {
 	}
 
 	@Override
-	public void onSynchronized(PeerEvent event) {
-		removeInvalidTransaction();
+	public void onBeforeChanging(BlockEvent event) {
+
 	}
 
+	@Override
+	public void onLastBlockChanged(BlockEvent event) {
+		removeInvalidTransaction();
+	}
 }

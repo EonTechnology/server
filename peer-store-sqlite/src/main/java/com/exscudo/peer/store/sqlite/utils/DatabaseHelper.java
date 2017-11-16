@@ -90,7 +90,7 @@ public class DatabaseHelper {
 		try {
 
 			Statement statement = connection.getConnection().createStatement();
-			statement.executeUpdate("ANALYZE;");
+			statement.executeUpdate("PRAGMA optimize;");
 			statement.close();
 
 		} catch (Exception e) {

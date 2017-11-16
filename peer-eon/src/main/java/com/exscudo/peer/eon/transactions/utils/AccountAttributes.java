@@ -28,17 +28,20 @@ public class AccountAttributes {
 	public AccountProperty asProperty() {
 		HashMap<String, Object> data = new HashMap<String, Object>();
 		data.put("publicKey", Format.convert(publicKey));
-		return new AccountProperty(Format.MathID.pick(publicKey), ID, data);
+		return new AccountProperty(ID, data);
 	}
 
-	private static AccountAttributes parse(IAccount account) {
-		AccountProperty p = account.getProperty(ID);
+	private static AccountAttributes parse(AccountProperty p) {
 		Objects.requireNonNull(p);
-
 		Map<String, Object> data = p.getData();
 		Object amountObj = data.get("publicKey");
 
 		return new AccountAttributes(Format.convert(amountObj.toString()));
+	}
+
+	private static AccountAttributes parse(IAccount account) {
+		AccountProperty p = account.getProperty(ID);
+		return parse(p);
 	}
 
 	public static void setPublicKey(IAccount account, byte[] publicKey) {

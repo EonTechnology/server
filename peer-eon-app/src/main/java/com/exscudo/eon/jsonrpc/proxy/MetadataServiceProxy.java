@@ -25,4 +25,9 @@ public class MetadataServiceProxy extends PeerServiceProxy implements IMetadataS
 	public String[] getWellKnownNodes() throws RemotePeerException, IOException {
 		return doRequest("getWellKnownNodes", new Object[0], String[].class);
 	}
+
+	@Override
+	public boolean addPeer(long peerID, String address) throws RemotePeerException, IOException {
+		return doRequest("addPeer", new Object[]{peerID, address}, Boolean.class);
+	}
 }

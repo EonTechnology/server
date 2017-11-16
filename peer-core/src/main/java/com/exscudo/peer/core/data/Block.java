@@ -7,8 +7,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
-import com.exscudo.peer.core.services.AccountProperty;
-
 /**
  * Basic element of building a chain of blocks (blockchain).
  * <p>
@@ -26,8 +24,7 @@ public class Block extends SignedMessage implements Serializable {
 	protected long nextBlock;
 	protected List<Transaction> transactions;
 	protected BigInteger cumulativeDifficulty;
-
-	protected AccountProperty[] accProps;
+	protected byte[] snapshot;
 
 	/**
 	 * Returns the version of the block.
@@ -173,20 +170,22 @@ public class Block extends SignedMessage implements Serializable {
 	}
 
 	/**
-	 * Sets snapshot (in future)
+	 * Returns the hash of the snapshot where the current state of accounts is
+	 * saved.
 	 *
 	 * @return
 	 */
-	public AccountProperty[] getAccProps() {
-		return accProps;
+	public byte[] getSnapshot() {
+		return this.snapshot;
 	}
 
 	/**
-	 * Returns snapshot
+	 * Returns the hash of the snapshot where the current state of accounts is
+	 * saved.
 	 *
-	 * @param accProps
+	 * @param snapshot
 	 */
-	public void setAccProps(AccountProperty[] accProps) {
-		this.accProps = accProps;
+	public void setSnapshot(byte[] snapshot) {
+		this.snapshot = snapshot;
 	}
 }

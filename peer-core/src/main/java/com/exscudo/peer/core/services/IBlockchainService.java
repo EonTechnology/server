@@ -14,7 +14,7 @@ public interface IBlockchainService {
 	 * 
 	 * @return block
 	 */
-	LinkedBlock getLastBlock();
+	Block getLastBlock();
 
 	/**
 	 * Returns a block with the specified {@code blockID}
@@ -22,7 +22,14 @@ public interface IBlockchainService {
 	 * @param blockID
 	 * @return block or null
 	 */
-	LinkedBlock getBlock(long blockID);
+	Block getBlock(long blockID);
+
+	/**
+	 * Returns a block by specified height.
+	 * 
+	 * @return block or null
+	 */
+	Block getBlockByHeight(int height);
 
 	/**
 	 * Returns for the block specified by the {@code id} the index in the chain
@@ -59,4 +66,12 @@ public interface IBlockchainService {
 	 */
 	ITransactionMapper transactionMapper();
 
+	/**
+	 * Returns the status of accounts corresponding to the specified snapshot ID.
+	 *
+	 * @param snapshot
+	 *            id
+	 * @return {@code ILedger} object or null
+	 */
+	ILedger getState(byte[] snapshot);
 }

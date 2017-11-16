@@ -1,10 +1,7 @@
 package com.exscudo.peer.eon;
 
-import java.util.HashMap;
-
 import com.exscudo.peer.core.services.IBacklogService;
 import com.exscudo.peer.core.services.IBlockchainService;
-import com.exscudo.peer.core.services.ITransactionHandler;
 import com.exscudo.peer.eon.ExecutionContext.Host;
 import com.exscudo.peer.eon.crypto.ISigner;
 import com.exscudo.peer.eon.listeners.BacklogCleaner;
@@ -22,22 +19,6 @@ public class EngineConfigurator {
 	private int blacklistingPeriod = 30000;
 	private String[] publicPeers;
 	private String[] innerPeers;
-
-	private ITransactionHandler txHandler = new TransactionHandlerDecorator(
-			new HashMap<Integer, ITransactionHandler>() {
-				private static final long serialVersionUID = 3518338953704623292L;
-
-				{
-					put(TransactionType.AccountRegistration,
-							new com.exscudo.peer.eon.transactions.handlers.AccountRegistrationHandler());
-					put(TransactionType.OrdinaryPayment,
-							new com.exscudo.peer.eon.transactions.handlers.OrdinaryPaymentHandler());
-					put(TransactionType.DepositRefill,
-							new com.exscudo.peer.eon.transactions.handlers.DepositRefillHandler());
-					put(TransactionType.DepositWithdraw,
-							new com.exscudo.peer.eon.transactions.handlers.DepositWithdrawHandler());
-				}
-			});
 
 	public EngineConfigurator setSigner(ISigner signer) {
 		this.signer = signer;
@@ -87,18 +68,17 @@ public class EngineConfigurator {
 
 	public ExecutionContext build() {
 
-		BlockGenerator blockGenerator = new BlockGenerator(backlog, blockchain, txHandler, signer);
-		BacklogCleaner cleaner = new BacklogCleaner(backlog, blockchain, txHandler);
+		BlockGenerator blockGenerator = new BlockGenerator(backlog, blockchain, signer);
+		BacklogCleaner cleaner = new BacklogCleaner(backlog, blockchain);
 
-		BlockchainDecorator blockchainDecorator = new BlockchainDecorator(blockchain, txHandler);
-
+		BlockchainDecorator blockchainDecorator = new BlockchainDecorator(blockchain);
 		blockchainDecorator.addListener(blockGenerator);
+		blockchainDecorator.addListener(cleaner);
 
 		final ExecutionContext context = new ExecutionContext(timeProvider);
 		context.addListener(blockGenerator);
-		context.addListener(cleaner);
 
-		BacklogDecorator backlogDecorator = new BacklogDecorator(backlog, blockchain, txHandler);
+		BacklogDecorator backlogDecorator = new BacklogDecorator(backlog, blockchain);
 
 		Instance peer = new Instance(blockchainDecorator, backlogDecorator, blockGenerator);
 
@@ -116,7 +96,7 @@ public class EngineConfigurator {
 		for (String address : publicPeers) {
 			address = address.trim();
 			if (address.length() > 0) {
-				context.addPublicPeer(address);
+				context.addImmutablePeer(address);
 			}
 		}
 

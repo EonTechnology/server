@@ -13,8 +13,9 @@ public class Transaction extends SignedMessage {
 	// deadline * DEADLINE_TIME_UNIT - deadline in seconds
 	private static final int DEADLINE_TIME_UNIT = 60;
 
+	private int version;
 	private int type;
-	private short deadline;
+	private int deadline;
 	private long referencedTransaction;
 	private long fee;
 	private Map<String, Object> data;
@@ -45,7 +46,7 @@ public class Transaction extends SignedMessage {
 	 * 
 	 * @return
 	 */
-	public short getDeadline() {
+	public int getDeadline() {
 		return deadline;
 	}
 
@@ -55,7 +56,7 @@ public class Transaction extends SignedMessage {
 	 *
 	 * @param deadline
 	 */
-	public void setDeadline(short deadline) {
+	public void setDeadline(int deadline) {
 		this.deadline = deadline;
 	}
 
@@ -68,7 +69,11 @@ public class Transaction extends SignedMessage {
 	 */
 	public boolean isExpired(int timestamp) {
 
-		return (getTimestamp() + getDeadline() * DEADLINE_TIME_UNIT <= timestamp);
+		if (version == 1) {
+			return (getTimestamp() + getDeadline() * DEADLINE_TIME_UNIT <= timestamp);
+		}
+
+		return (getTimestamp() + getDeadline() <= timestamp);
 	}
 
 	/**
@@ -175,4 +180,11 @@ public class Transaction extends SignedMessage {
 		this.height = height;
 	}
 
+	public int getVersion() {
+		return version;
+	}
+
+	public void setVersion(int version) {
+		this.version = version;
+	}
 }

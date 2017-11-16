@@ -1,19 +1,10 @@
 package com.exscudo.peer.store.sqlite;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.Objects;
-
-import org.sqlite.SQLiteConfig;
-import org.sqlite.SQLiteConfig.JournalMode;
-import org.sqlite.SQLiteConfig.TransactionMode;
 
 import com.exscudo.peer.core.Fork;
 import com.exscudo.peer.core.ForkProvider;
@@ -24,14 +15,15 @@ import com.exscudo.peer.store.sqlite.lock.ILockManager;
 import com.exscudo.peer.store.sqlite.lock.ILockableObject;
 import com.exscudo.peer.store.sqlite.lock.PessimisticLockManager;
 import com.exscudo.peer.store.sqlite.utils.BlockHelper;
+import com.exscudo.peer.store.sqlite.utils.ForkHelper;
 import com.exscudo.peer.store.sqlite.utils.SettingHelper;
 import com.exscudo.peer.store.sqlite.utils.SettingName;
+import org.sqlite.SQLiteConfig;
 
 /**
  * Init DB connection.
  * <p>
  * To create instance use {@link Storage#create}
- *
  */
 public class Storage {
 
@@ -44,9 +36,9 @@ public class Storage {
 
 	private volatile Block lastBlock;
 
-	public Storage(ConnectionProxy connection) {
+	public Storage(Connection conn) {
 
-		this.connection = connection;
+		this.connection = new ConnectionProxy(conn);
 		this.lockManager = new PessimisticLockManager();
 
 		transactionRoot = new ILockableObject() {
@@ -68,10 +60,9 @@ public class Storage {
 		};
 
 		try {
-			long genesisBlockID = Long.parseLong(SettingHelper.getValue(connection, SettingName.genesisBlockID), 10);
-			String begin = SettingHelper.getValue(connection, SettingName.forkBegin);
-			String end = SettingHelper.getValue(connection, SettingName.forkEnd);
-			ForkProvider.init(new Fork(genesisBlockID, begin, end));
+
+			Fork fork = ForkHelper.getFork(connection);
+			ForkProvider.init(fork);
 
 			long lastID = Long.parseLong(SettingHelper.getValue(connection, SettingName.lastBlockID), 10);
 			Block lastBlock = BlockHelper.get(connection, lastID);
@@ -89,7 +80,7 @@ public class Storage {
 		return block;
 	}
 
-	public Block getLastBlock() {
+	public synchronized Block getLastBlock() {
 		return lastBlock;
 	}
 
@@ -144,67 +135,24 @@ public class Storage {
 	//
 	// Static members
 	//
-
-	public static Storage create(String url) throws ClassNotFoundException, IOException, SQLException {
-
-		return create(url,
-				new String[]{"/com/exscudo/eon/data/sqlite/DBv1.sql", "/com/exscudo/eon/data/sqlite/init.sql"});
+	public static Storage create(String url) throws IOException, ClassNotFoundException, SQLException {
+		return create(url, new Initializer());
 	}
 
-	public static Storage create(String url, String[] initFiles)
+	public static Storage create(String url, IInitializer loader)
 			throws ClassNotFoundException, IOException, SQLException {
-
-		if (url == null) {
-			throw new IllegalArgumentException();
-		}
+		Objects.requireNonNull(url);
+		Objects.requireNonNull(loader);
 
 		Class.forName("org.sqlite.JDBC");
 		SQLiteConfig config = new SQLiteConfig();
-		config.setJournalMode(JournalMode.WAL);
+		config.setJournalMode(SQLiteConfig.JournalMode.WAL);
 		config.setBusyTimeout("5000");
-		config.setTransactionMode(TransactionMode.EXCLUSIVE);
+		config.setTransactionMode(SQLiteConfig.TransactionMode.EXCLUSIVE);
 
-		ConnectionProxy conn = new ConnectionProxy(DriverManager.getConnection(url, config.toProperties()));
-
-		Statement statement = conn.getConnection().createStatement();
-		statement.executeUpdate("BEGIN IMMEDIATE;");
-		int db_version = 0;
-		try {
-			db_version = Integer.parseInt(SettingHelper.getValue(conn, SettingName.dbVersion), 10);
-		} catch (Exception ignored) {
-		}
-
-		switch (db_version) {
-			case 0 :
-				for (String file : initFiles) {
-					runSqlScript(conn.getConnection(), statement, file);
-				}
-			default :
-				break;
-		}
-
-		statement.executeUpdate("COMMIT;");
-		return new Storage(conn);
-	}
-
-	private static void runSqlScript(Connection connection, Statement statement, String fileName)
-			throws IOException, SQLException {
-
-		InputStream inputStream = connection.getClass().getResourceAsStream(fileName);
-
-		try (InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
-			BufferedReader r = new BufferedReader(reader);
-			String str = null;
-			StringBuilder sb = new StringBuilder(8192);
-
-			while ((str = r.readLine()) != null) {
-				sb.append(str);
-				sb.append("\n");
-			}
-
-			statement.executeUpdate(sb.toString());
-		}
-
+		Connection connection = DriverManager.getConnection(url, config.toProperties());
+		loader.initialize(connection);
+		return new Storage(connection);
 	}
 
 	//

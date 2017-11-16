@@ -9,23 +9,52 @@ import java.util.Random;
  *
  */
 public class PeerInfo implements Comparable<PeerInfo> {
+
+	/**
+	 * The node has an unknown state. 1. The initial state of the node. 2. In this
+	 * state the node gets after exclusion from the black list.
+	 */
+	public final static int STATE_AMBIGUOUS = 10;
+	/**
+	 * The node is in the pool of active nodes (used to synchronize data)
+	 */
+	public final static int STATE_CONNECTED = 20;
+	/**
+	 * In this state, the node falls if it does not respond, or use unsupported
+	 * protocol.
+	 */
+	public final static int STATE_DISCONNECTED = 30;
+
+	/**
+	 * Peer from init list
+	 */
+	public final static int TYPE_IMMUTABLE = 10;
+	/**
+	 * Peer added from other peer
+	 */
+	public final static int TYPE_NORMAL = 20;
+	/**
+	 * Inner peer
+	 */
+	public final static int TYPE_INNER = 30;
+
 	private static final Random random = new Random();
 
-	private final boolean inner;
+	private final int type;
 	final int index;
 	final String address;
-	private volatile State state;
+	private volatile int state;
 	private volatile long blacklistingTime;
 	private volatile long connectingTime;
 	private volatile Metadata metadata;
 
-	public PeerInfo(int index, String address, boolean inner) {
+	public PeerInfo(int index, String address, int type) {
 
 		this.address = address;
 		this.index = index;
-		this.inner = inner;
+		this.type = type;
 
-		state = State.STATE_AMBIGUOUS;
+		state = STATE_AMBIGUOUS;
 
 		metadata = new Metadata(random.nextLong(), null, null);
 
@@ -38,7 +67,11 @@ public class PeerInfo implements Comparable<PeerInfo> {
 	 *         otherwise- false
 	 */
 	public boolean isInner() {
-		return inner;
+		return type == TYPE_INNER;
+	}
+
+	public boolean isImmutable() {
+		return type == TYPE_IMMUTABLE;
 	}
 
 	public String getAddress() {
@@ -55,7 +88,7 @@ public class PeerInfo implements Comparable<PeerInfo> {
 	 *
 	 * @return
 	 */
-	public State getState() {
+	public int getState() {
 		return state;
 	}
 
@@ -64,7 +97,7 @@ public class PeerInfo implements Comparable<PeerInfo> {
 	 *
 	 * @param state
 	 */
-	public void setState(State state) {
+	public void setState(int state) {
 		this.state = state;
 	}
 
@@ -121,24 +154,6 @@ public class PeerInfo implements Comparable<PeerInfo> {
 	 */
 	public void setMetadata(Metadata metadata) {
 		this.metadata = metadata;
-	}
-
-	//
-	// STATE_AMBIGUOUS
-	// The node has an unknown state.
-	// 1. The initial state of the node.
-	// 2. In this state the node gets after exclusion from the black list.
-	//
-	// STATE_CONNECTED
-	// The node is in the pool of active nodes (used to synchronize data)
-	//
-	// STATE_DISCONNECTED
-	// In this state, the node falls if it does not respond, or use
-	// unsupported protocol.
-	//
-	public static enum State {
-
-		STATE_AMBIGUOUS, STATE_CONNECTED, STATE_DISCONNECTED;
 	}
 
 	//

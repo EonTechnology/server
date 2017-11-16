@@ -125,6 +125,7 @@ public class Backlog implements ILockableObject, IBacklogService {
 		}
 
 		private transient Comparator<Transaction> comparatorTran = new TransactionComparator();
+
 		@Override
 		public int compare(Long a, Long b) {
 			Transaction aTx = this.transactions.get(a);

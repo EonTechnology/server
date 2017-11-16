@@ -14,12 +14,10 @@ import com.exscudo.peer.eon.EonConstant;
 public class AccountBalance {
 	public static final UUID ID = UUID.fromString("5afe47d6-6233-11e7-907b-a6006ad3dba0");
 
-	private final long accountID;
 	private long value;
 
-	public AccountBalance(long accountID, long balance) {
+	public AccountBalance(long balance) {
 		this.value = balance;
-		this.accountID = accountID;
 	}
 
 	public long getValue() {
@@ -45,7 +43,7 @@ public class AccountBalance {
 	public AccountProperty asProperty() {
 		HashMap<String, Object> data = new HashMap<String, Object>();
 		data.put("amount", value);
-		return new AccountProperty(accountID, ID, data);
+		return new AccountProperty(ID, data);
 	}
 
 	private static AccountBalance parse(IAccount account) {
@@ -58,14 +56,14 @@ public class AccountBalance {
 				balance = Long.parseLong(amountObj.toString());
 			}
 		}
-		return new AccountBalance(account.getID(), balance);
+		return new AccountBalance(balance);
 	}
 
 	public static void setBalance(IAccount account, long balance) {
 		if (balance < 0 || balance > EonConstant.MAX_MONEY) {
 			throw new IllegalArgumentException("Illegal balance.");
 		}
-		account.putProperty(new AccountBalance(account.getID(), balance).asProperty());
+		account.putProperty(new AccountBalance(balance).asProperty());
 	}
 
 	public static long getBalance(IAccount account) {

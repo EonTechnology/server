@@ -36,9 +36,9 @@ public abstract class AbstractContext<TPeer extends IPeer, TInstance extends IIn
 	public abstract int getCurrentTime();
 
 	/**
-	 * Returns current fork
+	 * Returns current hard-fork
 	 *
-	 * @return current fork
+	 * @return current hard-fork
 	 */
 	public Fork getCurrentFork() {
 		return ForkProvider.getInstance();

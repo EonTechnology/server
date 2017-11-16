@@ -19,7 +19,8 @@ RUN mvn -Dmaven.repo.local=/repository dependency:go-offline package jetty:help 
 
 # Copy additional files
 COPY peer-eon-app/jetty.xml /app/peer-eon-app/jetty.xml
-COPY db /app/db
+#COPY db /app/db
+RUN mkdir /app/db
 
 # Copy sources
 COPY peer-eon-app/src /app/peer-eon-app/src
@@ -37,6 +38,7 @@ RUN mvn -Dmaven.repo.local=/repository -Dtest="**/*TestIT.java" -DfailIfNoTests=
 
 EXPOSE 9443
 
+ENV MAVEN_OPTS "-XX:+HeapDumpOnOutOfMemoryError -verbose:gc -XX:+PrintGCDetails -XX:+PrintFlagsFinal -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -Xmx350m"
 ENTRYPOINT mvn -o -Dmaven.repo.local=/repository jetty:run -DSECRET_SEED=$SECRET_SEED
 
 # For debug

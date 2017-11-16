@@ -48,7 +48,7 @@ public class EonConstant {
 	/**
 	 * Maximum allowed lifetime of a transaction.
 	 */
-	public static final short TRANSACTION_MAX_LIFETIME = 600;
+	public static final int TRANSACTION_MAX_LIFETIME = 600 * 60;
 
 	/**
 	 * The maximum size of the data in the block.

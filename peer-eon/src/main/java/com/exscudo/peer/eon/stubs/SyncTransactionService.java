@@ -18,7 +18,7 @@ import com.exscudo.peer.eon.services.ITransactionSynchronizationService;
  * interface
  *
  */
-public class SyncTransactionService implements ITransactionSynchronizationService {
+public class SyncTransactionService extends BaseService implements ITransactionSynchronizationService {
 	/**
 	 * The maximum number of transactions transmitted during synchronization.
 	 */

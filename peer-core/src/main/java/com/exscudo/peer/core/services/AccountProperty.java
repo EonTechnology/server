@@ -14,13 +14,9 @@ public class AccountProperty implements Serializable {
 	private static final long serialVersionUID = 2326856545894572608L;
 
 	private UUID type;
-	private long accountID;
 	private Map<String, Object> data;
 
-	private int height = -1;
-
-	public AccountProperty(long accountID, UUID type, Map<String, Object> data) {
-		this.accountID = accountID;
+	public AccountProperty(UUID type, Map<String, Object> data) {
 		this.type = type;
 		this.data = data;
 	}
@@ -33,18 +29,6 @@ public class AccountProperty implements Serializable {
 
 	public UUID getType() {
 		return type;
-	}
-
-	public long getAccountID() {
-		return accountID;
-	}
-
-	public int getHeight() {
-		return height;
-	}
-
-	public void setHeight(int height) {
-		this.height = height;
 	}
 
 }

@@ -60,7 +60,7 @@ public final class GenerateBlockTask extends BaseTask implements Runnable {
 				// New block creating...
 				Block newBlock = instance.getGenerator().createNextBlock(lastCreatedBlock);
 				if (newBlock == null) {
-					Loggers.warning(GenerateBlockTask.class, "Unable to crate new block.");
+					Loggers.warning(GenerateBlockTask.class, "Unable to create new block.");
 					return;
 				}
 

@@ -1,5 +1,7 @@
 package com.exscudo.peer.eon.transactions.rules;
 
+import com.exscudo.peer.core.Fork;
+import com.exscudo.peer.core.ForkProvider;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.exceptions.IllegalSignatureException;
 import com.exscudo.peer.core.exceptions.LifecycleException;
@@ -14,8 +16,13 @@ public class BaseValidationRule implements IValidationRule {
 
 	public ValidationResult validate(Transaction tx, ILedger ledger, TransactionContext context) {
 
+		Fork fork = ForkProvider.getInstance();
+		if (!fork.isSupportedTran(tx, context.timestamp)) {
+			return ValidationResult.error("Unsupported transaction version.");
+		}
+
 		if (tx.isExpired(context.timestamp) || tx.getDeadline() < 1
-				|| tx.getDeadline() > EonConstant.TRANSACTION_MAX_LIFETIME) {
+				|| !tx.isExpired(tx.getTimestamp() + EonConstant.TRANSACTION_MAX_LIFETIME)) {
 			return ValidationResult.error(new LifecycleException());
 		}
 

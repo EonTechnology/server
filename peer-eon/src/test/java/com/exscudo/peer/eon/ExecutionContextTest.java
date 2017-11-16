@@ -42,7 +42,7 @@ public class ExecutionContextTest {
 
 		for (String peer : ec.getPeers().getPeersList()) {
 			PeerInfo p = ec.getPeers().getPeerByAddress(peer);
-			p.setState(PeerInfo.State.STATE_CONNECTED);
+			p.setState(PeerInfo.STATE_CONNECTED);
 		}
 
 		int pubCnt = 0;
@@ -78,7 +78,7 @@ public class ExecutionContextTest {
 
 		for (String peer : ec.getPeers().getPeersList()) {
 			PeerInfo p = ec.getPeers().getPeerByAddress(peer);
-			p.setState(PeerInfo.State.STATE_DISCONNECTED);
+			p.setState(PeerInfo.STATE_DISCONNECTED);
 		}
 
 		int pubCnt = 0;

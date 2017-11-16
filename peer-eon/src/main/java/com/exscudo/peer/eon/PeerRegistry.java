@@ -30,7 +30,7 @@ public class PeerRegistry {
 	 * @return object associated with passed {@code address}
 	 */
 	public PeerInfo addPeer(String address) {
-		return addPeer(address, false);
+		return addPeer(address, PeerInfo.TYPE_NORMAL);
 	}
 
 	/**
@@ -45,7 +45,7 @@ public class PeerRegistry {
 	 *            over the network), Otherwise - false
 	 * @return object associated with passed {@code address}
 	 */
-	public PeerInfo addPeer(String address, boolean inner) {
+	public PeerInfo addPeer(String address, int type) {
 		Objects.requireNonNull(address);
 
 		String ipAddress = address.split(":")[0];
@@ -57,7 +57,8 @@ public class PeerRegistry {
 			PeerInfo peer = peers.get(address);
 			if (peer == null) {
 
-				peer = new PeerInfo(++peerCounter, address, inner);
+				peer = new PeerInfo(++peerCounter, address, type);
+				peer.setConnectingTime(System.currentTimeMillis());
 				peers.put(address, peer);
 
 				peersIP.put(ipAddress, address);
@@ -175,6 +176,20 @@ public class PeerRegistry {
 
 		return numberOfConnectedPeers;
 
+	}
+
+	public void remove(String address) {
+		Lock lock = readWriteLock.writeLock();
+		try {
+			lock.lock();
+
+			peers.remove(address);
+			String ipAddress = address.split(":")[0];
+			peersIP.remove(ipAddress);
+
+		} finally {
+			lock.unlock();
+		}
 	}
 
 }

@@ -33,4 +33,19 @@ public interface IMetadataService {
 	 */
 	String[] getWellKnownNodes() throws RemotePeerException, IOException;
 
+	/**
+	 * Add new peer to connect
+	 * 
+	 * @param peerID
+	 *            peer id
+	 * @param address
+	 *            peer address (ip:port)
+	 * @return <code>true</code> if per added to server peer list, otherwise
+	 *         <code>false</code>
+	 * @throws RemotePeerException
+	 *             An error in the protocol.
+	 * @throws IOException
+	 *             Error during access to the services node.
+	 */
+	boolean addPeer(long peerID, String address) throws RemotePeerException, IOException;
 }

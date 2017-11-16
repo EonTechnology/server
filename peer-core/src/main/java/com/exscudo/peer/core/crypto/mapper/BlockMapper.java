@@ -31,6 +31,10 @@ class BlockMapper {
 		map.put("generationSignature", Format.convert(block.getGenerationSignature()));
 		map.put("generator", Format.ID.accountId(block.getSenderID()));
 
+		if (block.getVersion() >= 2) {
+			map.put("snapshot", Format.convert(block.getSnapshot()));
+		}
+
 		return map;
 	}
 }

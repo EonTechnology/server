@@ -42,7 +42,7 @@ public class TransactionTestIT {
 		Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 + 1);
 
 		Transaction tx = Registration.newAccount(signer.getPublicKey())
-				.validity(lastBlock.getTimestamp() + 100, (short) 60).forFee(1L).build(ctx.getSigner());
+				.validity(lastBlock.getTimestamp() + 100, 3600).forFee(1L).build(ctx.getSigner());
 		ctx.transactionBotService.putTransaction(tx);
 		ctx.generateBlockForNow();
 
@@ -51,8 +51,8 @@ public class TransactionTestIT {
 
 		Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 * 2 + 1);
 
-		Transaction tx2 = Payment.newPayment(10000L).to(Format.MathID.pick(signer.getPublicKey())).forFee(1L)
-				.validity(lastBlock.getTimestamp() + 200, (short) 60).build(ctx.getSigner());
+		Transaction tx2 = Payment.newPayment(10000L, Format.MathID.pick(signer.getPublicKey())).forFee(1L)
+				.validity(lastBlock.getTimestamp() + 200, 3600).build(ctx.getSigner());
 
 		ctx.transactionBotService.putTransaction(tx2);
 		ctx.generateBlockForNow();
@@ -69,10 +69,10 @@ public class TransactionTestIT {
 				ctx.context.getInstance().getBlockchainService().getLastBlock().getID(),
 				ctx2.context.getInstance().getBlockchainService().getLastBlock().getID());
 
-		Transaction tx3 = Payment.newPayment(8000L).to(Format.MathID.pick(ctx.getSigner().getPublicKey())).forFee(1000L)
-				.validity(lastBlock.getTimestamp() + 200, (short) 60).build(signer);
-		Transaction tx4 = Payment.newPayment(8000L).to(Format.MathID.pick(ctx2.getSigner().getPublicKey()))
-				.forFee(1000L).validity(lastBlock.getTimestamp() + 200, (short) 60).build(signer);
+		Transaction tx3 = Payment.newPayment(8000L, Format.MathID.pick(ctx.getSigner().getPublicKey())).forFee(1000L)
+				.validity(lastBlock.getTimestamp() + 200, 3600).build(signer);
+		Transaction tx4 = Payment.newPayment(8000L, Format.MathID.pick(ctx2.getSigner().getPublicKey()))
+				.forFee(1000L).validity(lastBlock.getTimestamp() + 200, 3600).build(signer);
 
 		ctx.transactionBotService.putTransaction(tx3);
 		ctx2.transactionBotService.putTransaction(tx4);
@@ -131,7 +131,7 @@ public class TransactionTestIT {
 		Assert.assertEquals(AccountService.State.NotFound, informationNew.state);
 
 		Transaction tx = Registration.newAccount(signerNew.getPublicKey())
-				.validity(lastBlock.getTimestamp() + 100, (short) 60).forFee(1L).build(signer);
+				.validity(lastBlock.getTimestamp() + 100, 3600).forFee(1L).build(signer);
 		Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 + 1);
 		ctx.transactionBotService.putTransaction(tx);
 
@@ -154,8 +154,8 @@ public class TransactionTestIT {
 		informationCtx = ctx.accountBotService.getInformation(signerCtxID);
 		informationNew = ctx.accountBotService.getInformation(signerNewID);
 
-		Transaction tx2 = Payment.newPayment(10000L).to(Format.MathID.pick(signerNew.getPublicKey())).forFee(1L)
-				.validity(lastBlock.getTimestamp() + 200, (short) 60).build(signer);
+		Transaction tx2 = Payment.newPayment(10000L, Format.MathID.pick(signerNew.getPublicKey())).forFee(1L)
+				.validity(lastBlock.getTimestamp() + 200, 3600).build(signer);
 		Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 * 2 + 1);
 		ctx.transactionBotService.putTransaction(tx2);
 		ctx.generateBlockForNow();
@@ -173,7 +173,7 @@ public class TransactionTestIT {
 		informationCtx = ctx.accountBotService.getInformation(signerCtxID);
 		informationNew = ctx.accountBotService.getInformation(signerNewID);
 
-		Transaction tx3 = Deposit.refill(100L).validity(lastBlock.getTimestamp() + 200, (short) 60).build(signerNew);
+		Transaction tx3 = Deposit.refill(100L).validity(lastBlock.getTimestamp() + 200, 3600).build(signerNew);
 		Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 * 3 + 1);
 		ctx.transactionBotService.putTransaction(tx3);
 		ctx.generateBlockForNow();
@@ -192,7 +192,7 @@ public class TransactionTestIT {
 		informationCtx = ctx.accountBotService.getInformation(signerCtxID);
 		informationNew = ctx.accountBotService.getInformation(signerNewID);
 
-		Transaction tx4 = Deposit.withdraw(50L).validity(lastBlock.getTimestamp() + 200, (short) 60).build(signerNew);
+		Transaction tx4 = Deposit.withdraw(50L).validity(lastBlock.getTimestamp() + 200, 3600).build(signerNew);
 		Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 * 4 + 1);
 		ctx.transactionBotService.putTransaction(tx4);
 		ctx.generateBlockForNow();

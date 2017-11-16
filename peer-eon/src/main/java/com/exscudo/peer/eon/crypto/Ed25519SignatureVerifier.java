@@ -1,6 +1,11 @@
 package com.exscudo.peer.eon.crypto;
 
+import java.util.Collections;
+import java.util.Map;
+
 import com.exscudo.peer.core.crypto.ISignatureVerifier;
+import com.exscudo.peer.core.utils.Format;
+import com.exscudo.peer.eon.CachedHashMap;
 import com.iwebpp.crypto.TweetNaclFast;
 
 /**
@@ -9,6 +14,8 @@ import com.iwebpp.crypto.TweetNaclFast;
  */
 public class Ed25519SignatureVerifier implements ISignatureVerifier {
 
+	private Map<String, TweetNaclFast.Signature> cache = Collections.synchronizedMap(new CachedHashMap<>(5000));
+
 	@Override
 	public String getName() {
 		return "Ed25519";
@@ -16,7 +23,13 @@ public class Ed25519SignatureVerifier implements ISignatureVerifier {
 
 	@Override
 	public boolean verify(byte[] message, byte[] signature, byte[] publicKey) {
-		TweetNaclFast.Signature sign = new TweetNaclFast.Signature(publicKey, null);
+
+		String key = Format.convert(publicKey);
+		TweetNaclFast.Signature sign = cache.get(key);
+		if (sign == null) {
+			sign = new TweetNaclFast.Signature(publicKey, null);
+			cache.put(key, sign);
+		}
 		return sign.detached_verify(message, signature);
 	}
 

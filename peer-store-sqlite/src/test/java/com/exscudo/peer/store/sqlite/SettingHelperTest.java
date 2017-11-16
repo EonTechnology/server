@@ -14,7 +14,8 @@ public class SettingHelperTest {
 
 	@Before
 	public void setUp() throws Exception {
-		connection = ConnectionUtils.create("/com/exscudo/eon/sqlite/transactions_test.sql");
+		connection = new ConnectionProxy(
+				ConnectionUtils.create("/com/exscudo/peer/store/sqlite/transactions_test.sql"));
 	}
 
 	@After

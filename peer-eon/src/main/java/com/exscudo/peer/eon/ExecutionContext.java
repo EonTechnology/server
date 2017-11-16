@@ -8,7 +8,6 @@ import java.util.function.Predicate;
 
 import com.exscudo.peer.core.AbstractContext;
 import com.exscudo.peer.core.IPeer;
-import com.exscudo.peer.eon.PeerInfo.State;
 
 /**
  * Context within which tasks are performed.
@@ -26,7 +25,7 @@ public class ExecutionContext extends AbstractContext<Peer, Instance> {
 	 * @return
 	 */
 	public String getVersion() {
-		return "0.5.2";
+		return "0.6.0";
 	}
 
 	/**
@@ -120,10 +119,10 @@ public class ExecutionContext extends AbstractContext<Peer, Instance> {
 			return false;
 		}
 		synchronized (pi) {
-			if (pi.getState() == State.STATE_AMBIGUOUS) {
+			if (pi.getState() == PeerInfo.STATE_AMBIGUOUS) {
 				pi.setBlacklistingTime(System.currentTimeMillis());
 			} else {
-				pi.setState(State.STATE_DISCONNECTED);
+				pi.setState(PeerInfo.STATE_DISCONNECTED);
 			}
 		}
 		return true;
@@ -151,7 +150,7 @@ public class ExecutionContext extends AbstractContext<Peer, Instance> {
 		}
 
 		synchronized (pi) {
-			pi.setState(State.STATE_CONNECTED);
+			pi.setState(PeerInfo.STATE_CONNECTED);
 			pi.setConnectingTime(System.currentTimeMillis() + duration);
 		}
 		return true;
@@ -193,7 +192,7 @@ public class ExecutionContext extends AbstractContext<Peer, Instance> {
 
 			@Override
 			public boolean test(PeerInfo peer) {
-				return peer.getState() == State.STATE_CONNECTED && peer.getAddress().length() > 0;
+				return peer.getState() == PeerInfo.STATE_CONNECTED && peer.getAddress().length() > 0;
 			}
 		});
 
@@ -213,7 +212,7 @@ public class ExecutionContext extends AbstractContext<Peer, Instance> {
 
 			@Override
 			public boolean test(PeerInfo peer) {
-				return super.test(peer) && peer.getState() == State.STATE_CONNECTED;
+				return super.test(peer) && peer.getState() == PeerInfo.STATE_CONNECTED;
 			}
 		});
 		if (pi == null) {
@@ -234,7 +233,7 @@ public class ExecutionContext extends AbstractContext<Peer, Instance> {
 		PeerInfo pi = getAnyPeer(new PeerBasePredicate(getHost().getPeerID(), isInnerPeersUsing) {
 			@Override
 			public boolean test(PeerInfo peer) {
-				return super.test(peer) && peer.getState() != State.STATE_CONNECTED;
+				return super.test(peer) && peer.getState() != PeerInfo.STATE_CONNECTED;
 			}
 
 		});
@@ -250,7 +249,7 @@ public class ExecutionContext extends AbstractContext<Peer, Instance> {
 		final PeerInfo pi = getAnyPeer(new Predicate<PeerInfo>() {
 			@Override
 			public boolean test(PeerInfo peer) {
-				return peer.getState() != State.STATE_CONNECTED || peer.getBlacklistingTime() > 0;
+				return peer.getState() != PeerInfo.STATE_CONNECTED || peer.getBlacklistingTime() > 0;
 			}
 		});
 
@@ -284,7 +283,7 @@ public class ExecutionContext extends AbstractContext<Peer, Instance> {
 	public void addPublicPeer(String address) {
 
 		if (address.length() > 0) {
-			peers.addPeer(address, false);
+			peers.addPeer(address, PeerInfo.TYPE_NORMAL);
 		}
 
 	}
@@ -292,8 +291,16 @@ public class ExecutionContext extends AbstractContext<Peer, Instance> {
 	public void addInnerPeer(String address) {
 
 		if (address.length() > 0) {
-			peers.addPeer(address, true);
+			peers.addPeer(address, PeerInfo.TYPE_INNER);
 			isInnerPeersUsing = true;
+		}
+
+	}
+
+	public void addImmutablePeer(String address) {
+
+		if (address.length() > 0) {
+			peers.addPeer(address, PeerInfo.TYPE_IMMUTABLE);
 		}
 
 	}

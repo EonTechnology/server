@@ -32,16 +32,23 @@ public class Engine {
 
 			engine.scheduledThreadPool = Executors.newScheduledThreadPool(12);
 
-			engine.scheduledThreadPool.scheduleAtFixedRate(new SyncPeerListTask(context), 0, 5, TimeUnit.SECONDS);
-			engine.scheduledThreadPool.scheduleWithFixedDelay(new PeerRemoveTask(context), 0, 1, TimeUnit.SECONDS);
-			engine.scheduledThreadPool.scheduleAtFixedRate(new PeerConnectTask(context), 0, 5, TimeUnit.SECONDS);
-			engine.scheduledThreadPool.scheduleAtFixedRate(new SyncTimeTask(context), 0, 60, TimeUnit.MINUTES);
-			engine.scheduledThreadPool.scheduleAtFixedRate(new SyncTransactionListTask(context), 0, 1,
+			engine.scheduledThreadPool.scheduleAtFixedRate(timed(new SyncPeerListTask(context)), 0, 5,
 					TimeUnit.SECONDS);
-			engine.scheduledThreadPool.scheduleWithFixedDelay(new GenerateBlockTask(context), 0, 1, TimeUnit.SECONDS);
-			engine.scheduledThreadPool.scheduleAtFixedRate(new SyncForkedTransactionListTask(context), 0, 3,
+			engine.scheduledThreadPool.scheduleWithFixedDelay(timed(new PeerRemoveTask(context)), 0, 1,
 					TimeUnit.SECONDS);
-			engine.scheduledThreadPool.scheduleWithFixedDelay(new SyncBlockListTask(context), 0, 5, TimeUnit.SECONDS);
+			engine.scheduledThreadPool.scheduleAtFixedRate(timed(new PeerDistributeTask(context)), 0, 30,
+					TimeUnit.SECONDS);
+			engine.scheduledThreadPool.scheduleAtFixedRate(timed(new PeerConnectTask(context)), 0, 5, TimeUnit.SECONDS);
+			engine.scheduledThreadPool.scheduleAtFixedRate(timed(new SyncTimeTask(context)), 0, 60, TimeUnit.MINUTES);
+			engine.scheduledThreadPool.scheduleAtFixedRate(timed(new SyncTransactionListTask(context)), 0, 1,
+					TimeUnit.SECONDS);
+			engine.scheduledThreadPool.scheduleWithFixedDelay(timed(new GenerateBlockTask(context)), 0, 1,
+					TimeUnit.SECONDS);
+			// engine.scheduledThreadPool.scheduleAtFixedRate(timed(new
+			// SyncForkedTransactionListTask(context)), 0, 3,
+			// TimeUnit.SECONDS);
+			engine.scheduledThreadPool.scheduleWithFixedDelay(timed(new SyncBlockListTask(context)), 0, 5,
+					TimeUnit.SECONDS);
 
 			return engine;
 
@@ -52,6 +59,10 @@ public class Engine {
 
 	public void destory() {
 		scheduledThreadPool.shutdownNow();
+	}
+
+	public static Runnable timed(Runnable main) {
+		return new TimedTask(main);
 	}
 
 }

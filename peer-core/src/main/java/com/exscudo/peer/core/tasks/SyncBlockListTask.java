@@ -127,14 +127,15 @@ public final class SyncBlockListTask implements Runnable {
 
 	/**
 	 * Short synchronization scheme (synchronization of the last block only). In
-	 * most cases, if the network is in a "stable" state, the synchronization will
-	 * be performed exactly by the short scheme.
+	 * most cases, if the network is in a "stable" state, the synchronization
+	 * will be performed exactly by the short scheme.
 	 * <p>
 	 * At first, the last block is requested on the services peer. In the second
-	 * step, searches for a block preceding the received from services node. If it
-	 * is contained in the chain of blocks on the current node, then its added to
-	 * the end of chain (if necessary, roll back the local chain of blocks to common
-	 * block). The criterion for adding the block is difficulty.
+	 * step, searches for a block preceding the received from services node. If
+	 * it is contained in the chain of blocks on the current node, then its
+	 * added to the end of chain (if necessary, roll back the local chain of
+	 * blocks to common block). The criterion for adding the block is
+	 * difficulty.
 	 *
 	 * @param service
 	 *            access point on a remote node that implements the block
@@ -147,7 +148,8 @@ public final class SyncBlockListTask implements Runnable {
 	 *             Error during request processing on the services node. (e.g.
 	 *             illegal arguments, invalid format, etc.)
 	 * @throws ProtocolException
-	 *             The behavior of the services node does not match expectations.
+	 *             The behavior of the services node does not match
+	 *             expectations.
 	 */
 	private boolean shortSyncScheme(IBlockSynchronizationService service)
 			throws ProtocolException, IOException, RemotePeerException {
@@ -186,9 +188,9 @@ public final class SyncBlockListTask implements Runnable {
 	 * synchronization mode is used usually when a node in unstable state (for
 	 * example, it is used during connected to a network).
 	 * <p>
-	 * In the process of synchronization, the chain is rolled back to the point of
-	 * division of the chain. Then the new ending imported. The maximum depth of
-	 * division is defined in {@link Constant#SYNC_MILESTONE_DEPTH}
+	 * In the process of synchronization, the chain is rolled back to the point
+	 * of division of the chain. Then the new ending imported. The maximum depth
+	 * of division is defined in {@link Constant#SYNC_MILESTONE_DEPTH}
 	 *
 	 * @param service
 	 *            access point on a remote node that implements the block
@@ -199,7 +201,8 @@ public final class SyncBlockListTask implements Runnable {
 	 *             Error during request processing on the services node. (e.g.
 	 *             illegal arguments, invalid format, etc.)
 	 * @throws ProtocolException
-	 *             The behavior of the services node does not match expectations.
+	 *             The behavior of the services node does not match
+	 *             expectations.
 	 */
 	private void longSyncScheme(IBlockSynchronizationService service)
 			throws ProtocolException, IOException, RemotePeerException {
@@ -241,7 +244,7 @@ public final class SyncBlockListTask implements Runnable {
 		int newSize = futureBlocks.size();
 		while (newState.compareTo(beginState) < 0 && newSize == futureBlocks.size()) {
 
-			lastBlockIDs = new long[]{newBlock.getID()};
+			lastBlockIDs = new long[] { newBlock.getID() };
 			items = service.getBlockHistory(blockIdEncode(lastBlockIDs));
 
 			newSize = futureBlocks.size() + items.length;
@@ -406,7 +409,7 @@ public final class SyncBlockListTask implements Runnable {
 						"Failed to sync. Before: " + currentState.getDifficulty() + ", after: " + diff.getDifficulty());
 			}
 
-		} catch (Exception e) {
+		} catch (Throwable e) {
 			uow.rollback();
 			throw e;
 		}

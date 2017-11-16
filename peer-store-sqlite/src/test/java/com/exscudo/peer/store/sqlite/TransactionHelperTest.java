@@ -1,6 +1,9 @@
 package com.exscudo.peer.store.sqlite;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.HashMap;
 import java.util.List;
@@ -19,7 +22,8 @@ public class TransactionHelperTest {
 
 	@Before
 	public void setUp() throws Exception {
-		connection = ConnectionUtils.create("/com/exscudo/eon/sqlite/transactions_test.sql");
+		connection = new ConnectionProxy(
+				ConnectionUtils.create("/com/exscudo/peer/store/sqlite/transactions_test.sql"));
 	}
 
 	@After

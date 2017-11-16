@@ -1,13 +1,5 @@
 package com.exscudo.eon.IT;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
-import org.junit.runners.MethodSorters;
-import org.mockito.Mockito;
-
 import com.exscudo.peer.core.Fork;
 import com.exscudo.peer.core.ForkProvider;
 import com.exscudo.peer.core.data.Block;
@@ -15,6 +7,13 @@ import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.utils.Format;
 import com.exscudo.peer.eon.TimeProvider;
 import com.exscudo.peer.eon.transactions.Payment;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.FixMethodOrder;
+import org.junit.Test;
+import org.junit.experimental.categories.Category;
+import org.junit.runners.MethodSorters;
+import org.mockito.Mockito;
 
 @Category(IIntegrationTest.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -52,8 +51,8 @@ public class TransactionNetworkTestIT {
 		Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 + 1);
 		Mockito.when(fork.getGenesisBlockID()).thenReturn(1L);
 
-		Transaction tx = Payment.newPayment(100L).to(Format.MathID.pick(ctx2.getSigner().getPublicKey())).forFee(1L)
-				.validity(lastBlock.getTimestamp(), (short) 60).build(ctx1.getSigner());
+		Transaction tx = Payment.newPayment(100L, Format.MathID.pick(ctx2.getSigner().getPublicKey())).forFee(1L)
+				.validity(lastBlock.getTimestamp(), 3600).build(ctx1.getSigner());
 
 		Mockito.when(fork.getGenesisBlockID()).thenReturn(genesisBlockID);
 
@@ -75,8 +74,8 @@ public class TransactionNetworkTestIT {
 		Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 + 1);
 		Mockito.when(fork.getGenesisBlockID()).thenReturn(1L);
 
-		Transaction tx = Payment.newPayment(100L).to(Format.MathID.pick(ctx2.getSigner().getPublicKey())).forFee(1L)
-				.validity(lastBlock.getTimestamp(), (short) 60).build(ctx1.getSigner());
+		Transaction tx = Payment.newPayment(100L, Format.MathID.pick(ctx2.getSigner().getPublicKey())).forFee(1L)
+				.validity(lastBlock.getTimestamp(), 3600).build(ctx1.getSigner());
 
 		ctx1.transactionBotService.putTransaction(tx);
 
@@ -113,8 +112,8 @@ public class TransactionNetworkTestIT {
 
 		Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 * 2 + 1);
 
-		Transaction tx = Payment.newPayment(100L).to(Format.MathID.pick(ctx2.getSigner().getPublicKey())).forFee(1L)
-				.validity(lastBlock.getTimestamp(), (short) 60).build(ctx1.getSigner());
+		Transaction tx = Payment.newPayment(100L, Format.MathID.pick(ctx2.getSigner().getPublicKey())).forFee(1L)
+				.validity(lastBlock.getTimestamp(), 3600).build(ctx1.getSigner());
 
 		ctx1.transactionBotService.putTransaction(tx);
 		ctx1.generateBlockForNow();

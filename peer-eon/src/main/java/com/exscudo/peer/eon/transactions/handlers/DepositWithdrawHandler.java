@@ -21,7 +21,7 @@ public class DepositWithdrawHandler extends BaseHandler {
 		Long amount = Long.parseLong(tx.getData().get("amount").toString());
 		IAccount account = ledger.getAccount(tx.getSenderID());
 
-		AccountDeposit.withdraw(account, amount);
+		AccountDeposit.withdraw(account, amount, context.height);
 		AccountBalance.refill(account, amount);
 	}
 

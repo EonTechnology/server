@@ -1,12 +1,13 @@
 package com.exscudo.peer.eon.transactions;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-
-import org.junit.Before;
-import org.junit.Test;
 
 import com.exscudo.peer.core.Fork;
 import com.exscudo.peer.core.ForkProvider;
@@ -21,6 +22,8 @@ import com.exscudo.peer.eon.transactions.rules.BaseValidationRule;
 import com.exscudo.peer.eon.transactions.rules.ValidationResult;
 import com.exscudo.peer.eon.transactions.utils.AccountAttributes;
 import com.exscudo.peer.eon.transactions.utils.AccountBalance;
+import org.junit.Before;
+import org.junit.Test;
 
 public class BaseValidationRuleTest {
 
@@ -33,16 +36,17 @@ public class BaseValidationRuleTest {
 
 		Fork fork = mock(Fork.class);
 		when(fork.getGenesisBlockID()).thenReturn(0L);
+		when(fork.isSupportedTran(any(), anyInt())).thenReturn(true);
 		ForkProvider.init(fork);
 
 		ledger = mock(ILedger.class);
 
 		IAccount account = mock(IAccount.class);
 		when(account.getProperty(AccountAttributes.ID)).thenReturn(new AccountAttributes(new byte[32]).asProperty());
-		when(account.getProperty(AccountBalance.ID)).thenReturn(new AccountBalance(0, 5L).asProperty());
+		when(account.getProperty(AccountBalance.ID)).thenReturn(new AccountBalance(5L).asProperty());
 		when(ledger.getAccount(anyLong())).thenReturn(account);
 
-		validationContext = new TransactionContext(1000);
+		validationContext = new TransactionContext(1000, 0);
 
 		CryptoProvider.getInstance().addProvider(new ISignatureVerifier() {
 			@Override

@@ -3,8 +3,12 @@ package com.exscudo.peer.store.sqlite;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
+import com.exscudo.peer.eon.CachedHashMap;
+import com.exscudo.peer.store.sqlite.merkle.TreeNode;
 
 /**
  * Caching {@code PreparedStatement}.
@@ -41,5 +45,10 @@ public class ConnectionProxy {
 
 		return statement;
 	}
+
+	public Map<String, TreeNode> getTreeNodeCache() {
+		return cache;
+	}
+	private Map<String, TreeNode> cache = Collections.synchronizedMap(new CachedHashMap<String, TreeNode>(100000));
 
 }

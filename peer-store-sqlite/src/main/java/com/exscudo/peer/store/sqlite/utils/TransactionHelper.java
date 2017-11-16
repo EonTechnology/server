@@ -20,7 +20,7 @@ import com.exscudo.peer.store.sqlite.ConnectionProxy;
 @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
 public class TransactionHelper {
 
-	static final String SELECT_TRANSACTIONS_SQL = "select \"id\", \"type\", \"timestamp\", \"deadline\", \"sender\", \"recipient\", \"fee\", \"referencedTransaction\", \"signature\", \"attachment\", \"block\", \"height\" from \"transaction\" ";
+	static final String SELECT_TRANSACTIONS_SQL = "select \"id\", \"type\", \"version\", \"timestamp\", \"deadline\", \"sender\", \"recipient\", \"fee\", \"referencedTransaction\", \"signature\", \"attachment\", \"block\", \"height\" from \"transaction\" ";
 
 	/**
 	 * Read transaction from DB row
@@ -34,8 +34,9 @@ public class TransactionHelper {
 	static Transaction getTransactionFromRow(ResultSet set) throws SQLException {
 
 		int type = set.getInt("type");
+		int version = set.getInt("version");
 		int timestamp = set.getInt("timestamp");
-		short deadline = set.getShort("deadline");
+		int deadline = set.getInt("deadline");
 		long sender = set.getLong("sender");
 		long fee = set.getLong("fee");
 		long referencedTransaction = set.getLong("referencedTransaction");
@@ -50,6 +51,7 @@ public class TransactionHelper {
 
 		Transaction transaction = new Transaction();
 		transaction.setType(type);
+		transaction.setVersion(version);
 		transaction.setTimestamp(timestamp);
 		transaction.setDeadline(deadline);
 		transaction.setReference(referencedTransaction);
@@ -167,12 +169,12 @@ public class TransactionHelper {
 			}
 
 			PreparedStatement saveStatement = db.prepareStatement(
-					"INSERT OR REPLACE INTO \"transaction\" (\"id\", \"type\", \"timestamp\", \"deadline\", \"sender\", \"recipient\", \"fee\", \"referencedTransaction\", \"signature\", \"attachment\", \"block\", \"height\")\nVALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
+					"INSERT OR REPLACE INTO \"transaction\" (\"id\", \"type\", \"timestamp\", \"deadline\", \"sender\", \"recipient\", \"fee\", \"referencedTransaction\", \"signature\", \"attachment\", \"block\", \"height\", \"version\")\nVALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
 			synchronized (saveStatement) {
 				saveStatement.setLong(1, transaction.getID());
 				saveStatement.setInt(2, transaction.getType());
 				saveStatement.setInt(3, transaction.getTimestamp());
-				saveStatement.setShort(4, transaction.getDeadline());
+				saveStatement.setInt(4, transaction.getDeadline());
 				saveStatement.setLong(5, transaction.getSenderID());
 				saveStatement.setLong(6, recipientID);
 				saveStatement.setLong(7, transaction.getFee());
@@ -181,6 +183,7 @@ public class TransactionHelper {
 				saveStatement.setString(10, data);
 				saveStatement.setLong(11, transaction.getBlock());
 				saveStatement.setInt(12, transaction.getHeight());
+				saveStatement.setInt(13, transaction.getVersion());
 
 				saveStatement.executeUpdate();
 			}

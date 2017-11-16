@@ -1,18 +1,27 @@
 package com.exscudo.peer.store.sqlite;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.Arrays;
 
+import com.exscudo.peer.core.Constant;
+import com.exscudo.peer.core.ForkProvider;
+import com.exscudo.peer.core.crypto.CryptoProvider;
 import com.exscudo.peer.core.data.Block;
+import com.exscudo.peer.core.data.Difficulty;
 import com.exscudo.peer.core.data.Transaction;
+import com.exscudo.peer.core.data.TransactionComparator;
+import com.exscudo.peer.core.exceptions.IllegalSignatureException;
+import com.exscudo.peer.core.exceptions.LifecycleException;
 import com.exscudo.peer.core.exceptions.ValidateException;
-import com.exscudo.peer.core.services.ILedger;
+import com.exscudo.peer.core.services.IAccount;
 import com.exscudo.peer.core.services.IUnitOfWork;
-import com.exscudo.peer.core.services.LinkedBlock;
 import com.exscudo.peer.core.utils.Format;
-import com.exscudo.peer.store.sqlite.core.LinkedBlockImpl;
+import com.exscudo.peer.eon.DifficultyHelper;
+import com.exscudo.peer.eon.EonConstant;
+import com.exscudo.peer.eon.Sandbox;
+import com.exscudo.peer.eon.transactions.utils.AccountAttributes;
+import com.exscudo.peer.eon.transactions.utils.AccountDeposit;
+import com.exscudo.peer.store.sqlite.merkle.CachedLedger;
+import com.exscudo.peer.store.sqlite.merkle.Ledgers;
 import com.exscudo.peer.store.sqlite.utils.BlockHelper;
 import com.exscudo.peer.store.sqlite.utils.DatabaseHelper;
 import com.exscudo.peer.store.sqlite.utils.TransactionHelper;
@@ -36,155 +45,67 @@ public class UnitOfWork implements IUnitOfWork {
 
 	private Storage.LockedObject backlogRoot;
 	private Backlog.Savepoint backlogSavepoint;
-	private LedgerBase ledger;
 
 	private Block headBlock;
 
-	private ISegment<Transaction> backlog = new ISegment<Transaction>() {
-
-		List<Long> removed = new ArrayList<>();
-		HashMap<Long, Transaction> saved = new HashMap<>();
+	private CachedSegment<Long, Transaction> backlog = new CachedSegment<Long, Transaction>() {
 
 		@Override
-		public Transaction get(long id) {
-
-			if (removed.contains(id)) {
-				return null;
-			}
-
-			if (saved.containsKey(id)) {
-				return saved.get(id);
-			}
-
+		protected Transaction doGet(Long id) {
 			return connector.getBacklog().get(id);
 		}
 
 		@Override
-		public void put(Transaction instance) {
-			long id = instance.getID();
-			saved.put(id, instance);
-			removed.remove(id);
+		protected void doPut(Long id, Transaction value) {
+			connector.getBacklog().put(value);
 		}
 
 		@Override
-		public void remove(long id) {
-			saved.remove(id);
-			removed.add(id);
-		}
-
-		@Override
-		public boolean contains(long id) {
-			return get(id) != null;
-		}
-
-		@Override
-		public void commit() {
-			for (Long id : removed) {
-				connector.getBacklog().remove(id);
-			}
-			for (Map.Entry<Long, Transaction> entry : saved.entrySet()) {
-				connector.getBacklog().put(entry.getValue());
-			}
+		protected void doRemove(Long id) {
+			connector.getBacklog().remove(id);
 		}
 
 	};
 
-	private ISegment<Block> blockSet = new ISegment<Block>() {
-
-		List<Long> removed = new ArrayList<>();
-		HashMap<Long, Block> saved = new HashMap<>();
+	private CachedSegment<Long, Block> blockSet = new CachedSegment<Long, Block>() {
 
 		@Override
-		public Block get(long id) {
-			if (removed.contains(id)) {
-				return null;
-			}
-
-			if (saved.containsKey(id)) {
-				return saved.get(id);
-			}
-
+		protected Block doGet(Long id) {
 			return BlockHelper.get(connection, id);
 		}
 
 		@Override
-		public void put(Block instance) {
-			long id = instance.getID();
-			saved.put(id, instance);
-			removed.remove(id);
+		protected void doPut(Long id, Block value) {
+			BlockHelper.save(connection, value);
 		}
 
 		@Override
-		public void remove(long id) {
-			saved.remove(id);
-			removed.add(id);
-		}
-
-		@Override
-		public boolean contains(long id) {
-			return get(id) != null;
-		}
-
-		@Override
-		public void commit() {
-			for (Long id : removed) {
-				BlockHelper.remove(connection, id);
-			}
-			for (Map.Entry<Long, Block> entry : saved.entrySet()) {
-				BlockHelper.save(connection, entry.getValue());
-			}
+		protected void doRemove(Long id) {
+			BlockHelper.remove(connection, id);
 		}
 
 	};
 
-	private ISegment<Transaction> transactionSet = new ISegment<Transaction>() {
-
-		List<Long> removed = new ArrayList<>();
-		HashMap<Long, Transaction> saved = new HashMap<>();
+	private CachedSegment<Long, Transaction> transactionSet = new CachedSegment<Long, Transaction>() {
 
 		@Override
-		public Transaction get(long id) {
-
-			if (removed.contains(id)) {
-				return null;
-			}
-
-			if (saved.containsKey(id)) {
-				return saved.get(id);
-			}
-
+		protected Transaction doGet(Long id) {
 			return TransactionHelper.get(connection, id);
 		}
 
 		@Override
-		public void put(Transaction instance) {
-			long id = instance.getID();
-			saved.put(id, instance);
-			removed.remove(id);
+		protected void doPut(Long id, Transaction value) {
+			TransactionHelper.save(connection, value);
 		}
 
 		@Override
-		public void remove(long id) {
-			saved.remove(id);
-			removed.add(id);
-		}
-
-		@Override
-		public boolean contains(long id) {
-			return get(id) != null;
-		}
-
-		@Override
-		public void commit() {
-			for (Long id : removed) {
-				TransactionHelper.remove(connection, id);
-			}
-			for (Map.Entry<Long, Transaction> entry : saved.entrySet()) {
-				TransactionHelper.save(connection, entry.getValue());
-			}
+		protected void doRemove(Long id) {
+			TransactionHelper.remove(connection, id);
 		}
 
 	};
+
+	private CachedLedger ledger;
 
 	public UnitOfWork(Storage connector) {
 		this.connector = connector;
@@ -200,9 +121,8 @@ public class UnitOfWork implements IUnitOfWork {
 		backlogSavepoint = connector.getBacklog().createSavepoint();
 
 		DatabaseHelper.beginTransaction(connection, TRAN_NAME);
-
 		popTo(block.getID());
-		ledger = new LedgerState(connector, headBlock);
+		ledger = Ledgers.newCachedLedger(connection, headBlock.getSnapshot());
 	}
 
 	private void popTo(long blockId) {
@@ -235,7 +155,7 @@ public class UnitOfWork implements IUnitOfWork {
 		}
 
 		block.setNextBlock(0);
-		blockSet.put(block);
+		blockSet.put(blockId, block);
 
 		headBlock = block;
 	}
@@ -246,10 +166,12 @@ public class UnitOfWork implements IUnitOfWork {
 
 		for (Transaction tx : removedBlock.getTransactions()) {
 
+			long txID = tx.getID();
 			tx.setBlock(0);
 			tx.setHeight(0);
-			backlog.put(tx);
-			transactionSet.remove(tx.getID());
+
+			backlog.put(txID, tx);
+			transactionSet.remove(txID);
 		}
 
 		blockSet.remove(block.getID());
@@ -260,17 +182,26 @@ public class UnitOfWork implements IUnitOfWork {
 	@Override
 	public void commit() {
 
-		blockSet.commit();
-		transactionSet.commit();
-		backlog.commit();
+		synchronized (connector) {
+			Difficulty diffNew = new Difficulty(headBlock);
+			Difficulty currNew = new Difficulty(connector.getLastBlock());
+			if (diffNew.compareTo(currNew) <= 0) {
+				throw new IllegalStateException();
+			}
 
-		DatabaseHelper.commitTransaction(connection, TRAN_NAME);
+			blockSet.commit();
+			transactionSet.commit();
+			backlog.commit();
+			ledger.commit();
 
-		connector.setLastBlock(headBlock);
+			DatabaseHelper.commitTransaction(connection, TRAN_NAME);
 
-		backlogRoot.unlock();
-		txRoot.unlock();
-		blockRoot.unlock();
+			connector.setLastBlock(headBlock);
+
+			backlogRoot.unlock();
+			txRoot.unlock();
+			blockRoot.unlock();
+		}
 	}
 
 	@Override
@@ -288,11 +219,97 @@ public class UnitOfWork implements IUnitOfWork {
 	@Override
 	public Block pushBlock(Block newBlock) throws ValidateException {
 
-		Block prevBlock = headBlock;
-		if (prevBlock.getID() != newBlock.getPreviousBlock()) {
-			throw new IllegalStateException(
-					"Unexpected block. Expected - " + Format.ID.blockId(newBlock.getPreviousBlock()) + ", current - "
-							+ Format.ID.blockId(prevBlock.getID()));
+		ensureValid(newBlock);
+		headBlock = saveBlock(headBlock, newBlock);
+		ledger.analyze();
+		return headBlock;
+	}
+
+	private void ensureValid(Block newBlock) throws ValidateException {
+
+		// version
+		int version = ForkProvider.getInstance().getBlockVersion(newBlock.getTimestamp());
+		if (version != newBlock.getVersion()) {
+			throw new ValidateException("Unsupported block version.");
+		}
+
+		// timestamp
+		int timestamp = headBlock.getTimestamp() + Constant.BLOCK_PERIOD;
+		if (timestamp != newBlock.getTimestamp()) {
+			throw new LifecycleException();
+		}
+
+		// previous block
+		if (headBlock.getID() != newBlock.getPreviousBlock()) {
+			throw new ValidateException("Unexpected block. Expected - " + Format.ID.blockId(newBlock.getPreviousBlock())
+					+ ", current - " + Format.ID.blockId(headBlock.getID()));
+		}
+
+		IAccount generator = ledger.getAccount(newBlock.getSenderID());
+		if (generator != null) {
+
+			// block height is not transmitted over the network
+			int height = headBlock.getHeight() + 1;
+			newBlock.setHeight(height);
+
+			// check generator balance
+			AccountDeposit deposit = AccountDeposit.parse(generator);
+			if (deposit.getValue() < EonConstant.MIN_DEPOSIT_SIZE
+					|| (height - deposit.getHeight() < Constant.BLOCK_IN_DAY && deposit.getHeight() != 0)) {
+				throw new ValidateException("Too small deposit.");
+			}
+			byte[] publicKey = AccountAttributes.getPublicKey(generator);
+
+			// generation signature
+			Block targetBlock = headBlock;
+			if (height - EonConstant.DIFFICULTY_DELAY > 0) {
+				int targetHeight = height - EonConstant.DIFFICULTY_DELAY;
+				// ATTENTION. in case EonConstant.DIFFICULTY_DELAY < SYNC_MILESTONE_DEPTH it is
+				// necessary to revise
+				targetBlock = BlockHelper.getByHeight(connection, targetHeight);
+			}
+			if (!CryptoProvider.getInstance().verifySignature(targetBlock.getGenerationSignature(),
+					newBlock.getGenerationSignature(), publicKey)) {
+				throw new IllegalSignatureException("The field Generation Signature is incorrect.");
+			}
+
+			// signature
+			if (!newBlock.verifySignature(publicKey)) {
+				throw new IllegalSignatureException();
+			}
+
+			// snapshot
+			Sandbox sandbox = new Sandbox(ledger, headBlock.getTimestamp(), headBlock.getHeight() + 1);
+			Transaction[] sortedTransactions = newBlock.getTransactions().toArray(new Transaction[0]);
+			Arrays.sort(sortedTransactions, new TransactionComparator());
+			for (Transaction tx : sortedTransactions) {
+				sandbox.execute(tx);
+			}
+			byte[] snapshot = sandbox.createSnapshot(newBlock.getSenderID());
+			if (newBlock.getVersion() >= 2) {
+				if (!Arrays.equals(snapshot, newBlock.getSnapshot())) {
+					throw new ValidateException("Illegal snapshot prefix.");
+				}
+			}
+			newBlock.setSnapshot(snapshot);
+
+			// adds the data that is not transmitted over the network
+			newBlock.setCumulativeDifficulty(
+					DifficultyHelper.calculateDifficulty(newBlock, headBlock, deposit.getValue()));
+			return;
+		}
+
+		throw new ValidateException("Invalid generator. " + Format.ID.accountId(newBlock.getSenderID()));
+
+	}
+
+	private Block saveBlock(Block prevBlock, Block newBlock) throws ValidateException {
+
+		if (newBlock.getPreviousBlock() == 0) {
+			throw new ValidateException("Previous block is not specified.");
+		} else if (prevBlock.getID() != newBlock.getPreviousBlock()) {
+			throw new ValidateException("Unexpected block. Expected - " + Format.ID.blockId(newBlock.getPreviousBlock())
+					+ ", current - " + Format.ID.blockId(prevBlock.getID()));
 		}
 
 		if (BlockHelper.get(connector.getConnection(), newBlock.getID()) != null) {
@@ -301,6 +318,7 @@ public class UnitOfWork implements IUnitOfWork {
 
 		long id = newBlock.getID();
 		for (Transaction tx : newBlock.getTransactions()) {
+
 			long txID = tx.getID();
 
 			if (transactionSet.contains(tx.getID())) {
@@ -312,38 +330,15 @@ public class UnitOfWork implements IUnitOfWork {
 			backlog.remove(txID);
 			tx.setBlock(id);
 			tx.setHeight(newBlock.getHeight());
-
-			transactionSet.put(tx);
+			transactionSet.put(txID, tx);
 		}
 
 		prevBlock.setNextBlock(id);
 
-		blockSet.put(prevBlock);
-		blockSet.put(newBlock);
+		blockSet.put(newBlock.getPreviousBlock(), prevBlock);
+		blockSet.put(id, newBlock);
 
-		headBlock = blockSet.get(id);
-		ledger = new LedgerProxy(headBlock, ledger);
-		return headBlock;
-	}
-
-	@Override
-	public LinkedBlock getLastBlock() {
-		return new LinkedBlockImpl(ledger, headBlock);
-	}
-
-	@Override
-	public LinkedBlock getBlock(long blockID) {
-
-		return new LinkedBlockImpl(null, blockSet.get(blockID)) {
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			public ILedger getState() {
-				throw new UnsupportedOperationException();
-			}
-
-		};
-
+		return blockSet.get(id);
 	}
 
 }

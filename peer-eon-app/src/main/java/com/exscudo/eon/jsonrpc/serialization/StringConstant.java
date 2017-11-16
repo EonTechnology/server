@@ -26,6 +26,7 @@ public class StringConstant {
 	public static final String nextBlock = "next";
 	public static final String transactions = "transactions";
 	public static final String transaction = "transaction";
+	public static final String snapshot = "snapshot";
 
 	// Others
 	public static final String messageEncoding = "UTF-8";

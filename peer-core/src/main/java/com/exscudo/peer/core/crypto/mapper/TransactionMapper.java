@@ -29,6 +29,9 @@ public class TransactionMapper {
 		if (forSign) {
 			map.remove(Constants.SIGNATURE);
 			map.put(Constants.NETWORK, Format.ID.blockId(ForkProvider.getInstance().getGenesisBlockID()));
+			if (transaction.getVersion() == 1) {
+				map.remove(Constants.VERSION);
+			}
 		}
 
 		return map;
@@ -51,6 +54,7 @@ public class TransactionMapper {
 		map.put(Constants.TIMESTAMP, transaction.getTimestamp());
 		map.put(Constants.DEADLINE, transaction.getDeadline());
 		map.put(Constants.FEE, transaction.getFee());
+		map.put(Constants.VERSION, transaction.getVersion());
 		if (transaction.getReference() != 0) {
 			map.put(Constants.REFERENCED_TRANSACTION, Format.ID.transactionId(transaction.getReference()));
 		}
@@ -77,7 +81,7 @@ public class TransactionMapper {
 
 		int type = Integer.parseInt(map.get(Constants.TYPE).toString());
 		int timestamp = Integer.parseInt(map.get(Constants.TIMESTAMP).toString());
-		short deadline = Short.parseShort(map.get(Constants.DEADLINE).toString());
+		int deadline = Integer.parseInt(map.get(Constants.DEADLINE).toString());
 		long fee = Long.parseLong(map.get(Constants.FEE).toString());
 		long referencedTransaction = 0L;
 		if (map.containsKey(Constants.REFERENCED_TRANSACTION)) {
@@ -85,6 +89,11 @@ public class TransactionMapper {
 		}
 		long sender = Format.ID.accountId(map.get(Constants.SENDER).toString());
 		byte[] signature = Format.convert(map.get(Constants.SIGNATURE).toString());
+
+		int version = 1;
+		if (map.containsKey(Constants.VERSION)) {
+			version = Integer.parseInt(map.get(Constants.VERSION).toString());
+		}
 
 		Map<String, Object> attachment = null;
 		Object obj = map.get(Constants.ATTACHMENT);
@@ -97,6 +106,7 @@ public class TransactionMapper {
 		}
 
 		tx.setType(type);
+		tx.setVersion(version);
 		tx.setTimestamp(timestamp);
 		tx.setDeadline(deadline);
 		tx.setReference(referencedTransaction);
@@ -119,6 +129,6 @@ public class TransactionMapper {
 		public static final String SIGNATURE = "signature";
 		public static final String ATTACHMENT = "attachment";
 		public static final String NETWORK = "network";
-
+		public static final String VERSION = "version";
 	}
 }

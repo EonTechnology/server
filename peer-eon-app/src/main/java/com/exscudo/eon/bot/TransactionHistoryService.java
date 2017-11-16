@@ -8,7 +8,6 @@ import java.util.List;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.exceptions.RemotePeerException;
-import com.exscudo.peer.core.services.AccountProperty;
 import com.exscudo.peer.core.services.IBacklogService;
 import com.exscudo.peer.core.utils.Format;
 import com.exscudo.peer.store.sqlite.ConnectionProxy;
@@ -133,9 +132,8 @@ public class TransactionHistoryService {
 			Block b = BlockHelper.get(connection, item);
 
 			if (b != null) {
-				// Clear transactions and properties in block ti minimize package size
-				b.setAccProps(new AccountProperty[0]);
-				b.setTransactions(new ArrayList<>());
+				// Clear transactions in block ti minimize package size
+				// b.setTransactions(new ArrayList<>());
 				items.add(b);
 			}
 		}

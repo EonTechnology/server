@@ -22,7 +22,7 @@ public class DepositRefillHandler extends BaseHandler {
 
 		IAccount account = ledger.getAccount(tx.getSenderID());
 		AccountBalance.withdraw(account, amount);
-		AccountDeposit.refill(account, amount);
+		AccountDeposit.refill(account, amount, context.height);
 	}
 
 }

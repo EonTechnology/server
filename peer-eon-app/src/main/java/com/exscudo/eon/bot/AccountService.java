@@ -12,8 +12,8 @@ import com.exscudo.peer.core.utils.Format;
 import com.exscudo.peer.eon.TransactionType;
 import com.exscudo.peer.eon.transactions.utils.AccountBalance;
 import com.exscudo.peer.eon.transactions.utils.AccountDeposit;
-import com.exscudo.peer.store.sqlite.LedgerState;
 import com.exscudo.peer.store.sqlite.Storage;
+import com.exscudo.peer.store.sqlite.merkle.Ledgers;
 
 /**
  * Account status service.
@@ -66,7 +66,7 @@ public class AccountService {
 
 	/**
 	 * Get account status
-	 * 
+	 *
 	 * @param id
 	 *            account ID
 	 * @return
@@ -82,7 +82,8 @@ public class AccountService {
 			throw new RemotePeerException(e);
 		}
 
-		final ILedger ledgerState = new LedgerState(storage, storage.getLastBlock());
+		final ILedger ledgerState = Ledgers.newReadOnlyLedger(storage.getConnection(),
+				storage.getLastBlock().getSnapshot());
 		final boolean exist = ledgerState.existAccount(accID);
 
 		if (exist) {
@@ -110,7 +111,7 @@ public class AccountService {
 
 	/**
 	 * Get account state
-	 * 
+	 *
 	 * @param id
 	 *            account ID
 	 * @return
@@ -119,7 +120,8 @@ public class AccountService {
 	 */
 	public Info getInformation(String id) throws RemotePeerException, IOException {
 
-		final ILedger ledgerState = new LedgerState(storage, storage.getLastBlock());
+		final ILedger ledgerState = Ledgers.newReadOnlyLedger(storage.getConnection(),
+				storage.getLastBlock().getSnapshot());
 
 		long accID;
 		try {

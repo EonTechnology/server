@@ -502,8 +502,8 @@ INSERT OR REPLACE INTO "property"("type", "account", "value", "blockid", "height
  VALUES('5afe47d6-6233-11e7-907b-a6006ad3dba0', -3756907016909472353, 'd6:amounti1000000000ee', -7385937782820944561, 0);
 INSERT OR REPLACE INTO "block" ("id", "version", "timestamp", "previousBlock", "generator", "generationSignature", "blockSignature", "height", "nextBlock", "cumulativeDifficulty")
  VALUES (-7385937782820944561, -1, 1506952527, '0', '4588983930547669755', '00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000', 'bd8ae079d2e9c93c17142b1759fcea8c80fef429e4a5df9d2302a08ac1912f0b4b0b6ae13878cf28567dc19cc3d5132379289ac8dfa620c65dd866bbc24b120a', '0', '0', '0');
-INSERT OR IGNORE INTO "settings" ("id", "name", "value") VALUES (2,	'CREATOR_ID',	'4588983930547669755');
-INSERT OR IGNORE INTO "settings" ("id", "name", "value") VALUES (3,	'GENESIS_BLOCK_ID',	'-7385937782820944561');
-INSERT OR IGNORE INTO "settings" ("id", "name", "value") VALUES (4,	'LastBlockId',	'-7385937782820944561');
-INSERT OR IGNORE INTO "settings" ("id", "name", "value") VALUES (5,	'FORK_BEGIN',	'2017-10-01T00:00:00.00Z');
-INSERT OR IGNORE INTO "settings" ("id", "name", "value") VALUES (6,	'FORK_END',	'2017-11-01T00:00:00.00Z');
+INSERT OR IGNORE INTO "settings" ("name", "value") VALUES ('CREATOR_ID',	'4588983930547669755');
+INSERT OR IGNORE INTO "settings" ("name", "value") VALUES ('GENESIS_BLOCK_ID',	'-7385937782820944561');
+INSERT OR IGNORE INTO "settings" ("name", "value") VALUES ('LastBlockId',	'-7385937782820944561');
+
+

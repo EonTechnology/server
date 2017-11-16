@@ -8,7 +8,7 @@ public class Loggers {
 	public static void error(Class<?> clazz, Throwable t) {
 
 		final Logger logger = LogManager.getLogger(clazz);
-		logger.error("Unexpected error has occurred. {}", t);
+		logger.error("Unexpected error has occurred: {}", t.getMessage(), t);
 	}
 
 	public static void error(Class<?> clazz, String message, Throwable t) {

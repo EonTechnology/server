@@ -9,6 +9,7 @@ import java.util.Map;
 
 import com.exscudo.peer.core.exceptions.RemotePeerException;
 import com.exscudo.peer.core.utils.Loggers;
+import com.exscudo.peer.eon.stubs.BaseService;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -53,12 +54,15 @@ public class JrpcService {
 	public String doRequest(String requestBody) throws IOException {
 
 		JsonRpcResponse response = new JsonRpcResponse();
-		try {
 
-			String version = null;
-			String id = null;
-			String methodName = null;
-			JsonNode paramsNode = null;
+		String version = null;
+		String id = null;
+		String methodName = null;
+		JsonNode paramsNode = null;
+
+		long startTime = System.nanoTime();
+
+		try {
 
 			JsonNode rootNode = objectMapper.readTree(requestBody);
 			Iterator<Map.Entry<String, JsonNode>> fieldsIterator = rootNode.fields();
@@ -138,6 +142,11 @@ public class JrpcService {
 
 							}
 
+							if (innerService instanceof BaseService) {
+								BaseService service = (BaseService) innerService;
+								service.setRemoteHost(remoteHost.get());
+							}
+
 							Object retObj = method.invoke(innerService, args);
 							if (method.getReturnType().equals(void.class))
 								response.setResult();
@@ -187,7 +196,13 @@ public class JrpcService {
 
 		boolean showLog = true;
 		if (showLog) {
+
+			long timeRun = System.nanoTime() - startTime;
+
 			String remotePeer = getRemoteHost();
+
+			Loggers.info(this.getClass(), "Timing:  {}ms - {} >> {}", timeRun / 1000000.0, methodName, remotePeer);
+
 			Loggers.trace(this.getClass(), "{} >> Request: {}; Response: {}", remotePeer == null ? "" : remotePeer,
 					requestBody != null ? requestBody : "NULL", responseBody);
 		}

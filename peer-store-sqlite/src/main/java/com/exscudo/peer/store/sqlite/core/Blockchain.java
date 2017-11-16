@@ -3,13 +3,12 @@ package com.exscudo.peer.store.sqlite.core;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.services.IBlockchainService;
+import com.exscudo.peer.core.services.ILedger;
 import com.exscudo.peer.core.services.ITransactionMapper;
 import com.exscudo.peer.core.services.IUnitOfWork;
-import com.exscudo.peer.core.services.LinkedBlock;
-import com.exscudo.peer.store.sqlite.LedgerProxy;
-import com.exscudo.peer.store.sqlite.LedgerState;
 import com.exscudo.peer.store.sqlite.Storage;
 import com.exscudo.peer.store.sqlite.Storage.LockedObject;
+import com.exscudo.peer.store.sqlite.merkle.Ledgers;
 import com.exscudo.peer.store.sqlite.utils.BlockHelper;
 import com.exscudo.peer.store.sqlite.utils.TransactionHelper;
 
@@ -68,23 +67,23 @@ public class Blockchain implements IBlockchainService {
 	}
 
 	@Override
-	public LinkedBlock getLastBlock() {
-		return getLinkedBlock(connector.getLastBlock());
+	public Block getLastBlock() {
+		return connector.getLastBlock();
 	}
 
 	@Override
-	public LinkedBlock getBlock(long blockID) {
-		Block block = BlockHelper.get(connector.getConnection(), blockID);
-		if (block == null)
-			return null;
-
-		return getLinkedBlock(block);
+	public Block getBlock(long blockID) {
+		return BlockHelper.get(connector.getConnection(), blockID);
 	}
 
-	private LinkedBlock getLinkedBlock(Block block) {
-		LedgerState state = new LedgerState(connector, block);
-		LedgerProxy proxy = new LedgerProxy(block, state);
-		return new LinkedBlockImpl(proxy, block);
+	@Override
+	public Block getBlockByHeight(int height) {
+		return BlockHelper.getByHeight(connector.getConnection(), height);
+	}
+
+	@Override
+	public ILedger getState(byte[] snapshot) {
+		return Ledgers.newCachedLedger(connector.getConnection(), snapshot);
 	}
 
 }

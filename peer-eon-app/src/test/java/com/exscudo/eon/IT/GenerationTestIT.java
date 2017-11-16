@@ -12,12 +12,10 @@ import org.mockito.Mockito;
 
 import com.dampcake.bencode.Bencode;
 import com.exscudo.peer.core.Constant;
-import com.exscudo.peer.core.crypto.AccountPropertyComparator;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Difficulty;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.TransactionComparator;
-import com.exscudo.peer.core.services.AccountProperty;
 import com.exscudo.peer.core.utils.Format;
 import com.exscudo.peer.eon.EonConstant;
 import com.exscudo.peer.eon.IServiceProxyFactory;
@@ -126,7 +124,7 @@ public class GenerationTestIT {
 
 		Difficulty difficulty = ctx.syncBlockPeerService.getDifficulty();
 		Block[] lastBlocks = ctx.syncBlockPeerService
-				.getBlockHistory(new String[]{Format.ID.blockId(lastBlock.getID())});
+				.getBlockHistory(new String[] { Format.ID.blockId(lastBlock.getID()) });
 
 		Assert.assertEquals(ctx.context.getInstance().getBlockchainService().getLastBlock().getCumulativeDifficulty(),
 				difficulty.getDifficulty());
@@ -188,7 +186,7 @@ public class GenerationTestIT {
 		Block lastBlock = ctx.context.getInstance().getBlockchainService().getLastBlock();
 
 		Transaction tx = Registration.newAccount(ctxNew.getSigner().getPublicKey())
-				.validity(lastBlock.getTimestamp() + 100, (short) 60).forFee(1L).build(ctx.getSigner());
+				.validity(lastBlock.getTimestamp() + 100, 3600).forFee(1L).build(ctx.getSigner());
 		Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 + 1);
 		ctx.transactionBotService.putTransaction(tx);
 		ctx.generateBlockForNow();
@@ -196,9 +194,9 @@ public class GenerationTestIT {
 		Assert.assertEquals("Registration in block", 1,
 				ctx.context.getInstance().getBlockchainService().getLastBlock().getTransactions().size());
 
-		Transaction tx2 = Payment.newPayment(EonConstant.MIN_DEPOSIT_SIZE + 1000L)
-				.to(Format.MathID.pick(ctxNew.getSigner().getPublicKey())).forFee(1L)
-				.validity(lastBlock.getTimestamp() + 200, (short) 60).build(ctx.getSigner());
+		Transaction tx2 = Payment
+				.newPayment(EonConstant.MIN_DEPOSIT_SIZE + 1000L, Format.MathID.pick(ctxNew.getSigner().getPublicKey()))
+				.forFee(1L).validity(lastBlock.getTimestamp() + 200, 3600).build(ctx.getSigner());
 		Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 * 2 + 1);
 		ctx.transactionBotService.putTransaction(tx2);
 		ctx.generateBlockForNow();
@@ -207,7 +205,7 @@ public class GenerationTestIT {
 				ctx.context.getInstance().getBlockchainService().getLastBlock().getTransactions().size());
 
 		Transaction tx3 = Deposit.refill(EonConstant.MIN_DEPOSIT_SIZE)
-				.validity(lastBlock.getTimestamp() + 200, (short) 60).build(ctxNew.getSigner());
+				.validity(lastBlock.getTimestamp() + 200, 3600).build(ctxNew.getSigner());
 		Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 * 3 + 1);
 		ctx.transactionBotService.putTransaction(tx3);
 		ctx.generateBlockForNow();
@@ -254,7 +252,7 @@ public class GenerationTestIT {
 				ctx.context.getInstance().getBlockchainService().getLastBlock().getID(),
 				ctxNew.context.getInstance().getBlockchainService().getLastBlock().getID());
 
-		Transaction tx4 = Deposit.refill(100L).validity(lastBlock2.getTimestamp() + 200, (short) 60)
+		Transaction tx4 = Deposit.refill(100L).validity(lastBlock2.getTimestamp() + 200, 3600)
 				.build(ctxNew.getSigner());
 		Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock2.getTimestamp() + 180 * 3 + 1);
 		ctxNew.transactionBotService.putTransaction(tx4);
@@ -361,8 +359,8 @@ public class GenerationTestIT {
 				ctx2.context.getInstance().getBlockchainService().getLastBlock().getID());
 
 		// put tx1 to ctx2
-		Transaction tx1 = Payment.newPayment(10000L).to(Format.MathID.pick(ctx2.getSigner().getPublicKey())).forFee(1L)
-				.validity(netStart + 180 * 1 + 2, (short) 60).build(ctx1.getSigner());
+		Transaction tx1 = Payment.newPayment(10000L, Format.MathID.pick(ctx2.getSigner().getPublicKey())).forFee(1L)
+				.validity(netStart + 180 * 1 + 2, 3600).build(ctx1.getSigner());
 		ctx2.transactionBotService.putTransaction(tx1);
 
 		// ctx2 generates block 2 with tx1
@@ -383,8 +381,8 @@ public class GenerationTestIT {
 				ctx2.context.getInstance().getBlockchainService().getLastBlock().getID());
 
 		// put tx2 to ctx1
-		Transaction tx2 = Payment.newPayment(10000L).to(Format.MathID.pick(ctx2.getSigner().getPublicKey())).forFee(1L)
-				.validity(netStart + 180 * 1 + 3, (short) 60).build(ctx1.getSigner());
+		Transaction tx2 = Payment.newPayment(10000L, Format.MathID.pick(ctx2.getSigner().getPublicKey())).forFee(1L)
+				.validity(netStart + 180 * 1 + 3, 3600).build(ctx1.getSigner());
 		ctx1.transactionBotService.putTransaction(tx2);
 
 		// ctx1 generates 'parallel' block 2 with tx1 and tx2
@@ -423,8 +421,10 @@ public class GenerationTestIT {
 
 		Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 + 1);
 
-		Transaction tx = Payment.newPayment(1000L).forFee(1L).validity(mockTimeProvider.get() - 1, (short) 60)
-				.to(Format.MathID.pick(ctx1.context.getInstance().getGenerator().getSigner().getPublicKey()))
+		Transaction tx = Payment
+				.newPayment(1000L,
+						Format.MathID.pick(ctx1.context.getInstance().getGenerator().getSigner().getPublicKey()))
+				.forFee(1L).validity(mockTimeProvider.get() - 1, 3600)
 				.build(ctx2.context.getInstance().getGenerator().getSigner());
 
 		ctx1.transactionBotService.putTransaction(tx);
@@ -477,6 +477,7 @@ public class GenerationTestIT {
 			Assert.assertEquals(block.getNextBlock(), blockNew.getNextBlock());
 			Assert.assertEquals(block.getCumulativeDifficulty().toString(),
 					blockNew.getCumulativeDifficulty().toString());
+			Assert.assertEquals(Format.convert(block.getSnapshot()), Format.convert(blockNew.getSnapshot()));
 
 			Transaction[] transactions = block.getTransactions().toArray(new Transaction[0]);
 			Transaction[] transactionsNew = blockNew.getTransactions().toArray(new Transaction[0]);
@@ -504,26 +505,6 @@ public class GenerationTestIT {
 				Assert.assertEquals(transaction.getHeight(), transactionNew.getHeight());
 				Assert.assertEquals(transaction.getID(), transactionNew.getID());
 				Assert.assertEquals(transaction.getLength(), transactionNew.getLength());
-			}
-
-			AccountProperty[] accProps = block.getAccProps();
-			AccountProperty[] accPropsNew = blockNew.getAccProps();
-
-			Arrays.sort(accProps, new AccountPropertyComparator());
-			Arrays.sort(accPropsNew, new AccountPropertyComparator());
-
-			Assert.assertEquals(accProps.length, accPropsNew.length);
-
-			for (int i = 0; i < accProps.length; i++) {
-				AccountProperty prop = accProps[i];
-				AccountProperty propNew = accPropsNew[i];
-
-				Assert.assertEquals(prop.getType().toString(), propNew.getType().toString());
-				Assert.assertEquals(prop.getAccountID(), propNew.getAccountID());
-				Assert.assertEquals(prop.getHeight(), propNew.getHeight());
-				Assert.assertEquals(Format.convert(bencode.encode(prop.getData())),
-						Format.convert(bencode.encode(propNew.getData())));
-
 			}
 
 			lastBlockID = block.getPreviousBlock();

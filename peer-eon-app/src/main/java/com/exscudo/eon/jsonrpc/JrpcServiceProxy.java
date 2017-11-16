@@ -78,6 +78,9 @@ public class JrpcServiceProxy {
 
 		HttpURLConnection connection = null;
 		String responseValue = null;
+
+		long startTime = System.nanoTime();
+
 		try {
 
 			connection = (HttpURLConnection) url.openConnection();
@@ -197,6 +200,11 @@ public class JrpcServiceProxy {
 
 			Loggers.trace(JrpcServiceProxy.class, "{} << Response: {}", url.getHost(), responseValue);
 			throw new RemotePeerException("Unable to parse response.");
+
+		} finally {
+
+			long timeRun = System.nanoTime() - startTime;
+			Loggers.info(this.getClass(), "Timing:  {}ms - {} >> {}", timeRun / 1000000.0, method, url);
 
 		}
 

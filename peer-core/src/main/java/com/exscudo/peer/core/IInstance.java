@@ -22,4 +22,5 @@ public interface IInstance {
 	 * @return backlog
 	 */
 	IBacklogService getBacklogService();
+
 }

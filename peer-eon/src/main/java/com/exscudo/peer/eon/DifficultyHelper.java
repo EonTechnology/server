@@ -20,10 +20,6 @@ public class DifficultyHelper {
 	public static BigInteger calculateDifficulty(Block block, Block prevBlock, long generatingBalance)
 			throws ValidateException {
 
-		if (generatingBalance < EonConstant.MIN_DEPOSIT_SIZE) {
-			throw new ValidateException("Too small deposit.");
-		}
-
 		byte[] generationSignatureHash;
 		try {
 			generationSignatureHash = MessageDigest.getInstance("SHA-512").digest(block.getGenerationSignature());

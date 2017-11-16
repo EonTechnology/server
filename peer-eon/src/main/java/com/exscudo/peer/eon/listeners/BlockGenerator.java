@@ -1,10 +1,16 @@
 package com.exscudo.peer.eon.listeners;
 
 import java.math.BigInteger;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.exscudo.peer.core.Constant;
+import com.exscudo.peer.core.ForkProvider;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.TransactionComparator;
@@ -13,11 +19,15 @@ import com.exscudo.peer.core.events.IBlockEventListener;
 import com.exscudo.peer.core.events.IPeerEventListener;
 import com.exscudo.peer.core.events.PeerEvent;
 import com.exscudo.peer.core.exceptions.ValidateException;
-import com.exscudo.peer.core.services.*;
+import com.exscudo.peer.core.services.IAccount;
+import com.exscudo.peer.core.services.IBacklogService;
+import com.exscudo.peer.core.services.IBlockchainService;
+import com.exscudo.peer.core.services.ILedger;
 import com.exscudo.peer.core.utils.Format;
 import com.exscudo.peer.core.utils.Loggers;
 import com.exscudo.peer.eon.DifficultyHelper;
 import com.exscudo.peer.eon.EonConstant;
+import com.exscudo.peer.eon.Sandbox;
 import com.exscudo.peer.eon.crypto.ISigner;
 import com.exscudo.peer.eon.tasks.GenerateBlockTask;
 import com.exscudo.peer.eon.transactions.utils.AccountDeposit;
@@ -35,15 +45,11 @@ public class BlockGenerator implements IPeerEventListener, IBlockEventListener {
 
 	private final IBlockchainService blockchain;
 
-	private final ITransactionHandler txHandler;
-
 	private ISigner signer;
 
-	public BlockGenerator(IBacklogService backlog, IBlockchainService blockchain, ITransactionHandler txHandler,
-			ISigner signer) {
+	public BlockGenerator(IBacklogService backlog, IBlockchainService blockchain, ISigner signer) {
 		this.backlog = backlog;
 		this.blockchain = blockchain;
-		this.txHandler = txHandler;
 		this.signer = signer;
 	}
 
@@ -105,80 +111,88 @@ public class BlockGenerator implements IPeerEventListener, IBlockEventListener {
 			}
 		}
 
-		Transaction[] sortedTransactions = map.values().toArray(new Transaction[0]);
-		Arrays.sort(sortedTransactions, new TransactionComparator());
-
-		Map<String, Transaction> payload = new TreeMap<>();
-		TransactionContext ctx = new TransactionContext(previousBlock.getTimestamp() + Constant.BLOCK_PERIOD,
-				Format.MathID.pick(getSigner().getPublicKey()));
-
-		ISandbox ledger = blockchain.getBlock(previousBlock.getID()).createSandbox(txHandler);
-		int payloadLength = 0;
-		for (Transaction tx : sortedTransactions) {
-			int txLength = tx.getLength();
-			if (txLength > EonConstant.TRANSACTION_MAX_PAYLOAD_LENGTH)
-				continue;
-			if (payloadLength + txLength > EonConstant.BLOCK_MAX_PAYLOAD_LENGTH)
-				break;
-
-			try {
-				ledger.execute(tx, ctx);
-				payload.put(Format.ID.transactionId(tx.getID()), tx);
-				payloadLength += txLength;
-			} catch (Exception e) {
-				Loggers.info(GenerateBlockTask.class, "Excluding tr({}) from block generation payload: {}",
-						Format.ID.transactionId(tx.getID()), e.getMessage());
-			}
-		}
-
-		return createBlock(previousBlock, payload);
+		return createBlock(previousBlock, map.values().toArray(new Transaction[0]));
 
 	}
 
-	private Block createBlock(Block previousBlock, Map<String, Transaction> payload) {
+	private Block createBlock(Block previousBlock, Transaction[] transactions) {
 
-		ILedger ledger = blockchain.getLastBlock().getState();
-		IAccount account = ledger.getAccount(Format.MathID.pick(getSigner().getPublicKey()));
-		if (account == null) {
-			Loggers.warning(GenerateBlockTask.class, "Failed to set generator account.");
+		int timestamp = previousBlock.getTimestamp() + Constant.BLOCK_PERIOD;
+		int version = ForkProvider.getInstance().getBlockVersion(timestamp);
+		if (version < 0) {
 			return null;
 		}
+		long senderID = Format.MathID.pick(getSigner().getPublicKey());
 
-		int height = previousBlock.getHeight() + 1 - EonConstant.DIFFICULTY_DELAY;
-		Block baseBlock = previousBlock;
-		if (height > 0) {
-			while (baseBlock.getHeight() > height) {
-				baseBlock = blockchain.getBlock(baseBlock.getPreviousBlock());
-			}
-		}
+		ILedger ledger = blockchain.getState(previousBlock.getSnapshot());
+		IAccount generator = ledger.getAccount(senderID);
+		if (generator != null) {
 
-		Block newBlock = new Block();
-		newBlock.setVersion(1);
-		newBlock.setHeight(previousBlock.getHeight() + 1);
-		newBlock.setTimestamp(previousBlock.getTimestamp() + Constant.BLOCK_PERIOD);
-		newBlock.setPreviousBlock(previousBlock.getID());
-		newBlock.setSenderID(Format.MathID.pick(getSigner().getPublicKey()));
-		newBlock.setGenerationSignature(getSigner().sign(baseBlock.getGenerationSignature()));
-		newBlock.setTransactions(payload.values());
-		newBlock.setSignature(getSigner().sign(newBlock.getBytes()));
+			int height = previousBlock.getHeight() + 1;
 
-		BigInteger diff;
-		try {
-			long generatingBalance = 0;
-			AccountDeposit deposit = AccountDeposit.parse(account);
-			if (deposit.getValue() >= EonConstant.MIN_DEPOSIT_SIZE
-					&& (previousBlock.getHeight() - deposit.getHeight() >= Constant.BLOCK_IN_DAY
-							|| deposit.getHeight() == 0)) {
-				generatingBalance = deposit.getValue();
+			AccountDeposit deposit = AccountDeposit.parse(generator);
+			if (deposit.getValue() < EonConstant.MIN_DEPOSIT_SIZE
+					|| (previousBlock.getHeight() - deposit.getHeight() < Constant.BLOCK_IN_DAY
+							&& deposit.getHeight() != 0)) {
+				Loggers.info(GenerateBlockTask.class, "Too small deposit.");
+				return null;
 			}
 
-			diff = DifficultyHelper.calculateDifficulty(newBlock, previousBlock, generatingBalance);
-		} catch (ValidateException e) {
-			return null;
-		}
-		newBlock.setCumulativeDifficulty(diff);
+			Block targetBlock = previousBlock;
+			if (height - EonConstant.DIFFICULTY_DELAY > 0) {
+				int targetHeight = height - EonConstant.DIFFICULTY_DELAY;
+				targetBlock = blockchain.getBlockByHeight(targetHeight);
+			}
+			byte[] generationSignature = getSigner().sign(targetBlock.getGenerationSignature());
 
-		return newBlock;
+			Sandbox sandbox = Sandbox.getInstance(blockchain, previousBlock);
+			Arrays.sort(transactions, new TransactionComparator());
+			int payloadLength = 0;
+			List<Transaction> payload = new ArrayList<>(transactions.length);
+			for (Transaction tx : transactions) {
+				int txLength = tx.getLength();
+				if (txLength > EonConstant.TRANSACTION_MAX_PAYLOAD_LENGTH)
+					continue;
+				if (payloadLength + txLength > EonConstant.BLOCK_MAX_PAYLOAD_LENGTH)
+					break;
+
+				try {
+					sandbox.execute(tx);
+					payload.add(tx);
+					payloadLength += txLength;
+				} catch (Exception e) {
+					Loggers.info(GenerateBlockTask.class, "Excluding tr({}) from block generation payload: {}",
+							Format.ID.transactionId(tx.getID()), e.getMessage());
+				}
+			}
+			byte[] snapshot = sandbox.createSnapshot(senderID);
+
+			Block newBlock = new Block();
+			newBlock.setVersion(version);
+			newBlock.setHeight(height);
+			newBlock.setTimestamp(timestamp);
+			newBlock.setPreviousBlock(previousBlock.getID());
+			newBlock.setSenderID(senderID);
+			newBlock.setGenerationSignature(generationSignature);
+			newBlock.setTransactions(payload);
+			newBlock.setSnapshot(snapshot);
+			newBlock.setSignature(getSigner().sign(newBlock.getBytes()));
+
+			BigInteger diff;
+			try {
+				diff = DifficultyHelper.calculateDifficulty(newBlock, previousBlock, deposit.getValue());
+			} catch (ValidateException e) {
+				return null;
+			}
+			newBlock.setCumulativeDifficulty(diff);
+
+			return newBlock;
+
+		}
+
+		Loggers.warning(GenerateBlockTask.class, "Failed to set generator account.");
+		return null;
+
 	}
 
 	/* IBlockEventListener members */
