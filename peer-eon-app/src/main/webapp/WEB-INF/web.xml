@@ -53,6 +53,24 @@
 		<url-pattern>/bot/*</url-pattern>
 	</servlet-mapping>
 
+	<!-- Blockchain Explorer -->
+
+	<servlet>
+		<servlet-name>explorerServlet</servlet-name>
+		<servlet-class>com.exscudo.eon.BotServlet</servlet-class>
+		<init-param>
+			<param-name>contextConfigLocation</param-name>
+			<param-value>WEB-INF/spring/explorer/servlet-context.xml</param-value>
+		</init-param>
+		<load-on-startup>3</load-on-startup>
+		<async-supported>true</async-supported>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>explorerServlet</servlet-name>
+		<url-pattern>/explorer/*</url-pattern>
+	</servlet-mapping>
+
+
 	<!-- Monitoring -->
 
 	<servlet>
@@ -62,7 +80,7 @@
 			<param-name>contextConfigLocation</param-name>
 			<param-value>WEB-INF/spring/prometheus/servlet-context.xml</param-value>
 		</init-param>
-		<load-on-startup>3</load-on-startup>
+		<load-on-startup>4</load-on-startup>
 		<async-supported>true</async-supported>
 	</servlet>
 	<servlet-mapping>
@@ -89,6 +107,7 @@
 	<filter-mapping>
 		<filter-name>springSecurityFilterChain</filter-name>
 		<url-pattern>/metrics/*</url-pattern>
+		<url-pattern>/explorer/*</url-pattern>
 	</filter-mapping>
 
 	<!-- gzip compression-->

@@ -18,8 +18,6 @@ import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.TransactionComparator;
 import com.exscudo.peer.core.utils.Format;
 import com.exscudo.peer.eon.EonConstant;
-import com.exscudo.peer.eon.IServiceProxyFactory;
-import com.exscudo.peer.eon.PeerInfo;
 import com.exscudo.peer.eon.TimeProvider;
 import com.exscudo.peer.eon.transactions.Deposit;
 import com.exscudo.peer.eon.transactions.Payment;
@@ -29,8 +27,8 @@ import com.exscudo.peer.eon.transactions.Registration;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class GenerationTestIT {
 
-	private static final String GENERATOR = "55373380ff77987646b816450824310fb377c1a14b6f725b94382af3cf7b788a";
-	private static final String GENERATOR2 = "dd6403d520afbfadeeff0b1bb49952440b767663454ab1e5f1a358e018cf9c73";
+	private static final String GENERATOR = "eba54bbb2dd6e55c466fac09707425145ca8560fe40de3fa3565883f4d48779e";
+	private static final String GENERATOR2 = "d2005ef0df1f6926082aefa09917874cfb212d1ff4eb55c78f670ef9dd23ef6c";
 	private static final String GENERATOR_NEW = "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff";
 	private TimeProvider mockTimeProvider;
 
@@ -204,8 +202,8 @@ public class GenerationTestIT {
 		Assert.assertEquals("Payment in block", 1,
 				ctx.context.getInstance().getBlockchainService().getLastBlock().getTransactions().size());
 
-		Transaction tx3 = Deposit.refill(EonConstant.MIN_DEPOSIT_SIZE)
-				.validity(lastBlock.getTimestamp() + 200, 3600).build(ctxNew.getSigner());
+		Transaction tx3 = Deposit.refill(EonConstant.MIN_DEPOSIT_SIZE).validity(lastBlock.getTimestamp() + 200, 3600)
+				.build(ctxNew.getSigner());
 		Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 * 3 + 1);
 		ctx.transactionBotService.putTransaction(tx3);
 		ctx.generateBlockForNow();
@@ -213,7 +211,7 @@ public class GenerationTestIT {
 		Assert.assertEquals("Deposit.refill in block", 1,
 				ctx.context.getInstance().getBlockchainService().getLastBlock().getTransactions().size());
 
-		int newTime = lastBlock.getTimestamp() + Constant.BLOCK_PERIOD * (Constant.BLOCK_IN_DAY + 2) + 1;
+		int newTime = lastBlock.getTimestamp() + Constant.BLOCK_PERIOD * (Constant.BLOCK_IN_DAY + 1) + 1;
 		Mockito.when(mockTimeProvider.get()).thenReturn(newTime);
 		ctx.generateBlockForNow();
 
@@ -368,13 +366,7 @@ public class GenerationTestIT {
 		ctx2.generateBlockForNow();
 
 		// ctx1 syncs with ctx2
-		ctx1.context.setProxyFactory(new IServiceProxyFactory() {
-			@SuppressWarnings("unchecked")
-			@Override
-			public <TService> TService createProxy(PeerInfo peer, Class<TService> clazz) {
-				return (TService) ctx2.syncBlockPeerService;
-			}
-		});
+		ctx1.setPeerToConnect(ctx2);
 		ctx1.syncBlockListTask.run();
 		Assert.assertEquals("Blockchains should be equal",
 				ctx1.context.getInstance().getBlockchainService().getLastBlock().getID(),
@@ -474,7 +466,6 @@ public class GenerationTestIT {
 			Assert.assertEquals(Format.convert(block.getSignature()), Format.convert(blockNew.getSignature()));
 			Assert.assertEquals(block.getID(), blockNew.getID());
 			Assert.assertEquals(block.getHeight(), blockNew.getHeight());
-			Assert.assertEquals(block.getNextBlock(), blockNew.getNextBlock());
 			Assert.assertEquals(block.getCumulativeDifficulty().toString(),
 					blockNew.getCumulativeDifficulty().toString());
 			Assert.assertEquals(Format.convert(block.getSnapshot()), Format.convert(blockNew.getSnapshot()));

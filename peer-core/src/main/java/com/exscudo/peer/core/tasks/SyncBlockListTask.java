@@ -86,15 +86,15 @@ public final class SyncBlockListTask implements Runnable {
 				Loggers.info(SyncBlockListTask.class, "Begining synchronization. Difficulty: [this] {}, [{}] {}. ",
 						currentState.getDifficulty(), peer, remoteState.getDifficulty());
 
-				if (shortSyncScheme(service)) {
+				if (shortSyncScheme(service) != null) {
 					return;
 				}
 
 				while (remoteState.compareTo(currentState) > 0) {
 
-					longSyncScheme(service);
+					Block headBlock = longSyncScheme(service);
 
-					Difficulty currentStateNew = new Difficulty(blockchain.getLastBlock());
+					Difficulty currentStateNew = new Difficulty(headBlock);
 					if (currentStateNew.compareTo(currentState) == 0) {
 						return;
 					}
@@ -127,15 +127,14 @@ public final class SyncBlockListTask implements Runnable {
 
 	/**
 	 * Short synchronization scheme (synchronization of the last block only). In
-	 * most cases, if the network is in a "stable" state, the synchronization
-	 * will be performed exactly by the short scheme.
+	 * most cases, if the network is in a "stable" state, the synchronization will
+	 * be performed exactly by the short scheme.
 	 * <p>
 	 * At first, the last block is requested on the services peer. In the second
-	 * step, searches for a block preceding the received from services node. If
-	 * it is contained in the chain of blocks on the current node, then its
-	 * added to the end of chain (if necessary, roll back the local chain of
-	 * blocks to common block). The criterion for adding the block is
-	 * difficulty.
+	 * step, searches for a block preceding the received from services node. If it
+	 * is contained in the chain of blocks on the current node, then its added to
+	 * the end of chain (if necessary, roll back the local chain of blocks to common
+	 * block). The criterion for adding the block is difficulty.
 	 *
 	 * @param service
 	 *            access point on a remote node that implements the block
@@ -148,10 +147,9 @@ public final class SyncBlockListTask implements Runnable {
 	 *             Error during request processing on the services node. (e.g.
 	 *             illegal arguments, invalid format, etc.)
 	 * @throws ProtocolException
-	 *             The behavior of the services node does not match
-	 *             expectations.
+	 *             The behavior of the services node does not match expectations.
 	 */
-	private boolean shortSyncScheme(IBlockSynchronizationService service)
+	private Block shortSyncScheme(IBlockSynchronizationService service)
 			throws ProtocolException, IOException, RemotePeerException {
 
 		Loggers.info(SyncBlockListTask.class, "ShortSyncScheme");
@@ -168,7 +166,7 @@ public final class SyncBlockListTask implements Runnable {
 
 		Block prevBlock = blockchain.getBlock(newBlock.getPreviousBlock());
 		if (prevBlock == null) {
-			return false;
+			return null;
 		}
 
 		if (context.isCurrentForkPassed(newBlock.getTimestamp())) {
@@ -177,9 +175,7 @@ public final class SyncBlockListTask implements Runnable {
 
 		HashMap<Long, Block> futuresBlock = new HashMap<>();
 		futuresBlock.put(newBlock.getPreviousBlock(), newBlock);
-		pushBlocks(blockchain, prevBlock, futuresBlock);
-
-		return true;
+		return pushBlocks(blockchain, prevBlock, futuresBlock);
 
 	}
 
@@ -188,9 +184,9 @@ public final class SyncBlockListTask implements Runnable {
 	 * synchronization mode is used usually when a node in unstable state (for
 	 * example, it is used during connected to a network).
 	 * <p>
-	 * In the process of synchronization, the chain is rolled back to the point
-	 * of division of the chain. Then the new ending imported. The maximum depth
-	 * of division is defined in {@link Constant#SYNC_MILESTONE_DEPTH}
+	 * In the process of synchronization, the chain is rolled back to the point of
+	 * division of the chain. Then the new ending imported. The maximum depth of
+	 * division is defined in {@link Constant#SYNC_MILESTONE_DEPTH}
 	 *
 	 * @param service
 	 *            access point on a remote node that implements the block
@@ -201,16 +197,16 @@ public final class SyncBlockListTask implements Runnable {
 	 *             Error during request processing on the services node. (e.g.
 	 *             illegal arguments, invalid format, etc.)
 	 * @throws ProtocolException
-	 *             The behavior of the services node does not match
-	 *             expectations.
+	 *             The behavior of the services node does not match expectations.
 	 */
-	private void longSyncScheme(IBlockSynchronizationService service)
+	private Block longSyncScheme(IBlockSynchronizationService service)
 			throws ProtocolException, IOException, RemotePeerException {
 
 		Loggers.info(SyncBlockListTask.class, "LongSyncScheme");
 
 		IBlockchainService blockchain = context.getInstance().getBlockchainService();
-		Difficulty beginState = new Difficulty(blockchain.getLastBlock());
+		Block lastBlock = blockchain.getLastBlock();
+		Difficulty beginState = new Difficulty(lastBlock);
 
 		long[] lastBlockIDs = blockchain.getLatestBlocks(Constant.SYNC_SHORT_FRAME);
 		Block[] items = service.getBlockHistory(blockIdEncode(lastBlockIDs));
@@ -230,7 +226,7 @@ public final class SyncBlockListTask implements Runnable {
 		List<Block> linked = getNextBlockchain(commonBlock, items);
 
 		if (linked.size() == 0) {
-			return;
+			return lastBlock;
 		}
 
 		Map<Long, Block> futureBlocks = new HashMap<>();
@@ -271,7 +267,12 @@ public final class SyncBlockListTask implements Runnable {
 					+ newState.getDifficulty());
 		}
 
-		pushBlocks(blockchain, commonBlock, futureBlocks);
+		// There are blocks after the general block
+		if (futureBlocks.isEmpty()) {
+			return lastBlock;
+		}
+
+		return pushBlocks(blockchain, commonBlock, futureBlocks);
 
 	}
 
@@ -322,13 +323,8 @@ public final class SyncBlockListTask implements Runnable {
 		return blockchain.getBlock(commonBlockID);
 	}
 
-	private void pushBlocks(IBlockchainService blockchain, Block commonBlock, Map<Long, Block> futureBlocks)
+	private Block pushBlocks(IBlockchainService blockchain, Block commonBlock, Map<Long, Block> futureBlocks)
 			throws ProtocolException {
-
-		// There are blocks after the general block
-		if (futureBlocks.isEmpty()) {
-			return;
-		}
 
 		if (blockchain.getBlock(commonBlock.getID()) == null)
 			throw new IllegalStateException();
@@ -347,7 +343,7 @@ public final class SyncBlockListTask implements Runnable {
 		Difficulty targetState = new Difficulty(maxBlock);
 
 		if (targetState.compareTo(currentState) <= 0) {
-			return;
+			return lastBlock;
 		}
 
 		Loggers.trace(SyncBlockListTask.class, "Last block: [{}]{}. Common block: [{}]{}.", lastBlock.getHeight(),
@@ -408,6 +404,8 @@ public final class SyncBlockListTask implements Runnable {
 				throw new ProtocolException(
 						"Failed to sync. Before: " + currentState.getDifficulty() + ", after: " + diff.getDifficulty());
 			}
+
+			return currBlock;
 
 		} catch (Throwable e) {
 			uow.rollback();

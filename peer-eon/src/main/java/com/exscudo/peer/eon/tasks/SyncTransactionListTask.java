@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 import com.exscudo.peer.core.Constant;
-import com.exscudo.peer.core.Fork;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.exceptions.LifecycleException;

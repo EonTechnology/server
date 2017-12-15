@@ -1,20 +1,18 @@
 package com.exscudo.eon.IT;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.time.Instant;
 
+import com.exscudo.eon.cfg.Fork;
+import com.exscudo.eon.cfg.ForkInitializer;
 import com.exscudo.peer.core.Constant;
-import com.exscudo.peer.core.Fork;
-import com.exscudo.peer.core.ForkProvider;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Transaction;
-import com.exscudo.peer.core.services.ITransactionHandler;
 import com.exscudo.peer.core.utils.Format;
 import com.exscudo.peer.eon.Peer;
 import com.exscudo.peer.eon.TimeProvider;
-import com.exscudo.peer.eon.TransactionHandlerDecorator;
-import com.exscudo.peer.eon.TransactionType;
 import com.exscudo.peer.eon.transactions.Payment;
+import com.exscudo.peer.store.sqlite.Storage;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
@@ -27,8 +25,8 @@ import org.mockito.Mockito;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ForkTest1IT {
 
-	protected static String GENERATOR = "55373380ff77987646b816450824310fb377c1a14b6f725b94382af3cf7b788a";
-	protected static String GENERATOR2 = "dd6403d520afbfadeeff0b1bb49952440b767663454ab1e5f1a358e018cf9c73";
+	protected static String GENERATOR = "eba54bbb2dd6e55c466fac09707425145ca8560fe40de3fa3565883f4d48779e";
+	protected static String GENERATOR2 = "d2005ef0df1f6926082aefa09917874cfb212d1ff4eb55c78f670ef9dd23ef6c";
 	protected TimeProvider mockTimeProvider;
 	protected Fork forkState1;
 	protected Fork forkState2;
@@ -46,51 +44,37 @@ public class ForkTest1IT {
 
 	@Before
 	public void setUp() throws Exception {
+
 		mockTimeProvider = Mockito.mock(TimeProvider.class);
-		ctx1 = new PeerContext(GENERATOR, mockTimeProvider);
-		ctx2 = new PeerContext(GENERATOR2, mockTimeProvider);
 
-		Block lastBlock = ctx1.context.getInstance().getBlockchainService().getLastBlock();
+		Storage storage1 = Utils.createStorage();
+		long timestamp = Utils.getLastBlock(storage1).getTimestamp();
 
-		long genesisBlockID = ForkProvider.getInstance().getGenesisBlockID();
+		String i1_begin = getTimeString(timestamp - 1);
+		String i1_end = getTimeString(timestamp + ForkTest1IT.BEGIN);
+		String i2_begin = i1_end;
+		String i2_end = getTimeString(timestamp + ForkTest1IT.END);
+		String i3_begin = i2_end;
+		String i3_end = getTimeString(timestamp + ForkTest1IT.END2);
 
-		ITransactionHandler txHandler = new TransactionHandlerDecorator(new HashMap<Integer, ITransactionHandler>() {
-			private static final long serialVersionUID = 3518338953704623292L;
+		forkState1 = new Fork(Utils.getGenesisBlockID(storage1),
+				new Fork.Item[] {
+						new Fork.Item(ForkTest1IT.FORK - 1, i1_begin, i1_end, ForkInitializer.items[0].handler, 1),
+						new Fork.Item(ForkTest1IT.FORK, i2_begin, i2_end, ForkInitializer.items[1].handler, 1) });
+		ctx1 = new PeerContext(GENERATOR, mockTimeProvider, storage1, forkState1);
 
-			{
-				put(TransactionType.AccountRegistration,
-						new com.exscudo.peer.eon.transactions.handlers.AccountRegistrationHandler());
-				put(TransactionType.OrdinaryPayment,
-						new com.exscudo.peer.eon.transactions.handlers.OrdinaryPaymentHandler());
-				put(TransactionType.DepositRefill,
-						new com.exscudo.peer.eon.transactions.handlers.DepositRefillHandler());
-				put(TransactionType.DepositWithdraw,
-						new com.exscudo.peer.eon.transactions.handlers.DepositWithdrawHandler());
-			}
-		});
+		Storage storage2 = Utils.createStorage();
+		forkState2 = new Fork(Utils.getGenesisBlockID(storage2),
+				new Fork.Item[] {
+						new Fork.Item(ForkTest1IT.FORK - 1, i1_begin, i1_end, ForkInitializer.items[0].handler, 1),
+						new Fork.Item(ForkTest1IT.FORK, i2_begin, i2_end, ForkInitializer.items[1].handler, 1),
+						new Fork.Item(ForkTest1IT.FORK + 1, i3_begin, i3_end, ForkInitializer.items[1].handler, 1) });
+		ctx2 = new PeerContext(GENERATOR2, mockTimeProvider, storage2, forkState2);
 
-		forkState1 = new Fork(genesisBlockID, new ArrayList<Fork.Item>() {
-			private static final long serialVersionUID = 1L;
-			{
-				add(new Fork.Item(ForkTest1IT.FORK - 1, (lastBlock.getTimestamp() - 1) * 1000L,
-						(lastBlock.getTimestamp() + ForkTest1IT.BEGIN) * 1000L, new int[] { 1 }, txHandler, 1));
-				add(new Fork.Item(ForkTest1IT.FORK, (lastBlock.getTimestamp() + ForkTest1IT.BEGIN) * 1000L,
-						(lastBlock.getTimestamp() + ForkTest1IT.END) * 1000L, new int[] { 1, 2 }, txHandler, 1));
-			}
-		});
+	}
 
-		forkState2 = new Fork(genesisBlockID, new ArrayList<Fork.Item>() {
-			private static final long serialVersionUID = 1L;
-			{
-				add(new Fork.Item(ForkTest1IT.FORK, (lastBlock.getTimestamp() + ForkTest1IT.BEGIN - 1) * 1000L,
-						(lastBlock.getTimestamp() + ForkTest1IT.END) * 1000L, new int[] { 1 }, txHandler, 1));
-				add(new Fork.Item(ForkTest1IT.FORK + 1, (lastBlock.getTimestamp() + ForkTest1IT.END) * 1000L,
-						(lastBlock.getTimestamp() + ForkTest1IT.END2) * 1000L, new int[] { 1, 2 }, txHandler, 1));
-			}
-		});
-
-		Mockito.when(ctx1.context.getCurrentFork()).thenReturn(forkState1);
-		Mockito.when(ctx2.context.getCurrentFork()).thenReturn(forkState2);
+	private String getTimeString(long timestamp) {
+		return Instant.ofEpochMilli((timestamp) * 1000L).toString();
 	}
 
 	@Test
@@ -244,9 +228,9 @@ public class ForkTest1IT {
 			Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 1);
 
 			Transaction tx1 = Payment.newPayment(100L, Format.MathID.pick(ctx2.getSigner().getPublicKey())).forFee(1L)
-					.validity(lastBlock.getTimestamp(), 3600).build(ctx1.getSigner());
+					.validity(lastBlock.getTimestamp(), 3600, 1).build(ctx1.getSigner());
 			Transaction tx2 = Payment.newPayment(100L, Format.MathID.pick(ctx2.getSigner().getPublicKey())).forFee(1L)
-					.validity(lastBlock.getTimestamp() + 1, 3600).build(ctx1.getSigner());
+					.validity(lastBlock.getTimestamp() + 1, 3600, 1).build(ctx1.getSigner());
 
 			ctx1.transactionBotService.putTransaction(tx1);
 			ctx2.transactionBotService.putTransaction(tx2);
@@ -347,8 +331,6 @@ public class ForkTest1IT {
 
 	@Test
 	public void step_6_tran_version_checked() throws Exception {
-
-		ForkProvider.init(forkState1);
 
 		Block lastBlock = ctx1.context.getInstance().getBlockchainService().getLastBlock();
 

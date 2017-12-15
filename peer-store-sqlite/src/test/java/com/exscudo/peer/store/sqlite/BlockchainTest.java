@@ -14,7 +14,7 @@ public class BlockchainTest {
 	@Before
 	public void setUp() throws Exception {
 		Storage storage = new Storage(ConnectionUtils.create("/com/exscudo/peer/store/sqlite/blocks_test.sql"));
-		blockchain = new Blockchain(storage);
+		blockchain = new Blockchain(storage, null);
 	}
 
 	@Test

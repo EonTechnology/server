@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import com.dampcake.bencode.Bencode;
 import com.dampcake.bencode.Type;
@@ -22,9 +21,8 @@ import com.exscudo.peer.core.services.ILedger;
 import com.exscudo.peer.core.utils.Format;
 import com.exscudo.peer.core.utils.Loggers;
 import com.exscudo.peer.eon.Account;
-import com.exscudo.peer.eon.transactions.utils.AccountAttributes;
-import com.exscudo.peer.eon.transactions.utils.AccountBalance;
-import com.exscudo.peer.eon.transactions.utils.AccountDeposit;
+import com.exscudo.peer.eon.state.serialization.PropertyType;
+import com.exscudo.peer.eon.transactions.utils.AccountProperties;
 import com.exscudo.peer.store.sqlite.ConnectionProxy;
 import com.exscudo.peer.store.sqlite.merkle.Ledgers;
 import com.exscudo.peer.store.sqlite.utils.BlockHelper;
@@ -202,7 +200,7 @@ public class MerkleMigrateAction {
 			statement.setLong(1, id);
 			statement.setInt(2, blockHeight);
 
-			Map<UUID, AccountProperty> properties = new HashMap<>();
+			Map<String, AccountProperty> properties = new HashMap<>();
 			ResultSet set = statement.executeQuery();
 			while (set.next()) {
 
@@ -214,11 +212,11 @@ public class MerkleMigrateAction {
 					map = bencode.decode(value.getBytes(), Type.DICTIONARY);
 				}
 
-				UUID type = UUID.fromString(set.getString("type"));
-				if (type.equals(AccountAttributes.ID) || type.equals(AccountDeposit.ID)
-						|| type.equals(AccountBalance.ID)) {
+				String type = set.getString("type");
+				if (type.equals(PropertyType.REGISTRATION) || type.equals(PropertyType.DEPOSIT)
+						|| type.equals(PropertyType.BALANCE)) {
 
-					if (type.equals(AccountDeposit.ID)) {
+					if (type.equals(PropertyType.DEPOSIT)) {
 						map.put("height", set.getInt("height"));
 					}
 
@@ -240,7 +238,7 @@ public class MerkleMigrateAction {
 	private static boolean validateAccount(IAccount account) {
 
 		try {
-			return (account.getID() == Format.MathID.pick(AccountAttributes.getPublicKey(account)));
+			return (account.getID() == Format.MathID.pick(AccountProperties.getPublicKey(account)));
 		} catch (Exception ignore) {
 			Loggers.error(MerkleMigrateAction.class, ignore);
 			return false;
@@ -281,10 +279,10 @@ public class MerkleMigrateAction {
 					map = bencode.decode(value.getBytes(), Type.DICTIONARY);
 				}
 
-				UUID type = UUID.fromString(set.getString("type"));
-				if (type.equals(AccountAttributes.ID) || type.equals(AccountDeposit.ID)
-						|| type.equals(AccountBalance.ID)) {
-					if (type.equals(AccountDeposit.ID)) {
+				String type = set.getString("type");
+				if (type.equals(PropertyType.REGISTRATION) || type.equals(PropertyType.DEPOSIT)
+						|| type.equals(PropertyType.BALANCE)) {
+					if (type.equals(PropertyType.DEPOSIT)) {
 						map.put("height", set.getInt("height"));
 					}
 					account.putProperty(new AccountProperty(type, map));

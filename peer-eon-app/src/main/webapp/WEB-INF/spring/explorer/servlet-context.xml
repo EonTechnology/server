@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	<bean name="Service" class="com.exscudo.eon.jsonrpc.JrpcService">
+		<constructor-arg>
+			<map key-type="java.lang.String">
+				<entry key="accounts">
+					<!-- IAccount Service -->
+					<bean class="com.exscudo.eon.bot.AccountService">
+						<constructor-arg ref="storage"/>
+					</bean>
+				</entry>
+				<entry key="explorer">
+					<!-- Blockchain explorer Service -->
+					<bean class="com.exscudo.eon.explorer.BlockchainExplorerService">
+						<constructor-arg ref="storage"/>
+					</bean>
+				</entry>
+			</map>
+		</constructor-arg>
+	</bean>
+
+</beans>

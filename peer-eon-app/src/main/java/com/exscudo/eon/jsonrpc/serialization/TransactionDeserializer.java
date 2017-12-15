@@ -4,8 +4,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.exscudo.peer.core.crypto.mapper.TransactionMapper;
 import com.exscudo.peer.core.data.Transaction;
+import com.exscudo.peer.core.data.mapper.transport.TransactionMapper;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;

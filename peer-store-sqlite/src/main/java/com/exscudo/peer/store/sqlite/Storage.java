@@ -6,8 +6,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Objects;
 
-import com.exscudo.peer.core.Fork;
-import com.exscudo.peer.core.ForkProvider;
+import com.exscudo.peer.core.IFork;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.exceptions.DataAccessException;
 import com.exscudo.peer.core.services.IUnitOfWork;
@@ -15,7 +14,6 @@ import com.exscudo.peer.store.sqlite.lock.ILockManager;
 import com.exscudo.peer.store.sqlite.lock.ILockableObject;
 import com.exscudo.peer.store.sqlite.lock.PessimisticLockManager;
 import com.exscudo.peer.store.sqlite.utils.BlockHelper;
-import com.exscudo.peer.store.sqlite.utils.ForkHelper;
 import com.exscudo.peer.store.sqlite.utils.SettingHelper;
 import com.exscudo.peer.store.sqlite.utils.SettingName;
 import org.sqlite.SQLiteConfig;
@@ -60,9 +58,6 @@ public class Storage {
 		};
 
 		try {
-
-			Fork fork = ForkHelper.getFork(connection);
-			ForkProvider.init(fork);
 
 			long lastID = Long.parseLong(SettingHelper.getValue(connection, SettingName.lastBlockID), 10);
 			Block lastBlock = BlockHelper.get(connection, lastID);
@@ -116,8 +111,8 @@ public class Storage {
 		return lockObject(blockRoot);
 	}
 
-	public IUnitOfWork createUnitOfWork(Block block) {
-		UnitOfWork uow = new UnitOfWork(this);
+	public IUnitOfWork createUnitOfWork(Block block, IFork fork) {
+		UnitOfWork uow = new UnitOfWork(this, fork);
 		try {
 			uow.begin(block);
 		} catch (Throwable e) {

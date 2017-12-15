@@ -58,7 +58,7 @@ public final class GenerateBlockTask extends BaseTask implements Runnable {
 			if (elapsedTime > Constant.BLOCK_PERIOD) {
 
 				// New block creating...
-				Block newBlock = instance.getGenerator().createNextBlock(lastCreatedBlock);
+				Block newBlock = instance.getGenerator().createNextBlock(lastCreatedBlock, context.getCurrentFork());
 				if (newBlock == null) {
 					Loggers.warning(GenerateBlockTask.class, "Unable to create new block.");
 					return;

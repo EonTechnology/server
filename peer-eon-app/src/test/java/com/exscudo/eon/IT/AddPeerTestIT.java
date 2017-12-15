@@ -2,6 +2,10 @@ package com.exscudo.eon.IT;
 
 import java.io.IOException;
 
+import com.exscudo.peer.core.IFork;
+import com.exscudo.peer.core.data.Block;
+import com.exscudo.peer.core.exceptions.RemotePeerException;
+import com.exscudo.peer.eon.TimeProvider;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
@@ -9,17 +13,12 @@ import org.junit.Test;
 import org.junit.runners.MethodSorters;
 import org.mockito.Mockito;
 
-import com.exscudo.peer.core.Fork;
-import com.exscudo.peer.core.data.Block;
-import com.exscudo.peer.core.exceptions.RemotePeerException;
-import com.exscudo.peer.eon.TimeProvider;
-
 @SuppressWarnings("WeakerAccess")
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class AddPeerTestIT {
 
-	protected static String GENERATOR = "55373380ff77987646b816450824310fb377c1a14b6f725b94382af3cf7b788a";
-	protected static String GENERATOR2 = "dd6403d520afbfadeeff0b1bb49952440b767663454ab1e5f1a358e018cf9c73";
+	protected static String GENERATOR = "eba54bbb2dd6e55c466fac09707425145ca8560fe40de3fa3565883f4d48779e";
+	protected static String GENERATOR2 = "d2005ef0df1f6926082aefa09917874cfb212d1ff4eb55c78f670ef9dd23ef6c";
 	TimeProvider mockTimeProvider;
 
 	protected PeerContext ctx1;
@@ -28,6 +27,7 @@ public class AddPeerTestIT {
 	@Before
 	public void setUp() throws Exception {
 		mockTimeProvider = Mockito.mock(TimeProvider.class);
+
 		ctx1 = new PeerContext(GENERATOR, mockTimeProvider);
 		ctx2 = new PeerContext(GENERATOR2, mockTimeProvider);
 
@@ -87,7 +87,7 @@ public class AddPeerTestIT {
 	@Test
 	public void step_4_IncorrectNetwork() throws IOException, RemotePeerException {
 
-		Fork fork = Mockito.spy(ctx2.context.getCurrentFork());
+		IFork fork = Mockito.spy(ctx2.context.getCurrentFork());
 		Mockito.when(fork.getGenesisBlockID()).thenReturn(0L);
 		Mockito.when(ctx2.context.getCurrentFork()).thenReturn(fork);
 
@@ -102,7 +102,7 @@ public class AddPeerTestIT {
 	@Test
 	public void step_5_IncorrectFork() throws IOException, RemotePeerException {
 
-		Fork fork = Mockito.spy(ctx2.context.getCurrentFork());
+		IFork fork = Mockito.spy(ctx2.context.getCurrentFork());
 		Mockito.when(fork.getNumber(Mockito.anyInt())).thenReturn(5);
 		Mockito.when(ctx2.context.getCurrentFork()).thenReturn(fork);
 

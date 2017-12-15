@@ -3,7 +3,6 @@ package com.exscudo.peer.eon;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 import com.exscudo.peer.core.services.AccountProperty;
 import com.exscudo.peer.core.services.IAccount;
@@ -15,7 +14,7 @@ import com.exscudo.peer.core.services.IAccount;
  */
 public class Account implements IAccount {
 	private final long id;
-	private final Map<UUID, AccountProperty> properties = new HashMap<>();
+	private final Map<String, AccountProperty> properties = new HashMap<>();
 
 	public Account(long id) {
 		this.id = id;
@@ -39,8 +38,8 @@ public class Account implements IAccount {
 	}
 
 	@Override
-	public AccountProperty getProperty(UUID uuid) {
-		return properties.get(uuid);
+	public AccountProperty getProperty(String id) {
+		return properties.get(id);
 	}
 
 	@Override
@@ -53,4 +52,8 @@ public class Account implements IAccount {
 		return properties.values();
 	}
 
+	@Override
+	public void removeProperty(String id) {
+		properties.remove(id);
+	}
 }

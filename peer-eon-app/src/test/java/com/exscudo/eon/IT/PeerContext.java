@@ -3,20 +3,20 @@ package com.exscudo.eon.IT;
 import java.io.IOException;
 import java.sql.SQLException;
 
-import org.mockito.Mockito;
-
 import com.exscudo.eon.bot.AccountService;
 import com.exscudo.eon.bot.TransactionService;
+import com.exscudo.eon.cfg.EngineConfigurator;
 import com.exscudo.eon.jsonrpc.ObjectMapperProvider;
 import com.exscudo.peer.core.Constant;
+import com.exscudo.peer.core.IFork;
 import com.exscudo.peer.core.crypto.CryptoProvider;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Difficulty;
 import com.exscudo.peer.core.data.Transaction;
+import com.exscudo.peer.core.data.mapper.crypto.SignedObjectMapper;
 import com.exscudo.peer.core.exceptions.RemotePeerException;
 import com.exscudo.peer.core.services.IBlockSynchronizationService;
 import com.exscudo.peer.core.tasks.SyncBlockListTask;
-import com.exscudo.peer.eon.EngineConfigurator;
 import com.exscudo.peer.eon.ExecutionContext;
 import com.exscudo.peer.eon.IServiceProxyFactory;
 import com.exscudo.peer.eon.PeerInfo;
@@ -35,10 +35,10 @@ import com.exscudo.peer.eon.tasks.PeerConnectTask;
 import com.exscudo.peer.eon.tasks.PeerRemoveTask;
 import com.exscudo.peer.eon.tasks.SyncPeerListTask;
 import com.exscudo.peer.eon.tasks.SyncTransactionListTask;
-import com.exscudo.peer.store.sqlite.Backlog;
 import com.exscudo.peer.store.sqlite.Storage;
 import com.exscudo.peer.store.sqlite.core.Blockchain;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.mockito.Mockito;
 
 class PeerContext {
 	ExecutionContext context;//
@@ -58,17 +58,24 @@ class PeerContext {
 	AccountService accountBotService;
 
 	ISigner signer;
+	IFork fork;
 
-	PeerContext(String seed, TimeProvider timeProvider) throws SQLException, IOException, ClassNotFoundException {
+	PeerContext(String seed, TimeProvider timeProvider)
+			throws ClassNotFoundException, SQLException, IOException {
+		this(seed, timeProvider, Utils.createStorage());
+	}
+	
+	PeerContext(String seed, TimeProvider timeProvider, Storage storage)
+			throws ClassNotFoundException, SQLException, IOException {
+		this(seed, timeProvider, storage, Utils.createFork(storage));
+	}
 
-		Ed25519SignatureVerifier signatureVerifier = new Ed25519SignatureVerifier();
-		CryptoProvider cryptoProvider = CryptoProvider.getInstance();
-		cryptoProvider.addProvider(signatureVerifier);
-		cryptoProvider.setDefaultProvider(signatureVerifier.getName());
+	PeerContext(String seed, TimeProvider timeProvider, Storage storage, IFork fork)
+			throws SQLException, IOException, ClassNotFoundException {
 
 		final ObjectMapper mapper = ObjectMapperProvider.createDefaultMapper();
-
-		signer = new Ed25519Signer(seed);
+		this.signer = new Ed25519Signer(seed);
+		this.fork = fork;
 
 		EngineConfigurator configurator = new EngineConfigurator();
 		configurator.setHost(new ExecutionContext.Host("0"));
@@ -76,11 +83,16 @@ class PeerContext {
 		configurator.setInnerPeers(new String[] {});
 		configurator.setTimeProvider(timeProvider);
 		configurator.setSigner(signer);
+		configurator.setFork(fork);
+		configurator.setBlockchain(new Blockchain(storage, fork));
+		configurator.setBacklog(storage.getBacklog());
 
-		Storage connector = Storage.create("jdbc:sqlite:", new TestInitializer());
-		connector.setBacklog(new Backlog());
-		configurator.setBlockchain(new Blockchain(connector));
-		configurator.setBacklog(connector.getBacklog());
+		long networkID = fork.getGenesisBlockID();
+		Ed25519SignatureVerifier signatureVerifier = new Ed25519SignatureVerifier();
+		CryptoProvider cryptoProvider = new CryptoProvider(new SignedObjectMapper(networkID));
+		cryptoProvider.addProvider(signatureVerifier);
+		cryptoProvider.setDefaultProvider(signatureVerifier.getName());
+		CryptoProvider.init(cryptoProvider);
 
 		context = Mockito.spy(configurator.build());
 
@@ -157,7 +169,7 @@ class PeerContext {
 
 		};
 
-		accountBotService = new AccountService(connector);
+		accountBotService = new AccountService(storage);
 		transactionBotService = new TransactionService(context);
 		syncTransactionListTask = new SyncTransactionListTask(context);
 

@@ -1,5 +1,6 @@
 package com.exscudo.peer.eon.transactions;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import com.exscudo.peer.core.data.Transaction;
@@ -8,9 +9,8 @@ import com.exscudo.peer.eon.EonConstant;
 import com.exscudo.peer.eon.crypto.ISigner;
 
 /**
- * Constructor to build a new transaction.
- * <b>
- * The allows base fields of the resulting transaction to be configured
+ * Constructor to build a new transaction. <b> The allows base fields of the
+ * resulting transaction to be configured
  */
 public class TransactionBuilder {
 
@@ -23,6 +23,14 @@ public class TransactionBuilder {
 
 	public TransactionBuilder(int type, Map<String, Object> data) {
 		this.type = type;
+		this.data = data;
+	}
+
+	protected TransactionBuilder(int type) {
+		this.type = type;
+	}
+
+	protected void setData(Map<String, Object> data) {
 		this.data = data;
 	}
 
@@ -62,6 +70,19 @@ public class TransactionBuilder {
 
 		return tx;
 
+	}
+
+	public Transaction build(ISigner signer, ISigner[] delegates) throws Exception {
+		Transaction tx = build(signer);
+		byte[] bytes = tx.getBytes();
+		HashMap<String, Object> confirmation = new HashMap<>();
+		for (ISigner s : delegates) {
+			long id = Format.MathID.pick(s.getPublicKey());
+			byte[] signature = s.sign(bytes);
+			confirmation.put(Format.ID.accountId(id), Format.convert(signature));
+		}
+		tx.setConfirmations(confirmation);
+		return tx;
 	}
 
 }

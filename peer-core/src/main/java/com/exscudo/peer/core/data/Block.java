@@ -21,7 +21,6 @@ public class Block extends SignedMessage implements Serializable {
 	protected byte[] generationSignature;
 
 	protected int height;
-	protected long nextBlock;
 	protected List<Transaction> transactions;
 	protected BigInteger cumulativeDifficulty;
 	protected byte[] snapshot;
@@ -128,24 +127,6 @@ public class Block extends SignedMessage implements Serializable {
 	 */
 	public Collection<Transaction> getTransactions() {
 		return new ArrayList<>(this.transactions);
-	}
-
-	/**
-	 * Returns the ID of the next block.
-	 *
-	 * @return
-	 */
-	public long getNextBlock() {
-		return nextBlock;
-	}
-
-	/**
-	 * Sets the ID of the next block.
-	 *
-	 * @param blockId
-	 */
-	public void setNextBlock(long blockId) {
-		nextBlock = blockId;
 	}
 
 	/**

@@ -112,7 +112,7 @@ public class JrpcService {
 				}
 			}
 
-			if (version.equals("2.0")) {
+			if (String.valueOf(version).equals("2.0")) {
 
 				String[] split = methodName.split("\\.");
 				Object innerService = innerServices.get(split[0]);

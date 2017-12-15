@@ -2,7 +2,7 @@ package com.exscudo.peer.eon.tasks;
 
 import java.io.IOException;
 
-import com.exscudo.peer.core.Fork;
+import com.exscudo.peer.core.IFork;
 import com.exscudo.peer.core.exceptions.RemotePeerException;
 import com.exscudo.peer.core.utils.Format;
 import com.exscudo.peer.core.utils.Loggers;
@@ -64,7 +64,7 @@ public final class PeerConnectTask extends BaseTask implements Runnable {
 
 				// Checks the instance of network. Different network instances
 				// has different genesis-blocks.
-				Fork hardFork = context.getCurrentFork();
+				IFork hardFork = context.getCurrentFork();
 				if (!Format.ID.blockId(hardFork.getGenesisBlockID()).equals(remoteAttributes.getNetworkID())) {
 					Loggers.info(PeerConnectTask.class, "Different NetworkID. \"{}\".", peer);
 					return;
@@ -73,8 +73,7 @@ public final class PeerConnectTask extends BaseTask implements Runnable {
 				// Connects only a nodes with known hard-forks.
 				int forkNumber = hardFork.getNumber(instance.getBlockchainService().getLastBlock().getTimestamp());
 				int forkNumberReal = hardFork.getNumber(context.getCurrentTime());
-				if (!((forkNumber == remoteAttributes.getFork() && forkNumber != -1)
-						|| (forkNumberReal == remoteAttributes.getFork() && forkNumberReal != -1))) {
+				if (forkNumber != remoteAttributes.getFork() && forkNumberReal != remoteAttributes.getFork()) {
 					Loggers.info(PeerConnectTask.class, "Incorrect fork. \"{}\".", peer);
 					return;
 				}

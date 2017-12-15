@@ -7,16 +7,23 @@ import java.util.Objects;
  * Provide cryptography algorithms
  */
 public class CryptoProvider {
-	private static CryptoProvider instance = new CryptoProvider();
+	private static CryptoProvider instance;
 
 	private HashMap<String, ISignatureVerifier> verifierSet;
 	private String defaultName;
+	private ISignedObjectMapper objectMapper;
 
-	private CryptoProvider() {
+	public CryptoProvider(ISignedObjectMapper mapper) {
 		verifierSet = new HashMap<>();
+		objectMapper = mapper;
+	}
+
+	public static void init(CryptoProvider cryptoProvider) {
+		instance = cryptoProvider;
 	}
 
 	public static CryptoProvider getInstance() {
+		Objects.requireNonNull(instance, "The CryptoProvider has not been initialized.");
 		return instance;
 	}
 
@@ -161,17 +168,7 @@ public class CryptoProvider {
 	 * @return bytes
 	 */
 	byte[] getBytes(SignedObject obj) {
-		return BencodeMessage.getBytes(obj);
+		return BencodeFormatter.getBytes(objectMapper.convert(obj));
 	}
 
-	/**
-	 * Get object length
-	 * 
-	 * @param obj
-	 *            object
-	 * @return length
-	 */
-	int getLength(SignedObject obj) {
-		return BencodeMessage.getLength(obj);
-	}
 }

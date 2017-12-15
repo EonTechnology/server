@@ -1,5 +1,13 @@
 package com.exscudo.peer.store.sqlite.utils;
 
+import com.dampcake.bencode.Bencode;
+import com.dampcake.bencode.Type;
+import com.exscudo.peer.core.data.Transaction;
+import com.exscudo.peer.core.exceptions.DataAccessException;
+import com.exscudo.peer.core.utils.Format;
+import com.exscudo.peer.eon.TransactionType;
+import com.exscudo.peer.store.sqlite.ConnectionProxy;
+
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -7,29 +15,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import com.dampcake.bencode.Bencode;
-import com.dampcake.bencode.Type;
-import com.exscudo.peer.core.data.Transaction;
-import com.exscudo.peer.core.exceptions.DataAccessException;
-import com.exscudo.peer.core.utils.Format;
-import com.exscudo.peer.store.sqlite.ConnectionProxy;
-
 /**
  * Management transactions in DB
  */
 @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
 public class TransactionHelper {
 
-	static final String SELECT_TRANSACTIONS_SQL = "select \"id\", \"type\", \"version\", \"timestamp\", \"deadline\", \"sender\", \"recipient\", \"fee\", \"referencedTransaction\", \"signature\", \"attachment\", \"block\", \"height\" from \"transaction\" ";
+	static final String SELECT_TRANSACTIONS_SQL = "select \"id\", \"type\", \"version\", \"timestamp\", \"deadline\", \"sender\", \"recipient\", \"fee\", \"referencedTransaction\", \"signature\", \"attachment\", \"block\", \"height\", \"confirmation\" from \"transaction\" ";
 
 	/**
 	 * Read transaction from DB row
 	 *
-	 * @param set
-	 *            row to read
+	 * @param set row to read
 	 * @return transaction from row
-	 * @throws SQLException
-	 *             problems with the DB
+	 * @throws SQLException problems with the DB
 	 */
 	static Transaction getTransactionFromRow(ResultSet set) throws SQLException {
 
@@ -49,6 +48,13 @@ public class TransactionHelper {
 			data = bencode.decode(attachmentText.getBytes(), Type.DICTIONARY);
 		}
 
+		Map<String, Object> confirmations = null;
+		String confirmationText = set.getString("confirmation");
+		if (confirmationText != null && confirmationText.length() > 0) {
+			Bencode bencode = new Bencode();
+			confirmations = bencode.decode(confirmationText.getBytes(), Type.DICTIONARY);
+		}
+
 		Transaction transaction = new Transaction();
 		transaction.setType(type);
 		transaction.setVersion(version);
@@ -61,6 +67,7 @@ public class TransactionHelper {
 		transaction.setSignature(signature);
 		transaction.setBlock(set.getLong("block"));
 		transaction.setHeight(set.getInt("height"));
+		transaction.setConfirmations(confirmations);
 
 		return transaction;
 	}
@@ -68,13 +75,10 @@ public class TransactionHelper {
 	/**
 	 * Read transaction from DB
 	 *
-	 * @param db
-	 *            data connection
-	 * @param id
-	 *            transaction id
+	 * @param db data connection
+	 * @param id transaction id
 	 * @return transaction or null if transaction not exist
-	 * @throws DataAccessException
-	 *             problems with the DB
+	 * @throws DataAccessException problems with the DB
 	 */
 	public static Transaction get(ConnectionProxy db, final long id) throws DataAccessException {
 
@@ -106,13 +110,10 @@ public class TransactionHelper {
 	/**
 	 * Check if transaction exists
 	 *
-	 * @param db
-	 *            data connection
-	 * @param id
-	 *            transaction id
+	 * @param db data connection
+	 * @param id transaction id
 	 * @return true if transaction exists, otherwise false
-	 * @throws DataAccessException
-	 *             problems with the DB
+	 * @throws DataAccessException problems with the DB
 	 */
 	public static boolean contains(ConnectionProxy db, long id) throws DataAccessException {
 
@@ -145,12 +146,9 @@ public class TransactionHelper {
 	/**
 	 * Save transaction to DB
 	 *
-	 * @param db
-	 *            data connection
-	 * @param transaction
-	 *            transaction to save
-	 * @throws DataAccessException
-	 *             problems with the DB
+	 * @param db          data connection
+	 * @param transaction transaction to save
+	 * @throws DataAccessException problems with the DB
 	 */
 	public static void save(ConnectionProxy db, final Transaction transaction) throws DataAccessException {
 
@@ -168,8 +166,20 @@ public class TransactionHelper {
 				recipientID = Format.ID.accountId(transaction.getData().get("recipient").toString());
 			}
 
+			if (transaction.getType() == TransactionType.AccountRegistration){
+				String accountId = transaction.getData().keySet().iterator().next();
+				recipientID = Format.ID.accountId(accountId);
+			}
+
+			String confirmations = "";
+			if (transaction.getConfirmations() != null) {
+				Bencode bencode = new Bencode();
+				byte[] encoded = bencode.encode(transaction.getConfirmations());
+				confirmations = new String(encoded, bencode.getCharset());
+			}
+
 			PreparedStatement saveStatement = db.prepareStatement(
-					"INSERT OR REPLACE INTO \"transaction\" (\"id\", \"type\", \"timestamp\", \"deadline\", \"sender\", \"recipient\", \"fee\", \"referencedTransaction\", \"signature\", \"attachment\", \"block\", \"height\", \"version\")\nVALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
+					"INSERT OR REPLACE INTO \"transaction\" (\"id\", \"type\", \"timestamp\", \"deadline\", \"sender\", \"recipient\", \"fee\", \"referencedTransaction\", \"signature\", \"attachment\", \"block\", \"height\", \"version\", \"confirmation\")\nVALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
 			synchronized (saveStatement) {
 				saveStatement.setLong(1, transaction.getID());
 				saveStatement.setInt(2, transaction.getType());
@@ -184,6 +194,8 @@ public class TransactionHelper {
 				saveStatement.setLong(11, transaction.getBlock());
 				saveStatement.setInt(12, transaction.getHeight());
 				saveStatement.setInt(13, transaction.getVersion());
+				saveStatement.setString(14, confirmations);
+
 
 				saveStatement.executeUpdate();
 			}
@@ -197,12 +209,9 @@ public class TransactionHelper {
 	/**
 	 * Remove transaction from DB
 	 *
-	 * @param db
-	 *            data connection
-	 * @param id
-	 *            transaction id
-	 * @throws DataAccessException
-	 *             problems with the DB
+	 * @param db data connection
+	 * @param id transaction id
+	 * @throws DataAccessException problems with the DB
 	 */
 	public static void remove(ConnectionProxy db, final long id) throws DataAccessException {
 
@@ -225,14 +234,11 @@ public class TransactionHelper {
 	/**
 	 * Find all transactions for account
 	 *
-	 * @param db
-	 *            data connection
-	 * @param accountId
-	 *            account id
+	 * @param db        data connection
+	 * @param accountId account id
 	 * @return transaction map. Empty if user does not exist or has not sent any
-	 *         transaction.
-	 * @throws DataAccessException
-	 *             problems with the DB
+	 * transaction.
+	 * @throws DataAccessException problems with the DB
 	 */
 	public static List<Transaction> findByAccount(ConnectionProxy db, long accountId, long from, int limit)
 			throws DataAccessException {
@@ -255,14 +261,39 @@ public class TransactionHelper {
 		}
 	}
 
+	public static Transaction findRegTransaction(ConnectionProxy db, long accountId) {
+		try {
+
+			PreparedStatement statement = db.prepareStatement(SELECT_TRANSACTIONS_SQL
+					+ " where \"type\" = ?1 and \"recipient\" = ?2");
+			synchronized (statement) {
+
+				statement.setInt(1, TransactionType.AccountRegistration);
+				statement.setLong(2, accountId);
+
+				ResultSet set = statement.executeQuery();
+
+				if (set.next()) {
+
+					Transaction transaction = getTransactionFromRow(set);
+					set.close();
+
+					return transaction;
+				}
+
+				return null;
+			}
+		} catch (Exception e) {
+			throw new DataAccessException(e);
+		}
+	}
+
 	/**
 	 * Read all transactions from PreparedStatement
 	 *
-	 * @param statement
-	 *            query to read
+	 * @param statement query to read
 	 * @return transaction map
-	 * @throws SQLException
-	 *             problems with the DB
+	 * @throws SQLException problems with the DB
 	 */
 	private static List<Transaction> readTransactionSet(PreparedStatement statement) throws SQLException {
 		ResultSet set = statement.executeQuery();

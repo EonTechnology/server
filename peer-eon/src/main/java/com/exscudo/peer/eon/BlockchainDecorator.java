@@ -42,7 +42,7 @@ public class BlockchainDecorator implements IBlockchainService {
 
 	@Override
 	public Block getBlockByHeight(int height) {
-		return blockchain.getBlock(height);
+		return blockchain.getBlockByHeight(height);
 	}
 
 	@Override

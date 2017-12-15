@@ -3,7 +3,7 @@ package com.exscudo.peer.store.sqlite;
 import java.util.Arrays;
 
 import com.exscudo.peer.core.Constant;
-import com.exscudo.peer.core.ForkProvider;
+import com.exscudo.peer.core.IFork;
 import com.exscudo.peer.core.crypto.CryptoProvider;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Difficulty;
@@ -13,13 +13,17 @@ import com.exscudo.peer.core.exceptions.IllegalSignatureException;
 import com.exscudo.peer.core.exceptions.LifecycleException;
 import com.exscudo.peer.core.exceptions.ValidateException;
 import com.exscudo.peer.core.services.IAccount;
+import com.exscudo.peer.core.services.ILedger;
+import com.exscudo.peer.core.services.ITransactionHandler;
 import com.exscudo.peer.core.services.IUnitOfWork;
+import com.exscudo.peer.core.services.TransactionContext;
 import com.exscudo.peer.core.utils.Format;
 import com.exscudo.peer.eon.DifficultyHelper;
 import com.exscudo.peer.eon.EonConstant;
-import com.exscudo.peer.eon.Sandbox;
-import com.exscudo.peer.eon.transactions.utils.AccountAttributes;
-import com.exscudo.peer.eon.transactions.utils.AccountDeposit;
+import com.exscudo.peer.eon.transactions.rules.ValidationResult;
+import com.exscudo.peer.eon.state.Balance;
+import com.exscudo.peer.eon.state.GeneratingBalance;
+import com.exscudo.peer.eon.transactions.utils.AccountProperties;
 import com.exscudo.peer.store.sqlite.merkle.CachedLedger;
 import com.exscudo.peer.store.sqlite.merkle.Ledgers;
 import com.exscudo.peer.store.sqlite.utils.BlockHelper;
@@ -106,10 +110,12 @@ public class UnitOfWork implements IUnitOfWork {
 	};
 
 	private CachedLedger ledger;
+	private IFork fork;
 
-	public UnitOfWork(Storage connector) {
+	public UnitOfWork(Storage connector, IFork fork) {
 		this.connector = connector;
 		this.connection = connector.getConnection();
+		this.fork = fork;
 	}
 
 	void begin(Block block) {
@@ -133,10 +139,6 @@ public class UnitOfWork implements IUnitOfWork {
 			throw new IllegalStateException("There should be current block exist.");
 		}
 
-		if (currBlock.getNextBlock() != 0) {
-			throw new IllegalStateException("There should be no reference to next block.");
-		}
-
 		Block block = blockSet.get(blockId);
 		while (currBlock.getID() != blockId) {
 			if (currBlock.getHeight() <= block.getHeight()) {
@@ -154,7 +156,6 @@ public class UnitOfWork implements IUnitOfWork {
 
 		}
 
-		block.setNextBlock(0);
 		blockSet.put(blockId, block);
 
 		headBlock = block;
@@ -219,98 +220,168 @@ public class UnitOfWork implements IUnitOfWork {
 	@Override
 	public Block pushBlock(Block newBlock) throws ValidateException {
 
-		ensureValid(newBlock);
-		headBlock = saveBlock(headBlock, newBlock);
-		ledger.analyze();
-		return headBlock;
-	}
-
-	private void ensureValid(Block newBlock) throws ValidateException {
-
 		// version
-		int version = ForkProvider.getInstance().getBlockVersion(newBlock.getTimestamp());
+		int version = fork.getBlockVersion(newBlock.getTimestamp());
 		if (version != newBlock.getVersion()) {
 			throw new ValidateException("Unsupported block version.");
 		}
 
-		// timestamp
-		int timestamp = headBlock.getTimestamp() + Constant.BLOCK_PERIOD;
-		if (timestamp != newBlock.getTimestamp()) {
-			throw new LifecycleException();
+		ValidationResult r = null;
+
+		// validate generator
+		r = validateGenerator(newBlock, ledger, headBlock);
+		if (r.hasError) {
+			throw r.cause;
 		}
 
-		// previous block
-		if (headBlock.getID() != newBlock.getPreviousBlock()) {
-			throw new ValidateException("Unexpected block. Expected - " + Format.ID.blockId(newBlock.getPreviousBlock())
-					+ ", current - " + Format.ID.blockId(headBlock.getID()));
+		// validate block
+		r = validateBlock(newBlock, ledger, headBlock);
+		if (r.hasError) {
+			throw r.cause;
+		}
+
+		// apply
+		ledger = applyBlock(newBlock, ledger, fork);
+
+		// validate state
+		r = validateState(newBlock, ledger);
+		if (r.hasError) {
+			throw r.cause;
+		}
+
+		ledger = saveState(ledger);
+		headBlock = saveBlock(newBlock);
+		return headBlock;
+	}
+
+	private ValidationResult validateGenerator(Block newBlock, ILedger ledger, Block targetBlock) {
+
+		if (ledger == null) {
+			return ValidationResult.error("Unable to get ledger for block. " + Format.ID.blockId(targetBlock.getID()));
 		}
 
 		IAccount generator = ledger.getAccount(newBlock.getSenderID());
-		if (generator != null) {
-
-			// block height is not transmitted over the network
-			int height = headBlock.getHeight() + 1;
-			newBlock.setHeight(height);
-
-			// check generator balance
-			AccountDeposit deposit = AccountDeposit.parse(generator);
-			if (deposit.getValue() < EonConstant.MIN_DEPOSIT_SIZE
-					|| (height - deposit.getHeight() < Constant.BLOCK_IN_DAY && deposit.getHeight() != 0)) {
-				throw new ValidateException("Too small deposit.");
-			}
-			byte[] publicKey = AccountAttributes.getPublicKey(generator);
-
-			// generation signature
-			Block targetBlock = headBlock;
-			if (height - EonConstant.DIFFICULTY_DELAY > 0) {
-				int targetHeight = height - EonConstant.DIFFICULTY_DELAY;
-				// ATTENTION. in case EonConstant.DIFFICULTY_DELAY < SYNC_MILESTONE_DEPTH it is
-				// necessary to revise
-				targetBlock = BlockHelper.getByHeight(connection, targetHeight);
-			}
-			if (!CryptoProvider.getInstance().verifySignature(targetBlock.getGenerationSignature(),
-					newBlock.getGenerationSignature(), publicKey)) {
-				throw new IllegalSignatureException("The field Generation Signature is incorrect.");
-			}
-
-			// signature
-			if (!newBlock.verifySignature(publicKey)) {
-				throw new IllegalSignatureException();
-			}
-
-			// snapshot
-			Sandbox sandbox = new Sandbox(ledger, headBlock.getTimestamp(), headBlock.getHeight() + 1);
-			Transaction[] sortedTransactions = newBlock.getTransactions().toArray(new Transaction[0]);
-			Arrays.sort(sortedTransactions, new TransactionComparator());
-			for (Transaction tx : sortedTransactions) {
-				sandbox.execute(tx);
-			}
-			byte[] snapshot = sandbox.createSnapshot(newBlock.getSenderID());
-			if (newBlock.getVersion() >= 2) {
-				if (!Arrays.equals(snapshot, newBlock.getSnapshot())) {
-					throw new ValidateException("Illegal snapshot prefix.");
-				}
-			}
-			newBlock.setSnapshot(snapshot);
-
-			// adds the data that is not transmitted over the network
-			newBlock.setCumulativeDifficulty(
-					DifficultyHelper.calculateDifficulty(newBlock, headBlock, deposit.getValue()));
-			return;
+		if (generator == null) {
+			return ValidationResult.error("Invalid generator. " + Format.ID.accountId(newBlock.getSenderID()));
 		}
 
-		throw new ValidateException("Invalid generator. " + Format.ID.accountId(newBlock.getSenderID()));
+		int height = targetBlock.getHeight() + 1;
+		GeneratingBalance deposit = AccountProperties.getDeposit(generator);
+		if (deposit.getValue() < EonConstant.MIN_DEPOSIT_SIZE) {
+			return ValidationResult.error("Too small deposit.");
+		}
+		if (height - deposit.getHeight() < Constant.BLOCK_IN_DAY && deposit.getHeight() != 0) {
+			return ValidationResult.error("The last deposit operation was made less than a day ago");
+		}
+
+		// adds the data that is not transmitted over the network
+		newBlock.setCumulativeDifficulty(
+				DifficultyHelper.calculateDifficulty(newBlock, targetBlock, deposit.getValue()));
+
+		return ValidationResult.success;
 
 	}
 
-	private Block saveBlock(Block prevBlock, Block newBlock) throws ValidateException {
+	private ValidationResult validateBlock(Block newBlock, ILedger ledger, Block targetBlock) {
 
-		if (newBlock.getPreviousBlock() == 0) {
-			throw new ValidateException("Previous block is not specified.");
-		} else if (prevBlock.getID() != newBlock.getPreviousBlock()) {
-			throw new ValidateException("Unexpected block. Expected - " + Format.ID.blockId(newBlock.getPreviousBlock())
-					+ ", current - " + Format.ID.blockId(prevBlock.getID()));
+		// timestamp
+		int timestamp = targetBlock.getTimestamp() + Constant.BLOCK_PERIOD;
+		if (timestamp != newBlock.getTimestamp()) {
+			return ValidationResult.error(new LifecycleException());
 		}
+
+		// previous block
+		if (newBlock.getPreviousBlock() == 0) {
+			return ValidationResult.error("Previous block is not specified.");
+		}
+
+		if (targetBlock.getID() != newBlock.getPreviousBlock()) {
+			return ValidationResult
+					.error("Unexpected block. Expected - " + Format.ID.blockId(newBlock.getPreviousBlock())
+							+ ", current - " + Format.ID.blockId(targetBlock.getID()));
+		}
+
+		if (ledger == null) {
+			return ValidationResult.error("Unable to get ledger for block. " + Format.ID.blockId(targetBlock.getID()));
+		}
+
+		IAccount generator = ledger.getAccount(newBlock.getSenderID());
+		if (generator == null) {
+			return ValidationResult.error("Invalid generator. " + Format.ID.accountId(newBlock.getSenderID()));
+		}
+
+		byte[] publicKey = AccountProperties.getPublicKey(generator);
+
+		// generation signature
+		int height = targetBlock.getHeight() + 1;
+		Block generationBlock = targetBlock;
+		if (height - EonConstant.DIFFICULTY_DELAY > 0) {
+			int generationHeight = height - EonConstant.DIFFICULTY_DELAY;
+			// ATTENTION. in case EonConstant.DIFFICULTY_DELAY < SYNC_MILESTONE_DEPTH it is
+			// necessary to revise
+			generationBlock = BlockHelper.getByHeight(connection, generationHeight);
+		}
+		if (!CryptoProvider.getInstance().verifySignature(generationBlock.getGenerationSignature(),
+				newBlock.getGenerationSignature(), publicKey)) {
+			return ValidationResult
+					.error(new IllegalSignatureException("The field Generation Signature is incorrect."));
+		}
+
+		// signature
+		if (!newBlock.verifySignature(publicKey)) {
+			return ValidationResult.error(new IllegalSignatureException());
+		}
+
+		// adds the data that is not transmitted over the network
+		newBlock.setHeight(targetBlock.getHeight() + 1);
+
+		return ValidationResult.success;
+	}
+
+	private ValidationResult validateState(Block newBlock, CachedLedger ledger) {
+
+		byte[] snapshot = ledger.getHash();
+		if (newBlock.getVersion() >= 2) {
+
+			if (!Arrays.equals(snapshot, newBlock.getSnapshot())) {
+				return ValidationResult.error("Illegal snapshot prefix.");
+			}
+		}
+		newBlock.setSnapshot(ledger.getHash());
+		return ValidationResult.success;
+
+	}
+
+	private CachedLedger applyBlock(Block newBlock, CachedLedger ledger, IFork fork) throws ValidateException {
+
+		ITransactionHandler handler = fork.getTransactionExecutor(newBlock.getTimestamp());
+		TransactionContext ctx = new TransactionContext(newBlock.getTimestamp(), headBlock.getHeight() + 1);
+		Transaction[] sortedTransactions = newBlock.getTransactions().toArray(new Transaction[0]);
+		Arrays.sort(sortedTransactions, new TransactionComparator());
+		for (Transaction tx : sortedTransactions) {
+			handler.run(tx, ledger, ctx);
+		}
+		long totalFee = ctx.getTotalFee();
+		if (totalFee != 0) {
+			IAccount creator = ledger.getAccount(newBlock.getSenderID());
+			Balance balance = AccountProperties.getBalance(creator);
+			if (balance == null) {
+				balance = new Balance(0);
+			}
+			balance.refill(totalFee);
+			AccountProperties.setBalance(creator, balance);
+			ledger.putAccount(creator);
+		}
+		return ledger;
+
+	}
+
+	private CachedLedger saveState(CachedLedger ledger) {
+		ledger.analyze();
+		return ledger;
+	}
+
+	private Block saveBlock(Block newBlock) throws ValidateException {
 
 		if (BlockHelper.get(connector.getConnection(), newBlock.getID()) != null) {
 			throw new ValidateException("Block already exists.");
@@ -333,9 +404,6 @@ public class UnitOfWork implements IUnitOfWork {
 			transactionSet.put(txID, tx);
 		}
 
-		prevBlock.setNextBlock(id);
-
-		blockSet.put(newBlock.getPreviousBlock(), prevBlock);
 		blockSet.put(id, newBlock);
 
 		return blockSet.get(id);

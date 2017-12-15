@@ -37,10 +37,4 @@ public class Constant {
 	 */
 	public static final int MAX_LATENCY = 15;
 
-	/**
-	 * The identifier of the dummy account. Used during preliminary verification of
-	 * transactions.
-	 */
-	public static final long DUMMY_ACCOUNT_ID = -0L;
-
 }

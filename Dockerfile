@@ -36,6 +36,7 @@ RUN mvn -Dmaven.repo.local=/repository -DfailIfNoTests=false test
 # Run integration tests
 RUN mvn -Dmaven.repo.local=/repository -Dtest="**/*TestIT.java" -DfailIfNoTests=false test
 
+VOLUME /app/peer-eon-app/src/main/webapp/WEB-INF
 EXPOSE 9443
 
 ENV MAVEN_OPTS "-XX:+HeapDumpOnOutOfMemoryError -verbose:gc -XX:+PrintGCDetails -XX:+PrintFlagsFinal -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -Xmx350m"

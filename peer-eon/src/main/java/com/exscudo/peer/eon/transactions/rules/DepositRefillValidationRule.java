@@ -6,36 +6,32 @@ import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.services.IAccount;
 import com.exscudo.peer.core.services.ILedger;
 import com.exscudo.peer.core.services.TransactionContext;
+import com.exscudo.peer.eon.state.Balance;
 import com.exscudo.peer.eon.transactions.Deposit;
-import com.exscudo.peer.eon.transactions.utils.AccountBalance;
+import com.exscudo.peer.eon.transactions.utils.AccountProperties;
 
-public class DepositRefillValidationRule extends BaseValidationRule {
+public class DepositRefillValidationRule implements IValidationRule {
 
 	@Override
 	public ValidationResult validate(Transaction tx, ILedger ledger, TransactionContext context) {
-
-		ValidationResult r = super.validate(tx, ledger, context);
-		if (r.hasError) {
-			return r;
-		}
 
 		if (tx.getFee() != Deposit.DEPOSIT_TRANSACTION_FEE) {
 			return ValidationResult.error("The field value Fee is not valid.");
 		}
 
 		final Map<String, Object> data = tx.getData();
-		if (data == null || data.size() != 1 || !data.containsKey("amount")) {
+		if (data == null || data.size() != 1) {
 			return ValidationResult.error("Attachment of unknown type.");
 		}
 
-		final Object amountObj = data.get("amount");
-		if (!(amountObj instanceof Long) && !(amountObj instanceof Integer)) {
+		long amount = 0;
+		try {
+			amount = Long.parseLong(String.valueOf(data.get("amount")));
+		} catch (NumberFormatException e) {
 			return ValidationResult.error("Attachment of unknown type.");
 		}
-
-		final Long trAmount = Long.parseLong(amountObj.toString());
-		if (trAmount <= 0) {
-			return ValidationResult.error("Invalid tr amount.");
+		if (amount <= 0) {
+			return ValidationResult.error("Invalid amount.");
 		}
 
 		IAccount account = ledger.getAccount(tx.getSenderID());
@@ -43,7 +39,8 @@ public class DepositRefillValidationRule extends BaseValidationRule {
 			return ValidationResult.error("Unknown sender.");
 		}
 
-		if (AccountBalance.getBalance(account) < tx.getFee() + trAmount) {
+		Balance balance = AccountProperties.getBalance(account);
+		if (balance == null || balance.getValue() < tx.getFee() + amount) {
 			return ValidationResult.error("Not enough funds.");
 		}
 

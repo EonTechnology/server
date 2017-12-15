@@ -11,7 +11,6 @@ public class SignedObject implements Serializable {
 
 	protected byte[] signature;
 	private boolean signatureOK = false;
-	private int length = 0;
 
 	public byte[] getSignature() {
 		return signature;
@@ -35,18 +34,6 @@ public class SignedObject implements Serializable {
 		}
 		return this.signatureOK;
 
-	}
-
-	/**
-	 * Get object length
-	 * 
-	 * @return length
-	 */
-	public int getLength() {
-		if (this.length == 0) {
-			this.length = CryptoProvider.getInstance().getLength(this);
-		}
-		return this.length;
 	}
 
 	/**

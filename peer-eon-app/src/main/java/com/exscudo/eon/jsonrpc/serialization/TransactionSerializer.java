@@ -3,8 +3,9 @@ package com.exscudo.eon.jsonrpc.serialization;
 import java.io.IOException;
 import java.util.Map;
 
-import com.exscudo.peer.core.crypto.mapper.TransactionMapper;
 import com.exscudo.peer.core.data.Transaction;
+import com.exscudo.peer.core.data.mapper.transport.TransactionMapper;
+import com.exscudo.peer.core.utils.Format;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
@@ -25,6 +26,7 @@ public class TransactionSerializer extends StdSerializer<Transaction> {
 	public void serialize(Transaction value, JsonGenerator gen, SerializerProvider provider) throws IOException {
 
 		Map<String, Object> map = TransactionMapper.convert(value);
+		map.put(StringConstant.id, Format.ID.transactionId(value.getID()));
 		gen.writeObject(map);
 
 	}

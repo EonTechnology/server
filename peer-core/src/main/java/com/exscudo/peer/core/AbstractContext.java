@@ -40,9 +40,7 @@ public abstract class AbstractContext<TPeer extends IPeer, TInstance extends IIn
 	 *
 	 * @return current hard-fork
 	 */
-	public Fork getCurrentFork() {
-		return ForkProvider.getInstance();
-	}
+	public abstract IFork getCurrentFork();
 
 	/**
 	 * Checks the status of the current hard-fork.

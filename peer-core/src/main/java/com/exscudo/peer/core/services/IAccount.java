@@ -1,7 +1,6 @@
 package com.exscudo.peer.core.services;
 
 import java.util.Collection;
-import java.util.UUID;
 
 /**
  * The interface defines the basic properties of the account.
@@ -26,7 +25,7 @@ public interface IAccount {
 	 *            One of the well-known types
 	 * @return
 	 */
-	AccountProperty getProperty(UUID id);
+	AccountProperty getProperty(String id);
 
 	/**
 	 * Adds a given {@code property}. If the property already exists, then its will
@@ -43,4 +42,10 @@ public interface IAccount {
 	 */
 	Collection<? extends AccountProperty> getProperties();
 
+	/**
+	 * Removes a property defined by {@code id}
+	 * 
+	 * @param id
+	 */
+	void removeProperty(String id);
 }

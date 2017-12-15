@@ -1,22 +1,20 @@
 package com.exscudo.peer.eon.transactions;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import java.util.Map;
+
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import com.dampcake.bencode.Bencode;
 import com.dampcake.bencode.Type;
 import com.exscudo.peer.MockSigner;
-import com.exscudo.peer.core.Fork;
-import com.exscudo.peer.core.ForkProvider;
-import com.exscudo.peer.core.crypto.mapper.TransactionMapper;
 import com.exscudo.peer.core.data.Transaction;
+import com.exscudo.peer.core.data.mapper.transport.TransactionMapper;
 import com.exscudo.peer.core.utils.Format;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import com.exscudo.peer.eon.crypto.ISigner;
 
 public class TransactionConverterTest {
 
@@ -24,9 +22,7 @@ public class TransactionConverterTest {
 
 	@Before
 	public void setUp() {
-		Fork fork = mock(Fork.class);
-		when(fork.getGenesisBlockID()).thenReturn(0L);
-		ForkProvider.init(fork);
+
 	}
 
 	@Test
@@ -90,6 +86,16 @@ public class TransactionConverterTest {
 				"d10:attachmentd6:amounti999ee8:deadlinei60e3:feei10e6:sender21:EON-RMNF4-KLGQ7-9Y65X9:signature128:c3764dce8a9c539f5f0d1be0fcd49e8c90f44eb7daf786297b276912eb478bae58c2d7cb22f1844404cb269400d11a3eb4eb7ae82bca2e9a29441f26d4c574379:timestampi12345e4:typei320e7:versioni1ee");
 	}
 
+	@Test
+	public void transaction_confirmations() throws Exception {
+		MockSigner signer = new MockSigner(123L);
+
+		Transaction tran = Deposit.withdraw(999L).validity(12345, 60, 1).build(signer, new ISigner[]{signer});
+
+		checkTransaction(tran,
+				"d10:attachmentd6:amounti999ee13:confirmationsd21:EON-RMNF4-KLGQ7-9Y65X128:c3764dce8a9c539f5f0d1be0fcd49e8c90f44eb7daf786297b276912eb478bae58c2d7cb22f1844404cb269400d11a3eb4eb7ae82bca2e9a29441f26d4c57437e8:deadlinei60e3:feei10e6:sender21:EON-RMNF4-KLGQ7-9Y65X9:signature128:c3764dce8a9c539f5f0d1be0fcd49e8c90f44eb7daf786297b276912eb478bae58c2d7cb22f1844404cb269400d11a3eb4eb7ae82bca2e9a29441f26d4c574379:timestampi12345e4:typei320e7:versioni1ee");
+	}
+
 	private void checkTransaction(Transaction tran, String data) throws IllegalArgumentException {
 		Map<String, Object> map = TransactionMapper.convert(tran);
 		byte[] bytes = bencode.encode(map);
@@ -115,5 +121,6 @@ public class TransactionConverterTest {
 		Assert.assertEquals(tran.getID(), tx.getID());
 		Assert.assertEquals(tran.getLength(), tx.getLength());
 		Assert.assertEquals(tran.getVersion(), tx.getVersion());
+		Assert.assertEquals(tran.getConfirmations(), tx.getConfirmations());
 	}
 }

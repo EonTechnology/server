@@ -5,14 +5,19 @@ import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.util.Iterator;
 
+import com.exscudo.peer.core.Constant;
+import com.exscudo.peer.core.IFork;
+import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.events.BlockEvent;
 import com.exscudo.peer.core.events.IBlockEventListener;
 import com.exscudo.peer.core.exceptions.ValidateException;
 import com.exscudo.peer.core.services.IBacklogService;
 import com.exscudo.peer.core.services.IBlockchainService;
+import com.exscudo.peer.core.services.ILedger;
+import com.exscudo.peer.core.services.ITransactionHandler;
+import com.exscudo.peer.core.services.TransactionContext;
 import com.exscudo.peer.core.utils.Loggers;
-import com.exscudo.peer.eon.Sandbox;
 
 /**
  * Performs the task of removing expired transaction, duplicate transactions,
@@ -23,12 +28,13 @@ public class BacklogCleaner implements IBlockEventListener {
 
 	private final IBacklogService backlog;
 	private final IBlockchainService blockchain;
+	private final IFork fork;
 
-	public BacklogCleaner(IBacklogService backlog, IBlockchainService blockchain) {
+	public BacklogCleaner(IBacklogService backlog, IBlockchainService blockchain, IFork fork) {
 
 		this.backlog = backlog;
 		this.blockchain = blockchain;
-
+		this.fork = fork;
 	}
 
 	public void removeInvalidTransaction() {
@@ -41,7 +47,14 @@ public class BacklogCleaner implements IBlockEventListener {
 			// gradually be filled if the node is not involved in the network.
 			// Because new blocks will no longer be created.
 
-			Sandbox sandbox = Sandbox.getInstance(blockchain);
+			Block block = blockchain.getLastBlock();
+			ILedger state = blockchain.getState(block.getSnapshot());
+			if (state == null) {
+				throw new IllegalStateException("Can not find a ledger.");
+			}
+			int timestamp = block.getTimestamp() + Constant.BLOCK_PERIOD;
+			ITransactionHandler handler = fork.getTransactionExecutor(timestamp);
+			TransactionContext ctx = new TransactionContext(timestamp, block.getHeight() + 1);
 
 			Iterator<Long> indexes = backlog.iterator();
 			while (indexes.hasNext()) {
@@ -57,7 +70,7 @@ public class BacklogCleaner implements IBlockEventListener {
 				boolean duplicate = blockchain.transactionMapper().containsTransaction(id);
 
 				try {
-					sandbox.execute(tx);
+					handler.run(tx, state, ctx);
 				} catch (ValidateException e) {
 
 					if (!duplicate && LOGGING) {

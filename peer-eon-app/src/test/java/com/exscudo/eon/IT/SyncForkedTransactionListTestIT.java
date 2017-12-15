@@ -20,8 +20,8 @@ import com.exscudo.peer.eon.transactions.Payment;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class SyncForkedTransactionListTestIT {
 
-	private static String GENERATOR = "55373380ff77987646b816450824310fb377c1a14b6f725b94382af3cf7b788a";
-	private static String GENERATOR2 = "dd6403d520afbfadeeff0b1bb49952440b767663454ab1e5f1a358e018cf9c73";
+	private static final String GENERATOR = "eba54bbb2dd6e55c466fac09707425145ca8560fe40de3fa3565883f4d48779e";
+	private static final String GENERATOR2 = "d2005ef0df1f6926082aefa09917874cfb212d1ff4eb55c78f670ef9dd23ef6c";
 	private TimeProvider mockTimeProvider;
 
 	private PeerContext ctx1;

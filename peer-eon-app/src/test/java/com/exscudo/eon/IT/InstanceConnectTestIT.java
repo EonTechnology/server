@@ -1,5 +1,8 @@
 package com.exscudo.eon.IT;
 
+import com.exscudo.peer.eon.Peer;
+import com.exscudo.peer.eon.PeerInfo;
+import com.exscudo.peer.eon.TimeProvider;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
@@ -8,18 +11,13 @@ import org.junit.experimental.categories.Category;
 import org.junit.runners.MethodSorters;
 import org.mockito.Mockito;
 
-import com.exscudo.peer.eon.IServiceProxyFactory;
-import com.exscudo.peer.eon.Peer;
-import com.exscudo.peer.eon.PeerInfo;
-import com.exscudo.peer.eon.TimeProvider;
-
 @Category(IIntegrationTest.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class InstanceConnectTestIT {
 
-	private static final String GENERATOR_1 = "55373380ff77987646b816450824310fb377c1a14b6f725b94382af3cf7b788a";
-	private static final String GENERATOR_2 = "dd6403d520afbfadeeff0b1bb49952440b767663454ab1e5f1a358e018cf9c73";
-	private static final String GENERATOR_3 = "2011550637a84ba5e1125a769e137d6625d412d64e495276330f0c62c9cf8417";
+	private static final String GENERATOR_1 = "eba54bbb2dd6e55c466fac09707425145ca8560fe40de3fa3565883f4d48779e";
+	private static final String GENERATOR_2 = "d2005ef0df1f6926082aefa09917874cfb212d1ff4eb55c78f670ef9dd23ef6c";
+	private static final String GENERATOR_3 = "391b34d7f878c7f327fd244370edb9d521472e36816a36299341d0220662e0c2";
 	private TimeProvider mockTimeProvider;
 
 	@Before
@@ -29,7 +27,6 @@ public class InstanceConnectTestIT {
 
 	@Test
 	public void step_1_sync_service() throws Exception {
-
 		PeerContext ctx_1 = new PeerContext(GENERATOR_1, mockTimeProvider);
 		PeerContext ctx_2 = new PeerContext(GENERATOR_2, mockTimeProvider);
 		PeerContext ctx_3 = new PeerContext(GENERATOR_3, mockTimeProvider);
@@ -53,19 +50,12 @@ public class InstanceConnectTestIT {
 		Assert.assertEquals("1=>2) Sync all peers", 5, ctx_2.context.getPeers().getPeersList().length);
 		Assert.assertEquals("2) Connected 1 peer", 1, ctx_2.context.getConnectedPoolSize());
 
-		ctx_3.context.setProxyFactory(new IServiceProxyFactory() {
-			@SuppressWarnings("unchecked")
-			@Override
-			public <TService> TService createProxy(PeerInfo peer, Class<TService> clazz) {
-				return (TService) ctx_2.syncMetadataPeerService;
-			}
-		});
-
 		Peer peer = ctx_2.context.getAnyPeerToConnect();
 		ctx_2.context.connectPeer(peer, 0);
 
 		Assert.assertEquals("2) Connected 2 peer", 2, ctx_2.context.getConnectedPoolSize());
 
+		ctx_3.setPeerToConnect(ctx_2);
 		ctx_3.syncPeerListTask.run();
 
 		Assert.assertEquals("2=>3) Sync all connected peers", 2, ctx_3.context.getPeers().getPeersList().length);
@@ -76,19 +66,13 @@ public class InstanceConnectTestIT {
 		PeerContext ctx_1 = new PeerContext(GENERATOR_1, mockTimeProvider);
 		PeerContext ctx_2 = new PeerContext(GENERATOR_2, mockTimeProvider);
 
-		ctx_2.context.setProxyFactory(new IServiceProxyFactory() {
-			@SuppressWarnings("unchecked")
-			@Override
-			public <TService> TService createProxy(PeerInfo peer, Class<TService> clazz) {
-				return (TService) ctx_1.syncMetadataPeerService;
-			}
-		});
-
 		ctx_2.context.addPublicPeer("1");
 		ctx_2.context.addPublicPeer("2");
 		ctx_2.context.addPublicPeer("3");
 		ctx_2.context.addPublicPeer("4");
 		ctx_2.context.addPublicPeer("5");
+
+		ctx_2.setPeerToConnect(ctx_1);
 		ctx_2.peerConnectTask.run();
 
 		Assert.assertEquals("Connected 2 peer", 2, ctx_2.context.getConnectedPoolSize());
@@ -98,19 +82,13 @@ public class InstanceConnectTestIT {
 	public void step_3_do_not_connect_itself() throws Exception {
 		PeerContext ctx_1 = new PeerContext(GENERATOR_1, mockTimeProvider);
 
-		ctx_1.context.setProxyFactory(new IServiceProxyFactory() {
-			@SuppressWarnings("unchecked")
-			@Override
-			public <TService> TService createProxy(PeerInfo peer, Class<TService> clazz) {
-				return (TService) ctx_1.syncMetadataPeerService;
-			}
-		});
-
 		ctx_1.context.addPublicPeer("1");
 		ctx_1.context.addPublicPeer("2");
 		ctx_1.context.addPublicPeer("3");
 		ctx_1.context.addPublicPeer("4");
 		ctx_1.context.addPublicPeer("5");
+
+		ctx_1.setPeerToConnect(ctx_1);
 		ctx_1.peerConnectTask.run();
 
 		Assert.assertEquals("Connected 1 peer", 1, ctx_1.context.getConnectedPoolSize());

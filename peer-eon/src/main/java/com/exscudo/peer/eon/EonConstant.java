@@ -43,7 +43,7 @@ public class EonConstant {
 	/**
 	 * Maximum transaction size in bytes
 	 */
-	public static final long TRANSACTION_MAX_PAYLOAD_LENGTH = 1024L;
+	public static final int TRANSACTION_MAX_PAYLOAD_LENGTH = 1024;
 
 	/**
 	 * Maximum allowed lifetime of a transaction.

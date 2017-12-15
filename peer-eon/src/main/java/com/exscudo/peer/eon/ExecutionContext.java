@@ -7,6 +7,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Predicate;
 
 import com.exscudo.peer.core.AbstractContext;
+import com.exscudo.peer.core.IFork;
 import com.exscudo.peer.core.IPeer;
 
 /**
@@ -15,8 +16,9 @@ import com.exscudo.peer.core.IPeer;
  */
 public class ExecutionContext extends AbstractContext<Peer, Instance> {
 
-	public ExecutionContext(TimeProvider time) {
+	public ExecutionContext(TimeProvider time, IFork fork) {
 		this.timeProvider = time;
+		this.fork = fork;
 	}
 
 	/**
@@ -25,7 +27,7 @@ public class ExecutionContext extends AbstractContext<Peer, Instance> {
 	 * @return
 	 */
 	public String getVersion() {
-		return "0.6.0";
+		return "0.7.0";
 	}
 
 	/**
@@ -63,6 +65,14 @@ public class ExecutionContext extends AbstractContext<Peer, Instance> {
 	@Override
 	public int getCurrentTime() {
 		return timeProvider.get();
+	}
+
+	/* Hard-fork */
+	private IFork fork;
+
+	@Override
+	public IFork getCurrentFork() {
+		return fork;
 	}
 
 	/**/

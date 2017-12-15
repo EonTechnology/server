@@ -13,8 +13,8 @@ public class ExecutionContextTest {
 
 	@Test
 	public void setInnerPeers_should_add_peers_to_peer_registry() throws Exception {
-		ExecutionContext ec = new ExecutionContext(new TimeProvider());
-		String[] peers = new String[]{"inner1", "inner2", "inner3"};
+		ExecutionContext ec = new ExecutionContext(new TimeProvider(), null);
+		String[] peers = new String[] { "inner1", "inner2", "inner3" };
 		for (String peer : peers)
 			ec.addInnerPeer(peer);
 
@@ -27,12 +27,12 @@ public class ExecutionContextTest {
 
 	@Test
 	public void getAnyConnectedPeer_should_return_inner_peers_if_they_set() throws Exception {
-		ExecutionContext ec = new ExecutionContext(new TimeProvider());
-		String[] publicPeers = new String[]{"public1", "public2", "public3", "public4"};
+		ExecutionContext ec = new ExecutionContext(new TimeProvider(), null);
+		String[] publicPeers = new String[] { "public1", "public2", "public3", "public4" };
 		for (String peer : publicPeers) {
 			ec.addPublicPeer(peer);
 		}
-		String[] innerPeers = new String[]{"inner1", "inner2", "inner3", "inner4"};
+		String[] innerPeers = new String[] { "inner1", "inner2", "inner3", "inner4" };
 		for (String peer : innerPeers) {
 			ec.addInnerPeer(peer);
 		}
@@ -63,12 +63,12 @@ public class ExecutionContextTest {
 
 	@Test
 	public void getAnyPeerToConnect_should_return_inner_peers_if_they_set() throws Exception {
-		ExecutionContext ec = new ExecutionContext(new TimeProvider());
-		String[] publicPeers = new String[]{"public1", "public2", "public3", "public4"};
+		ExecutionContext ec = new ExecutionContext(new TimeProvider(), null);
+		String[] publicPeers = new String[] { "public1", "public2", "public3", "public4" };
 		for (String peer : publicPeers) {
 			ec.addPublicPeer(peer);
 		}
-		String[] innerPeers = new String[]{"inner1", "inner2", "inner3", "inner4"};
+		String[] innerPeers = new String[] { "inner1", "inner2", "inner3", "inner4" };
 		for (String peer : innerPeers) {
 			ec.addInnerPeer(peer);
 		}

@@ -18,7 +18,7 @@ public class Ed25519SignatureVerifier implements ISignatureVerifier {
 
 	@Override
 	public String getName() {
-		return "Ed25519";
+		return Algorithms.Ed25519;
 	}
 
 	@Override

@@ -7,18 +7,14 @@ import com.exscudo.peer.core.services.IAccount;
 import com.exscudo.peer.core.services.ILedger;
 import com.exscudo.peer.core.services.TransactionContext;
 import com.exscudo.peer.core.utils.Format;
+import com.exscudo.peer.eon.state.Balance;
 import com.exscudo.peer.eon.transactions.Payment;
-import com.exscudo.peer.eon.transactions.utils.AccountBalance;
+import com.exscudo.peer.eon.transactions.utils.AccountProperties;
 
-public class OrdinaryPaymentValidationRule extends BaseValidationRule {
+public class OrdinaryPaymentValidationRule implements IValidationRule {
 
 	@Override
 	public ValidationResult validate(Transaction tx, ILedger ledger, TransactionContext context) {
-
-		ValidationResult r = super.validate(tx, ledger, context);
-		if (r.hasError) {
-			return r;
-		}
 
 		IAccount sender = ledger.getAccount(tx.getSenderID());
 		if (sender == null) {
@@ -30,21 +26,21 @@ public class OrdinaryPaymentValidationRule extends BaseValidationRule {
 			return ValidationResult.error("Attachment of unknown type.");
 		}
 
-		final Object amountObj = data.get("amount");
-		if (!(amountObj instanceof Long) && !(amountObj instanceof Integer)) {
-			return ValidationResult.error("Attachment of unknown type.");
+		long amount = 0;
+		try {
+			amount = Long.parseLong(String.valueOf(data.get("amount")));
+		} catch (NumberFormatException e) {
+			return ValidationResult.error("Attachment of unknown type. The amount format is not supports.");
 		}
-
-		final Object recipientObj = data.get("recipient");
-		if (!(recipientObj instanceof String)) {
-			return ValidationResult.error("Attachment of unknown type.");
+		if (amount < Payment.MIN_PAYMENT || amount > Payment.MAX_PAYMENT) {
+			return ValidationResult.error("Invalid amount size.");
 		}
 
 		long recipientID;
 		try {
-			recipientID = Format.ID.accountId(recipientObj.toString());
+			recipientID = Format.ID.accountId(String.valueOf(data.get("recipient")));
 		} catch (IllegalArgumentException e) {
-			return ValidationResult.error("Attachment of unknown type.");
+			return ValidationResult.error("Attachment of unknown type. The recipient format is not supports.");
 		}
 
 		IAccount recipient = ledger.getAccount(recipientID);
@@ -52,12 +48,8 @@ public class OrdinaryPaymentValidationRule extends BaseValidationRule {
 			return ValidationResult.error("Unknown recipient.");
 		}
 
-		long amount = Long.parseLong(amountObj.toString());
-		if (amount < Payment.MIN_PAYMENT || amount > Payment.MAX_PAYMENT) {
-			return ValidationResult.error("Invalid fee or amount.");
-		}
-
-		if (AccountBalance.getBalance(sender) < tx.getFee() + amount) {
+		Balance balance = AccountProperties.getBalance(sender);
+		if (balance == null || balance.getValue() < tx.getFee() + amount) {
 			return ValidationResult.error("Not enough funds.");
 		}
 

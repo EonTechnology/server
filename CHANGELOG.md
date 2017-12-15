@@ -6,6 +6,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+## 0.7.0 - 2017-12-15 - TestNet fork 3
+### Added
+- Transactions are now might be signed by using the Multi-Signature Mechanism.
+- EON now supports public accounts.
+- Blockchain explorer API has been implemented.
+
+### Changed
+- The accounts.getInformation() method response has been expanded.
+
 ## 0.6.0 - 2017-11-15 - TestNet fork 2
 ### Added
 - The ability to create an account state tree, which is based on “Sparse Merkle Tree” algorithm (Disclaimer. The term “sparse” here emphasizes the differences between a common Merkle tree and a Sparse Merkle tree, which means that the latter was designed especially to create an account state tree and is not widely used).

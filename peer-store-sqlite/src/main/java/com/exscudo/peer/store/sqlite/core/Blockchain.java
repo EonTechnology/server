@@ -1,5 +1,6 @@
 package com.exscudo.peer.store.sqlite.core;
 
+import com.exscudo.peer.core.IFork;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.services.IBlockchainService;
@@ -20,9 +21,11 @@ import com.exscudo.peer.store.sqlite.utils.TransactionHelper;
  */
 public class Blockchain implements IBlockchainService {
 	private Storage connector;
-
-	public Blockchain(Storage connector) {
+	private IFork fork;
+	
+	public Blockchain(Storage connector, IFork fork) {
 		this.connector = connector;
+		this.fork = fork;
 	}
 
 	@Override
@@ -63,7 +66,7 @@ public class Blockchain implements IBlockchainService {
 
 	@Override
 	public IUnitOfWork beginPush(Object source, Block headBlock) {
-		return connector.createUnitOfWork(headBlock);
+		return connector.createUnitOfWork(headBlock, fork);
 	}
 
 	@Override

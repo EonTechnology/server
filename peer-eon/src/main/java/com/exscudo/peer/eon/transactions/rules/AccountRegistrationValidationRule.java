@@ -8,17 +8,12 @@ import com.exscudo.peer.core.services.IAccount;
 import com.exscudo.peer.core.services.ILedger;
 import com.exscudo.peer.core.services.TransactionContext;
 import com.exscudo.peer.core.utils.Format;
-import com.exscudo.peer.eon.transactions.utils.AccountAttributes;
+import com.exscudo.peer.eon.transactions.utils.AccountProperties;
 
-public class AccountRegistrationValidationRule extends BaseValidationRule {
+public class AccountRegistrationValidationRule implements IValidationRule {
 
 	@Override
 	public ValidationResult validate(Transaction tx, ILedger ledger, TransactionContext context) {
-
-		ValidationResult r = super.validate(tx, ledger, context);
-		if (r.hasError) {
-			return r;
-		}
 
 		IAccount sender = ledger.getAccount(tx.getSenderID());
 		if (sender == null) {
@@ -31,33 +26,32 @@ public class AccountRegistrationValidationRule extends BaseValidationRule {
 		}
 
 		try {
-			HashSet<Long> accsInTr = new HashSet<>();
+
+			HashSet<Long> set = new HashSet<>();
 			for (Map.Entry<String, Object> entry : data.entrySet()) {
 
-				long accID = Format.ID.accountId(entry.getKey());
-				if (!(entry.getValue() instanceof String)) {
+				long id = Format.ID.accountId(entry.getKey());
+				byte[] publicKey = Format.convert(String.valueOf(entry.getValue()));
+
+				if (id != Format.MathID.pick(publicKey)) {
 					return ValidationResult.error("Attachment of unknown type.");
 				}
 
-				byte[] publicKey = Format.convert(entry.getValue().toString());
-				if (accID != Format.MathID.pick(publicKey)) {
+				if (publicKey.length != AccountProperties.getPublicKey(sender).length) {
 					return ValidationResult.error("Attachment of unknown type.");
 				}
 
-				if (publicKey.length != AccountAttributes.getPublicKey(sender).length) {
-					return ValidationResult.error("Attachment of unknown type.");
-				}
-
-				IAccount account = ledger.getAccount(accID);
+				IAccount account = ledger.getAccount(id);
 				if (account != null) {
-					return ValidationResult.error("IAccount can not be to created.");
+					return ValidationResult.error("Account already exists.");
 				}
 
-				if (accsInTr.contains(accID)) {
-					return ValidationResult.error("IAccount can not be to created.");
+				if (set.contains(id)) {
+					return ValidationResult.error("Account is duplicated.");
 				}
-				accsInTr.add(accID);
+				set.add(id);
 			}
+
 		} catch (Exception e) {
 			return ValidationResult.error("Attachment of unknown type.");
 		}

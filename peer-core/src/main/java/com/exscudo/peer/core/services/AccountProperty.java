@@ -2,7 +2,6 @@ package com.exscudo.peer.core.services;
 
 import java.io.Serializable;
 import java.util.Map;
-import java.util.UUID;
 
 /**
  * Account property.
@@ -13,10 +12,10 @@ import java.util.UUID;
 public class AccountProperty implements Serializable {
 	private static final long serialVersionUID = 2326856545894572608L;
 
-	private UUID type;
+	private String type;
 	private Map<String, Object> data;
 
-	public AccountProperty(UUID type, Map<String, Object> data) {
+	public AccountProperty(String type, Map<String, Object> data) {
 		this.type = type;
 		this.data = data;
 	}
@@ -27,7 +26,7 @@ public class AccountProperty implements Serializable {
 		return data;
 	}
 
-	public UUID getType() {
+	public String getType() {
 		return type;
 	}
 

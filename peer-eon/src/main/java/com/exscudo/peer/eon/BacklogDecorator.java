@@ -2,12 +2,17 @@ package com.exscudo.peer.eon;
 
 import java.util.Iterator;
 
+import com.exscudo.peer.core.Constant;
+import com.exscudo.peer.core.IFork;
+import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.exceptions.ValidateException;
-import com.exscudo.peer.core.services.IAccount;
 import com.exscudo.peer.core.services.IBacklogService;
 import com.exscudo.peer.core.services.IBlockchainService;
+import com.exscudo.peer.core.services.ILedger;
+import com.exscudo.peer.core.services.ITransactionHandler;
 import com.exscudo.peer.core.services.ITransactionMapper;
+import com.exscudo.peer.core.services.TransactionContext;
 
 /**
  * Pre-validation of transactions before putting in Backlog.
@@ -15,10 +20,12 @@ import com.exscudo.peer.core.services.ITransactionMapper;
 public class BacklogDecorator implements IBacklogService {
 	private final IBacklogService backlog;
 	private final IBlockchainService blockchain;
+	private final IFork fork;
 
-	public BacklogDecorator(IBacklogService backlog, IBlockchainService blockchain) {
+	public BacklogDecorator(IBacklogService backlog, IBlockchainService blockchain, IFork fork) {
 		this.backlog = backlog;
 		this.blockchain = blockchain;
+		this.fork = fork;
 	}
 
 	@Override
@@ -26,20 +33,27 @@ public class BacklogDecorator implements IBacklogService {
 
 		long accountID = transaction.getSenderID();
 
-		Sandbox sandbox = Sandbox.getInstance(blockchain);
-		IAccount account = sandbox.getLedger().getAccount(accountID);
-		if (account != null) {
+		Block block = blockchain.getLastBlock();
+		ILedger state = blockchain.getState(block.getSnapshot());
+		if (state == null) {
+			throw new IllegalStateException("Can not find a ledger.");
+		}
+		int timestamp = block.getTimestamp() + Constant.BLOCK_PERIOD;
+		ITransactionHandler handler = fork.getTransactionExecutor(timestamp);
+		TransactionContext ctx = new TransactionContext(timestamp, block.getHeight() + 1);
+
+		if (state.getAccount(accountID) != null) {
 			Iterator<Long> indexes = backlog.iterator();
 			while (indexes.hasNext()) {
 				long id = indexes.next();
 				Transaction tx = backlog.get(id);
 				if (tx != null && tx.getSenderID() == accountID) {
-					sandbox.execute(tx);
+					handler.run(tx, state, ctx);
 				}
 			}
 		}
 
-		sandbox.execute(transaction);
+		handler.run(transaction, state, ctx);
 
 		ITransactionMapper mapper = blockchain.transactionMapper();
 		long id = transaction.getID();

@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Objects;
 
-import com.exscudo.peer.core.Fork;
+import com.exscudo.peer.core.IFork;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.exceptions.RemotePeerException;
 import com.exscudo.peer.core.services.IBlockchainService;
@@ -36,7 +36,7 @@ public class SyncMetadataService extends BaseService implements IMetadataService
 		originAttributes.setPeerId(context.getHost().getPeerID());
 
 		Block lastBlock = context.getInstance().getBlockchainService().getLastBlock();
-		Fork fork = context.getCurrentFork();
+		IFork fork = context.getCurrentFork();
 		originAttributes.setNetworkID(Format.ID.blockId(fork.getGenesisBlockID()));
 		originAttributes.setFork(fork.getNumber(lastBlock.getTimestamp()));
 
@@ -104,7 +104,7 @@ public class SyncMetadataService extends BaseService implements IMetadataService
 			throw new RemotePeerException("Different PeerID in attributes");
 		}
 
-		Fork fork = context.getCurrentFork();
+		IFork fork = context.getCurrentFork();
 
 		if (!Format.ID.blockId(fork.getGenesisBlockID()).equals(attributes.getNetworkID())) {
 			throw new RemotePeerException("Different NetworkID");
@@ -113,7 +113,7 @@ public class SyncMetadataService extends BaseService implements IMetadataService
 		IBlockchainService blockchainService = context.getInstance().getBlockchainService();
 
 		int forkNumber = fork.getNumber(blockchainService.getLastBlock().getTimestamp());
-		if (attributes.getFork() != forkNumber || forkNumber == -1) {
+		if (attributes.getFork() != forkNumber) {
 			throw new RemotePeerException("Different Fork");
 		}
 

@@ -5,8 +5,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.exscudo.peer.core.Fork;
-import com.exscudo.peer.core.ForkProvider;
+import com.exscudo.peer.core.IFork;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.services.IBlockchainService;
 import com.exscudo.peer.eon.ExecutionContext;
@@ -36,10 +35,9 @@ public class SyncMetadataServiceTest {
 
 		ExecutionContext ctx = mock(ExecutionContext.class);
 		ExecutionContext.Host host = mock(ExecutionContext.Host.class);
-		Fork fork = mock(Fork.class);
+		IFork fork = mock(IFork.class);
 		when(fork.isPassed(anyInt())).thenReturn(false);
 		when(fork.getGenesisBlockID()).thenReturn(12345L);
-		ForkProvider.init(fork);
 
 		when(ctx.getHost()).thenReturn(host);
 		when(host.getPeerID()).thenReturn(peerId);

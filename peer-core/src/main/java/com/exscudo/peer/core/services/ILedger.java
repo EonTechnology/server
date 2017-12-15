@@ -9,10 +9,6 @@ public interface ILedger {
 
 	IAccount getAccount(long accountID);
 
-	default boolean existAccount(long accountID) {
-		return getAccount(accountID) != null;
-	}
-
 	void putAccount(IAccount account);
 
 	byte[] getHash();

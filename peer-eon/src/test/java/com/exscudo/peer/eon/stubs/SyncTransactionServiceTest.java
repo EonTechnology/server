@@ -6,8 +6,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.exscudo.peer.DefaultBacklog;
-import com.exscudo.peer.core.Fork;
-import com.exscudo.peer.core.ForkProvider;
+import com.exscudo.peer.core.IFork;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.exceptions.RemotePeerException;
@@ -57,10 +56,9 @@ public class SyncTransactionServiceTest {
 		when(blockchain.getLastBlock()).thenReturn(mockBlock);
 		when(blockchain.transactionMapper()).thenReturn(mock(ITransactionMapper.class));
 
-		Fork mockFork = mock(Fork.class);
+		IFork mockFork = mock(IFork.class);
 		when(mockFork.isPassed(anyInt())).thenReturn(false);
 		when(mockFork.getGenesisBlockID()).thenReturn(12345L);
-		ForkProvider.init(mockFork);
 
 		Instance peer = mock(Instance.class);
 		when(peer.getBacklogService()).thenReturn(backlog);

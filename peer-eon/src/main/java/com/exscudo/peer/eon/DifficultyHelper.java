@@ -5,7 +5,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 import com.exscudo.peer.core.data.Block;
-import com.exscudo.peer.core.exceptions.ValidateException;
 import com.exscudo.peer.core.utils.Format;
 
 /**
@@ -17,8 +16,7 @@ import com.exscudo.peer.core.utils.Format;
  */
 public class DifficultyHelper {
 
-	public static BigInteger calculateDifficulty(Block block, Block prevBlock, long generatingBalance)
-			throws ValidateException {
+	public static BigInteger calculateDifficulty(Block block, Block prevBlock, long generatingBalance) {
 
 		byte[] generationSignatureHash;
 		try {
@@ -28,9 +26,9 @@ public class DifficultyHelper {
 		}
 
 		BigInteger hit = new BigInteger(1,
-				new byte[]{generationSignatureHash[7], generationSignatureHash[6], generationSignatureHash[5],
+				new byte[] { generationSignatureHash[7], generationSignatureHash[6], generationSignatureHash[5],
 						generationSignatureHash[4], generationSignatureHash[3], generationSignatureHash[2],
-						generationSignatureHash[1], generationSignatureHash[0]});
+						generationSignatureHash[1], generationSignatureHash[0] });
 
 		Long scale = generatingBalance / EonConstant.DECIMAL_POINT;
 		if (scale != 0) {

@@ -13,6 +13,7 @@ import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.utils.Format;
 import com.exscudo.peer.eon.TimeProvider;
+import com.exscudo.peer.eon.crypto.Ed25519Signer;
 import com.exscudo.peer.eon.crypto.ISigner;
 import com.exscudo.peer.eon.transactions.Deposit;
 import com.exscudo.peer.eon.transactions.Payment;
@@ -21,8 +22,8 @@ import com.exscudo.peer.eon.transactions.Registration;
 @Category(IIntegrationTest.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class TransactionTestIT {
-	private static final String GENERATOR = "55373380ff77987646b816450824310fb377c1a14b6f725b94382af3cf7b788a";
-	private static final String GENERATOR2 = "dd6403d520afbfadeeff0b1bb49952440b767663454ab1e5f1a358e018cf9c73";
+	private static final String GENERATOR = "eba54bbb2dd6e55c466fac09707425145ca8560fe40de3fa3565883f4d48779e";
+	private static final String GENERATOR2 = "d2005ef0df1f6926082aefa09917874cfb212d1ff4eb55c78f670ef9dd23ef6c";
 	private static final String GENERATOR_NEW = "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff";
 	private TimeProvider mockTimeProvider;
 
@@ -35,14 +36,14 @@ public class TransactionTestIT {
 	public void step_1_doubleSending() throws Exception {
 		PeerContext ctx = new PeerContext(GENERATOR, mockTimeProvider);
 		PeerContext ctx2 = new PeerContext(GENERATOR2, mockTimeProvider);
-		ISigner signer = (new PeerContext(GENERATOR_NEW, mockTimeProvider)).getSigner();
+		ISigner signer = new Ed25519Signer(GENERATOR_NEW);
 
 		Block lastBlock = ctx.context.getInstance().getBlockchainService().getLastBlock();
 
 		Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 + 1);
 
-		Transaction tx = Registration.newAccount(signer.getPublicKey())
-				.validity(lastBlock.getTimestamp() + 100, 3600).forFee(1L).build(ctx.getSigner());
+		Transaction tx = Registration.newAccount(signer.getPublicKey()).validity(lastBlock.getTimestamp() + 100, 3600)
+				.forFee(1L).build(ctx.getSigner());
 		ctx.transactionBotService.putTransaction(tx);
 		ctx.generateBlockForNow();
 
@@ -71,8 +72,8 @@ public class TransactionTestIT {
 
 		Transaction tx3 = Payment.newPayment(8000L, Format.MathID.pick(ctx.getSigner().getPublicKey())).forFee(1000L)
 				.validity(lastBlock.getTimestamp() + 200, 3600).build(signer);
-		Transaction tx4 = Payment.newPayment(8000L, Format.MathID.pick(ctx2.getSigner().getPublicKey()))
-				.forFee(1000L).validity(lastBlock.getTimestamp() + 200, 3600).build(signer);
+		Transaction tx4 = Payment.newPayment(8000L, Format.MathID.pick(ctx2.getSigner().getPublicKey())).forFee(1000L)
+				.validity(lastBlock.getTimestamp() + 200, 3600).build(signer);
 
 		ctx.transactionBotService.putTransaction(tx3);
 		ctx2.transactionBotService.putTransaction(tx4);
@@ -114,8 +115,8 @@ public class TransactionTestIT {
 	public void step_2_balances_checker() throws Exception {
 		// Init peer and etc...
 		PeerContext ctx = new PeerContext(GENERATOR, mockTimeProvider);
-		ISigner signer = (new PeerContext(GENERATOR2, mockTimeProvider)).getSigner();
-		ISigner signerNew = (new PeerContext(GENERATOR_NEW, mockTimeProvider)).getSigner();
+		ISigner signer = new Ed25519Signer(GENERATOR2);
+		ISigner signerNew = new Ed25519Signer(GENERATOR_NEW);
 
 		Block lastBlock = ctx.context.getInstance().getBlockchainService().getLastBlock();
 
@@ -124,35 +125,36 @@ public class TransactionTestIT {
 		String signerNewID = Format.ID.accountId(Format.MathID.pick(signerNew.getPublicKey()));
 
 		// Create new acc
-		AccountService.Info information = ctx.accountBotService.getInformation(signerID);
-		AccountService.Info informationCtx = ctx.accountBotService.getInformation(signerCtxID);
-		AccountService.Info informationNew = ctx.accountBotService.getInformation(signerNewID);
+		AccountService.EONBalance balance = ctx.accountBotService.getBalance(signerID);
+		AccountService.EONBalance balanceCtx = ctx.accountBotService.getBalance(signerCtxID);
+		AccountService.EONBalance balanceNew = ctx.accountBotService.getBalance(signerNewID);
 
-		Assert.assertEquals(AccountService.State.NotFound, informationNew.state);
+		Assert.assertEquals(AccountService.State.NotFound, ctx.accountBotService.getState(signerNewID));
+		Assert.assertEquals(AccountService.State.Unauthorized, balanceNew.state);
 
 		Transaction tx = Registration.newAccount(signerNew.getPublicKey())
 				.validity(lastBlock.getTimestamp() + 100, 3600).forFee(1L).build(signer);
 		Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 + 1);
 		ctx.transactionBotService.putTransaction(tx);
 
-		informationNew = ctx.accountBotService.getInformation(signerNewID);
-		Assert.assertEquals(AccountService.State.Processing, informationNew.state);
+		balanceNew = ctx.accountBotService.getBalance(signerNewID);
+		Assert.assertEquals(AccountService.State.Processing, ctx.accountBotService.getState(signerNewID));
+		Assert.assertEquals(AccountService.State.Unauthorized, balanceNew.state);
 
 		ctx.generateBlockForNow();
 
 		Assert.assertEquals("Registration in block", 1,
 				ctx.context.getInstance().getBlockchainService().getLastBlock().getTransactions().size());
-		Assert.assertEquals("Fee in generator balance", informationCtx.amount + 1L,
-				ctx.accountBotService.getInformation(signerCtxID).amount);
-		Assert.assertEquals("Fee from sender", information.amount - 1L,
-				ctx.accountBotService.getInformation(signerID).amount);
+		Assert.assertEquals("Fee in generator balance", balanceCtx.amount + 1L,
+				ctx.accountBotService.getBalance(signerCtxID).amount);
+		Assert.assertEquals("Fee from sender", balance.amount - 1L, ctx.accountBotService.getBalance(signerID).amount);
 		Assert.assertEquals("New acc created", AccountService.State.OK,
 				ctx.accountBotService.getInformation(signerNewID).state);
 
 		// Payment to new acc
-		information = ctx.accountBotService.getInformation(signerID);
-		informationCtx = ctx.accountBotService.getInformation(signerCtxID);
-		informationNew = ctx.accountBotService.getInformation(signerNewID);
+		balance = ctx.accountBotService.getBalance(signerID);
+		balanceCtx = ctx.accountBotService.getBalance(signerCtxID);
+		balanceNew = ctx.accountBotService.getBalance(signerNewID);
 
 		Transaction tx2 = Payment.newPayment(10000L, Format.MathID.pick(signerNew.getPublicKey())).forFee(1L)
 				.validity(lastBlock.getTimestamp() + 200, 3600).build(signer);
@@ -162,16 +164,17 @@ public class TransactionTestIT {
 
 		Assert.assertEquals("Payment in block", 1,
 				ctx.context.getInstance().getBlockchainService().getLastBlock().getTransactions().size());
-		Assert.assertEquals("Fee in generator balance", informationCtx.amount + 1L,
-				ctx.accountBotService.getInformation(signerCtxID).amount);
-		Assert.assertEquals("Fee and amount from sender", information.amount - (10000L + 1L),
-				ctx.accountBotService.getInformation(signerID).amount);
-		Assert.assertEquals("Amount to recipient", informationNew.amount + 10000L,
-				ctx.accountBotService.getInformation(signerNewID).amount);
+		Assert.assertEquals("Fee in generator balance", balanceCtx.amount + 1L,
+				ctx.accountBotService.getBalance(signerCtxID).amount);
+		Assert.assertEquals("Fee and amount from sender", balance.amount - (10000L + 1L),
+				ctx.accountBotService.getBalance(signerID).amount);
+		Assert.assertEquals("Amount to recipient", balanceNew.amount + 10000L,
+				ctx.accountBotService.getBalance(signerNewID).amount);
 
 		// Deposit in new acc
-		informationCtx = ctx.accountBotService.getInformation(signerCtxID);
-		informationNew = ctx.accountBotService.getInformation(signerNewID);
+		balanceCtx = ctx.accountBotService.getBalance(signerCtxID);
+		balanceNew = ctx.accountBotService.getBalance(signerNewID);
+		AccountService.Info informationNew = ctx.accountBotService.getInformation(signerNewID);
 
 		Transaction tx3 = Deposit.refill(100L).validity(lastBlock.getTimestamp() + 200, 3600).build(signerNew);
 		Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 * 3 + 1);
@@ -180,16 +183,17 @@ public class TransactionTestIT {
 
 		Assert.assertEquals("Deposit.refill in block", 1,
 				ctx.context.getInstance().getBlockchainService().getLastBlock().getTransactions().size());
-		Assert.assertEquals("Fee in generator balance", informationCtx.amount + Deposit.DEPOSIT_TRANSACTION_FEE,
-				ctx.accountBotService.getInformation(signerCtxID).amount);
-		Assert.assertEquals("Fee and amount from sender",
-				informationNew.amount - (100L + Deposit.DEPOSIT_TRANSACTION_FEE),
-				ctx.accountBotService.getInformation(signerNewID).amount);
-		Assert.assertEquals("Deposit in sender", informationNew.deposit + 100L,
-				ctx.accountBotService.getInformation(signerNewID).deposit);
+		Assert.assertEquals("Fee in generator balance", balanceCtx.amount + Deposit.DEPOSIT_TRANSACTION_FEE,
+				ctx.accountBotService.getBalance(signerCtxID).amount);
+		Assert.assertEquals("Fee and amount from sender", balanceNew.amount - (100L + Deposit.DEPOSIT_TRANSACTION_FEE),
+				ctx.accountBotService.getBalance(signerNewID).amount);
+
+		Assert.assertTrue("Deposit in sender",
+				ctx.accountBotService.getInformation(signerNewID).deposit == 100L);
 
 		// Deposit from new acc
-		informationCtx = ctx.accountBotService.getInformation(signerCtxID);
+		balanceCtx = ctx.accountBotService.getBalance(signerCtxID);
+		balanceNew = ctx.accountBotService.getBalance(signerNewID);
 		informationNew = ctx.accountBotService.getInformation(signerNewID);
 
 		Transaction tx4 = Deposit.withdraw(50L).validity(lastBlock.getTimestamp() + 200, 3600).build(signerNew);
@@ -199,12 +203,12 @@ public class TransactionTestIT {
 
 		Assert.assertEquals("Deposit.withdraw in block", 1,
 				ctx.context.getInstance().getBlockchainService().getLastBlock().getTransactions().size());
-		Assert.assertEquals("Fee in generator balance", informationCtx.amount + Deposit.DEPOSIT_TRANSACTION_FEE,
-				ctx.accountBotService.getInformation(signerCtxID).amount);
-		Assert.assertEquals("Fee and amount from sender", informationNew.amount + 50L - Deposit.DEPOSIT_TRANSACTION_FEE,
-				ctx.accountBotService.getInformation(signerNewID).amount);
-		Assert.assertEquals("Deposit in sender", informationNew.deposit - 50L,
-				ctx.accountBotService.getInformation(signerNewID).deposit);
+		Assert.assertEquals("Fee in generator balance", balanceCtx.amount + Deposit.DEPOSIT_TRANSACTION_FEE,
+				ctx.accountBotService.getBalance(signerCtxID).amount);
+		Assert.assertEquals("Fee and amount from sender", balanceNew.amount + 50L - Deposit.DEPOSIT_TRANSACTION_FEE,
+				ctx.accountBotService.getBalance(signerNewID).amount);
+		Assert.assertTrue("Deposit in sender",
+				ctx.accountBotService.getInformation(signerNewID).deposit == 50L);
 	}
 
 }

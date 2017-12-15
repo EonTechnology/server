@@ -66,7 +66,7 @@ public final class SyncForkedTransactionListTask extends BaseTask implements Run
 
 					SalientAttributes attributes = metadataService.getAttributes();
 					int forkNumber = context.getCurrentFork().getNumber(lastBlock.getTimestamp());
-					if (attributes.getFork() == forkNumber && forkNumber != -1) {
+					if (attributes.getFork() == forkNumber) {
 
 						IBlockSynchronizationService blockService = peer.getBlockSynchronizationService();
 

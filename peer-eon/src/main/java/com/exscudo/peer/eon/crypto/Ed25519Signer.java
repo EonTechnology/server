@@ -30,7 +30,7 @@ public class Ed25519Signer implements ISigner {
 
 	@Override
 	public String getName() {
-		return "Ed25519";
+		return Algorithms.Ed25519;
 	}
 
 	@Override

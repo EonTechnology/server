@@ -5,20 +5,15 @@ import java.util.Map;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.services.IAccount;
 import com.exscudo.peer.core.services.ILedger;
+import com.exscudo.peer.core.services.ITransactionHandler;
 import com.exscudo.peer.core.services.TransactionContext;
 import com.exscudo.peer.core.utils.Format;
 import com.exscudo.peer.eon.Account;
-import com.exscudo.peer.eon.transactions.rules.AccountRegistrationValidationRule;
-import com.exscudo.peer.eon.transactions.utils.AccountAttributes;
+import com.exscudo.peer.eon.transactions.utils.AccountProperties;
 
-public class AccountRegistrationHandler extends BaseHandler {
+public class AccountRegistrationHandler implements ITransactionHandler {
 
-	public AccountRegistrationHandler() {
-		super(new AccountRegistrationValidationRule());
-	}
-
-	protected void doRun(Transaction tx, ILedger ledger, TransactionContext context) {
-		super.doRun(tx, ledger, context);
+	public void run(Transaction tx, ILedger ledger, TransactionContext context) {
 
 		final Map<String, Object> data = tx.getData();
 
@@ -26,9 +21,10 @@ public class AccountRegistrationHandler extends BaseHandler {
 			byte[] publicKey = Format.convert(entry.getValue().toString());
 
 			IAccount account = new Account(Format.MathID.pick(publicKey));
-			AccountAttributes.setPublicKey(account, publicKey);
+			AccountProperties.setPublicKey(account, publicKey);
 			ledger.putAccount(account);
 		}
+
 	}
 
 }

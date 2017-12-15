@@ -31,8 +31,13 @@
 		<constructor-arg ref="storage"/>
 	</bean>
 
+	<!-- ForkInitializer -->
+	<bean id="fork" class="com.exscudo.eon.cfg.ForkInitializer" factory-method="init" depends-on="storage">
+		<constructor-arg ref="storage"/>
+	</bean>
+
 	<!-- Engine Configuration -->
-	<bean id="engineConfiguration" class="com.exscudo.peer.eon.EngineConfigurator">
+	<bean id="engineConfiguration" class="com.exscudo.eon.cfg.EngineConfigurator">
 
 		<property name="host">
 			<!-- Host Properties -->
@@ -106,9 +111,11 @@
 		<property name="blockchain">
 			<bean class="com.exscudo.peer.store.sqlite.core.Blockchain">
 				<constructor-arg ref="storage"/>
+				<constructor-arg ref="fork"/>
 			</bean>
 		</property>
 		<property name="backlog" ref="backlog"/>
+		<property name="fork" ref="fork" />
 	</bean>
 
 	<bean id="executionContext" factory-bean="engineConfiguration"
@@ -117,7 +124,7 @@
 
 	<!-- Run tasks -->
 	<bean id="engine" depends-on="engineConfiguration, storage"
-		  factory-method="init" destroy-method="destory" class="com.exscudo.peer.eon.Engine">
+		  factory-method="init" destroy-method="destory" class="com.exscudo.eon.cfg.Engine">
 		<constructor-arg ref="executionContext"/>
 	</bean>
 

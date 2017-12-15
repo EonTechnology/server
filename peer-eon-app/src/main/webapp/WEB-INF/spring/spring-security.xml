@@ -12,6 +12,11 @@
 	<http auto-config="true" use-expressions="true">
 		<!--Uncomment to restrict access to metrics-->
 		<!--<intercept-url pattern="/metrics/**" access="hasIpAddress('127.0.0.1') or hasRole('ROLE_ADMIN')"/>-->
+
+		<!--Restrict access to explorer from not localhost-->
+		<intercept-url pattern="/explorer/**" access="hasIpAddress('127.0.0.1')"/>
+
+		<csrf disabled="true"/>
 	</http>
 
 	<authentication-manager>

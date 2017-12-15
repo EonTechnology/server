@@ -1,12 +1,11 @@
 package com.exscudo.peer.store.sqlite;
 
+import com.exscudo.peer.store.sqlite.migrate.StatementUtils;
+import org.sqlite.SQLiteConfig;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
-
-import org.sqlite.SQLiteConfig;
-
-import com.exscudo.peer.store.sqlite.migrate.StatementUtils;
 
 class ConnectionUtils {
 
@@ -24,6 +23,7 @@ class ConnectionUtils {
 		StatementUtils.runSqlScript(statement, "/com/exscudo/peer/store/sqlite/DBv1.sql");
 		StatementUtils.runSqlScript(statement, "/com/exscudo/peer/store/sqlite/DBv2.sql");
 		StatementUtils.runSqlScript(statement, "/com/exscudo/peer/store/sqlite/DBv2_clean.sql");
+		StatementUtils.runSqlScript(statement, "/com/exscudo/peer/store/sqlite/DBv3.sql");
 		StatementUtils.runSqlScript(statement, url);
 		statement.executeUpdate("COMMIT;");
 

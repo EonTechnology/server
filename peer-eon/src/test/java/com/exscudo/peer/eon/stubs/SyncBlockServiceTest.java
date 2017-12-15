@@ -2,7 +2,6 @@ package com.exscudo.peer.eon.stubs;
 
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import java.math.BigInteger;
@@ -12,26 +11,24 @@ import org.junit.Test;
 
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Difficulty;
-import com.exscudo.peer.core.services.IBacklogService;
 import com.exscudo.peer.core.services.IBlockchainService;
-import com.exscudo.peer.eon.EngineConfigurator;
 import com.exscudo.peer.eon.ExecutionContext;
+import com.exscudo.peer.eon.Instance;
 
 public class SyncBlockServiceTest {
 	private SyncBlockService service;
 
-	private IBacklogService backlog;
 	private IBlockchainService blockchain;
 
 	@Before
 	public void setup() throws Exception {
 
-		backlog = mock(IBacklogService.class);
 		blockchain = mock(IBlockchainService.class);
+		Instance mockInstance = mock(Instance.class);
+		when(mockInstance.getBlockchainService()).thenReturn(blockchain);
+		ExecutionContext context = mock(ExecutionContext.class);
+		when(context.getInstance()).thenReturn(mockInstance);
 
-		EngineConfigurator cfg = new EngineConfigurator();
-		ExecutionContext context = spy(cfg.setBacklog(backlog).setBlockchain(blockchain).setInnerPeers(new String[0])
-				.setPublicPeers(new String[0]).build());
 		service = new SyncBlockService(context);
 
 	}

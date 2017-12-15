@@ -18,6 +18,7 @@ import com.exscudo.peer.store.sqlite.ConnectionProxy;
 /**
  * Manage block in DB
  */
+// FIXME: remove block.nextBlock 
 @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
 public class BlockHelper {
 
@@ -80,7 +81,7 @@ public class BlockHelper {
 				saveStatement.setString(6, Format.convert(block.getGenerationSignature()));
 				saveStatement.setString(7, Format.convert(block.getSignature()));
 				saveStatement.setInt(8, block.getHeight());
-				saveStatement.setLong(9, block.getNextBlock());
+				saveStatement.setLong(9, 0L);
 				saveStatement.setString(10, block.getCumulativeDifficulty().toString());
 				saveStatement.setString(11, Format.convert(block.getSnapshot()));
 				saveStatement.executeUpdate();
@@ -322,7 +323,6 @@ public class BlockHelper {
 		block.setSnapshot(snapshot);
 
 		block.setHeight(set.getInt("height"));
-		block.setNextBlock(set.getLong("nextBlock"));
 		block.setCumulativeDifficulty(new BigInteger(set.getString("cumulativeDifficulty")));
 
 		return block;
