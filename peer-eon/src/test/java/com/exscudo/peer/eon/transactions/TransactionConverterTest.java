@@ -7,10 +7,12 @@ import java.util.Map;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import com.dampcake.bencode.Bencode;
 import com.dampcake.bencode.Type;
 import com.exscudo.peer.MockSigner;
+import com.exscudo.peer.core.crypto.CryptoProvider;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.mapper.transport.TransactionMapper;
 import com.exscudo.peer.core.utils.Format;
@@ -22,7 +24,8 @@ public class TransactionConverterTest {
 
 	@Before
 	public void setUp() {
-
+		CryptoProvider cryptoProvider = Mockito.mock(CryptoProvider.class);
+		CryptoProvider.init(cryptoProvider);
 	}
 
 	@Test
