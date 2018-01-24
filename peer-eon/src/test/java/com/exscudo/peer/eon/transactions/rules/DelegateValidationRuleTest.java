@@ -15,8 +15,8 @@ import com.exscudo.peer.eon.crypto.ISigner;
 import com.exscudo.peer.eon.state.Balance;
 import com.exscudo.peer.eon.state.RegistrationData;
 import com.exscudo.peer.eon.state.ValidationMode;
-import com.exscudo.peer.eon.transactions.Delegate;
-import com.exscudo.peer.eon.transactions.TransactionBuilder;
+import com.exscudo.peer.eon.transactions.builders.DelegateBuilder;
+import com.exscudo.peer.eon.transactions.builders.TransactionBuilder;
 import com.exscudo.peer.eon.transactions.utils.AccountProperties;
 import org.junit.Before;
 import org.junit.Test;
@@ -63,7 +63,7 @@ public class DelegateValidationRuleTest extends AbstractValidationRuleTest {
 		expectedException.expectMessage("Value already set.");
 
 		long id = Format.MathID.pick(sender.getPublicKey());
-		Transaction tx = Delegate.addAccount(id, 60).build(sender);
+		Transaction tx = DelegateBuilder.createNew(id, 60).build(sender);
 		validate(tx);
 	}
 
@@ -96,7 +96,7 @@ public class DelegateValidationRuleTest extends AbstractValidationRuleTest {
 	@Test
 	public void enable_mfa() throws Exception {
 		long id = Format.MathID.pick(sender.getPublicKey());
-		Transaction tx = Delegate.addAccount(id, 50).build(sender);
+		Transaction tx = DelegateBuilder.createNew(id, 50).build(sender);
 		validate(tx);
 	}
 
@@ -106,7 +106,7 @@ public class DelegateValidationRuleTest extends AbstractValidationRuleTest {
 		expectedException.expectMessage("Incorrect distribution of votes.");
 
 		long id = Format.MathID.pick(sender.getPublicKey());
-		Transaction tx = Delegate.addAccount(id, 40).build(sender);
+		Transaction tx = DelegateBuilder.createNew(id, 40).build(sender);
 		validate(tx);
 	}
 
@@ -121,7 +121,7 @@ public class DelegateValidationRuleTest extends AbstractValidationRuleTest {
 		AccountProperties.setValidationMode(senderAccount, validationMode);
 
 		long id = Format.MathID.pick(sender.getPublicKey());
-		Transaction tx = Delegate.addAccount(id, 0).build(sender);
+		Transaction tx = DelegateBuilder.createNew(id, 0).build(sender);
 		validate(tx);
 	}
 
@@ -133,7 +133,7 @@ public class DelegateValidationRuleTest extends AbstractValidationRuleTest {
 		when(ledger.getAccount(Format.MathID.pick(sender.getPublicKey()))).thenReturn(null);
 
 		long id = Format.MathID.pick(delegate_1.getPublicKey());
-		Transaction tx = Delegate.addAccount(id, 50).build(sender);
+		Transaction tx = DelegateBuilder.createNew(id, 50).build(sender);
 		validate(tx);
 	}
 
@@ -143,7 +143,7 @@ public class DelegateValidationRuleTest extends AbstractValidationRuleTest {
 		expectedException.expect(ValidateException.class);
 		expectedException.expectMessage("Unknown account " + Format.ID.accountId(id));
 
-		Transaction tx = Delegate.addAccount(id, 50).build(sender);
+		Transaction tx = DelegateBuilder.createNew(id, 50).build(sender);
 		validate(tx);
 	}
 
@@ -153,14 +153,14 @@ public class DelegateValidationRuleTest extends AbstractValidationRuleTest {
 		expectedException.expectMessage("Incorrect distribution of votes.");
 
 		long id = Format.MathID.pick(delegate_1.getPublicKey());
-		Transaction tx = Delegate.addAccount(id, 20).build(sender);
+		Transaction tx = DelegateBuilder.createNew(id, 20).build(sender);
 		validate(tx);
 	}
 
 	@Test
 	public void add_delegate() throws Exception {
 		long id = Format.MathID.pick(delegate_1.getPublicKey());
-		Transaction tx = Delegate.addAccount(id, 40).build(sender);
+		Transaction tx = DelegateBuilder.createNew(id, 40).build(sender);
 		validate(tx);
 	}
 
@@ -173,7 +173,7 @@ public class DelegateValidationRuleTest extends AbstractValidationRuleTest {
 		AccountProperties.setValidationMode(senderAccount, validationMode);
 
 		long id = Format.MathID.pick(delegate_1.getPublicKey());
-		Transaction tx = Delegate.removeAccount(id).build(sender);
+		Transaction tx = DelegateBuilder.createNew(id).build(sender);
 		validate(tx);
 	}
 
@@ -188,7 +188,7 @@ public class DelegateValidationRuleTest extends AbstractValidationRuleTest {
 		AccountProperties.setValidationMode(delegateAccount1, validationMode);
 
 		long id = Format.MathID.pick(delegate_1.getPublicKey());
-		Transaction tx = Delegate.addAccount(id, 40).build(sender);
+		Transaction tx = DelegateBuilder.createNew(id, 40).build(sender);
 		validate(tx);
 	}
 

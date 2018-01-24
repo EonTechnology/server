@@ -1,5 +1,6 @@
 package com.exscudo.eon.IT;
 
+import com.exscudo.peer.eon.transactions.builders.PaymentBuilder;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
@@ -14,7 +15,6 @@ import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.utils.Format;
 import com.exscudo.peer.eon.TimeProvider;
 import com.exscudo.peer.eon.tasks.SyncForkedTransactionListTask;
-import com.exscudo.peer.eon.transactions.Payment;
 
 @SuppressWarnings("WeakerAccess")
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -68,10 +68,10 @@ public class SyncForkedTransactionListTestIT {
 		lastBlock = ctx1.context.getInstance().getBlockchainService().getLastBlock();
 		Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + Constant.BLOCK_PERIOD + 1);
 
-		Transaction tx1 = Payment.newPayment(10000L, Format.MathID.pick(ctx2.getSigner().getPublicKey())).forFee(1L)
-				.validity(lastBlock.getTimestamp() + 150, 3600).build(ctx1.getSigner());
-		Transaction tx2 = Payment.newPayment(10000L, Format.MathID.pick(ctx2.getSigner().getPublicKey())).forFee(1L)
-				.validity(lastBlock.getTimestamp() + 100, 3600).build(ctx1.getSigner());
+		Transaction tx1 = PaymentBuilder.createNew(10000L, Format.MathID.pick(ctx2.getSigner().getPublicKey()))
+				.forFee(1L).validity(lastBlock.getTimestamp() + 150, 3600).build(ctx1.getSigner());
+		Transaction tx2 = PaymentBuilder.createNew(10000L, Format.MathID.pick(ctx2.getSigner().getPublicKey()))
+				.forFee(1L).validity(lastBlock.getTimestamp() + 100, 3600).build(ctx1.getSigner());
 
 		ctx1.transactionBotService.putTransaction(tx1);
 		ctx2.transactionBotService.putTransaction(tx2);

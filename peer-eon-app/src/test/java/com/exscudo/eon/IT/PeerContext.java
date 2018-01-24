@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 
 import com.exscudo.eon.bot.AccountService;
+import com.exscudo.eon.bot.ColoredCoinService;
 import com.exscudo.eon.bot.TransactionService;
 import com.exscudo.eon.cfg.EngineConfigurator;
 import com.exscudo.eon.jsonrpc.ObjectMapperProvider;
@@ -56,15 +57,15 @@ class PeerContext {
 
 	TransactionService transactionBotService;
 	AccountService accountBotService;
+	ColoredCoinService coloredCoinService;
 
 	ISigner signer;
 	IFork fork;
 
-	PeerContext(String seed, TimeProvider timeProvider)
-			throws ClassNotFoundException, SQLException, IOException {
+	PeerContext(String seed, TimeProvider timeProvider) throws ClassNotFoundException, SQLException, IOException {
 		this(seed, timeProvider, Utils.createStorage());
 	}
-	
+
 	PeerContext(String seed, TimeProvider timeProvider, Storage storage)
 			throws ClassNotFoundException, SQLException, IOException {
 		this(seed, timeProvider, storage, Utils.createFork(storage));
@@ -172,6 +173,7 @@ class PeerContext {
 		accountBotService = new AccountService(storage);
 		transactionBotService = new TransactionService(context);
 		syncTransactionListTask = new SyncTransactionListTask(context);
+		coloredCoinService = new ColoredCoinService(storage);
 
 		syncPeerListTask = new SyncPeerListTask(context);
 

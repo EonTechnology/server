@@ -14,7 +14,7 @@ import com.exscudo.peer.eon.crypto.Ed25519Signer;
 import com.exscudo.peer.eon.crypto.ISigner;
 import com.exscudo.peer.eon.state.Balance;
 import com.exscudo.peer.eon.state.RegistrationData;
-import com.exscudo.peer.eon.transactions.Registration;
+import com.exscudo.peer.eon.transactions.builders.AccountRegistrationBuilder;
 import com.exscudo.peer.eon.transactions.utils.AccountProperties;
 import org.junit.Before;
 import org.junit.Test;
@@ -23,7 +23,8 @@ import org.mockito.Mockito;
 public class AccountRegistrationValidationRuleTest extends AbstractValidationRuleTest {
 	private AccountRegistrationValidationRule rule = new AccountRegistrationValidationRule();
 
-	private ISigner senderSigner = new Ed25519Signer("112233445566778899aabbccddeeff00112233445566778899aabbccddeeff00");
+	private ISigner senderSigner = new Ed25519Signer(
+			"112233445566778899aabbccddeeff00112233445566778899aabbccddeeff00");
 	private IAccount sender;
 
 	@Override
@@ -50,7 +51,7 @@ public class AccountRegistrationValidationRuleTest extends AbstractValidationRul
 		expectedException.expectMessage("Account already exists.");
 
 		AccountProperties.setBalance(sender, new Balance(1000L));
-		Transaction tx = Registration.newAccount(senderSigner.getPublicKey()).build(senderSigner);
+		Transaction tx = AccountRegistrationBuilder.createNew(senderSigner.getPublicKey()).build(senderSigner);
 		validate(tx);
 	}
 
@@ -59,7 +60,7 @@ public class AccountRegistrationValidationRuleTest extends AbstractValidationRul
 		expectedException.expect(ValidateException.class);
 		expectedException.expectMessage("Attachment of unknown type.");
 
-		Transaction tx = spy(Registration.newAccount(new byte[0]).build(senderSigner));
+		Transaction tx = spy(AccountRegistrationBuilder.createNew(new byte[0]).build(senderSigner));
 		HashMap<String, Object> map = new HashMap<String, Object>();
 		map.put("data", "test");
 		when(tx.getData()).thenReturn(map);

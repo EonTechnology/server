@@ -10,7 +10,7 @@ import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.utils.Format;
 import com.exscudo.peer.eon.Peer;
 import com.exscudo.peer.eon.TimeProvider;
-import com.exscudo.peer.eon.transactions.Payment;
+import com.exscudo.peer.eon.transactions.builders.PaymentBuilder;
 import com.exscudo.peer.store.sqlite.Storage;
 
 import org.junit.Assert;
@@ -227,10 +227,10 @@ public class ForkTest1IT {
 
 			Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 1);
 
-			Transaction tx1 = Payment.newPayment(100L, Format.MathID.pick(ctx2.getSigner().getPublicKey())).forFee(1L)
-					.validity(lastBlock.getTimestamp(), 3600, 1).build(ctx1.getSigner());
-			Transaction tx2 = Payment.newPayment(100L, Format.MathID.pick(ctx2.getSigner().getPublicKey())).forFee(1L)
-					.validity(lastBlock.getTimestamp() + 1, 3600, 1).build(ctx1.getSigner());
+			Transaction tx1 = PaymentBuilder.createNew(100L, Format.MathID.pick(ctx2.getSigner().getPublicKey()))
+					.forFee(1L).validity(lastBlock.getTimestamp(), 3600, 1).build(ctx1.getSigner());
+			Transaction tx2 = PaymentBuilder.createNew(100L, Format.MathID.pick(ctx2.getSigner().getPublicKey()))
+					.forFee(1L).validity(lastBlock.getTimestamp() + 1, 3600, 1).build(ctx1.getSigner());
 
 			ctx1.transactionBotService.putTransaction(tx1);
 			ctx2.transactionBotService.putTransaction(tx2);
@@ -337,9 +337,9 @@ public class ForkTest1IT {
 		int time = lastBlock.getTimestamp();
 		Mockito.when(mockTimeProvider.get()).thenReturn(time);
 
-		Transaction tx1 = Payment.newPayment(100L, Format.MathID.pick(ctx2.getSigner().getPublicKey())).forFee(1L)
+		Transaction tx1 = PaymentBuilder.createNew(100L, Format.MathID.pick(ctx2.getSigner().getPublicKey())).forFee(1L)
 				.validity(mockTimeProvider.get(), 60, 1).build(ctx1.getSigner());
-		Transaction tx2 = Payment.newPayment(100L, Format.MathID.pick(ctx2.getSigner().getPublicKey())).forFee(1L)
+		Transaction tx2 = PaymentBuilder.createNew(100L, Format.MathID.pick(ctx2.getSigner().getPublicKey())).forFee(1L)
 				.validity(mockTimeProvider.get(), 3600, 2).build(ctx1.getSigner());
 
 		try {
@@ -359,10 +359,10 @@ public class ForkTest1IT {
 
 		ctx1.generateBlockForNow();
 
-		Transaction tx1p = Payment.newPayment(100L, Format.MathID.pick(ctx2.getSigner().getPublicKey())).forFee(1L)
-				.validity(mockTimeProvider.get(), 60, 1).build(ctx1.getSigner());
-		Transaction tx2p = Payment.newPayment(100L, Format.MathID.pick(ctx2.getSigner().getPublicKey())).forFee(1L)
-				.validity(mockTimeProvider.get(), 3600, 2).build(ctx1.getSigner());
+		Transaction tx1p = PaymentBuilder.createNew(100L, Format.MathID.pick(ctx2.getSigner().getPublicKey()))
+				.forFee(1L).validity(mockTimeProvider.get(), 60, 1).build(ctx1.getSigner());
+		Transaction tx2p = PaymentBuilder.createNew(100L, Format.MathID.pick(ctx2.getSigner().getPublicKey()))
+				.forFee(1L).validity(mockTimeProvider.get(), 3600, 2).build(ctx1.getSigner());
 
 		try {
 			ctx1.transactionBotService.putTransaction(tx1p);

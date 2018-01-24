@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+## 0.8.0 - 2018-01-25 - TestNet fork 4
+### Added
+- Colored Coin functionality.
+
 ## 0.7.0 - 2017-12-15 - TestNet fork 3
 ### Added
 - Transactions are now might be signed by using the Multi-Signature Mechanism.

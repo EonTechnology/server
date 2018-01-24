@@ -43,7 +43,7 @@ public class PrometheusServlet extends FrameworkServlet {
 		long maxMemory = runtime.maxMemory();
 
 		Block lastBlock = storage.getLastBlock();
-		PeerRegistry registry = new PeerRegistry();
+		PeerRegistry registry = context.getPeers();
 		String[] list = registry.getPeersList();
 
 		int count = storage.getBacklog().size();

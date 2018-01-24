@@ -56,6 +56,31 @@ public class TransactionType {
 	 */
 	public static final int AccountPublication = 475;
 
+	/**
+	 * Issue of colored coins.
+	 * <p>
+	 * Associates an account with a color coin. All operations for the issue or
+	 * withdrawal of a colored coin will be tied to the current account
+	 * <p>
+	 * ATTENTION: A reverse transaction is possible only if the entire amount of
+	 * colored coins on the account balance (see
+	 * {@link TransactionType#ColoredCoinSupply})
+	 */
+	public static final int ColoredCoinRegistration = 500;
+
+	/**
+	 * Transfer of colored coins between two accounts.
+	 */
+	public static final int ColoredCoinPayment = 510;
+
+	/**
+	 * Sets the total number of colored coins.
+	 * <p>
+	 * To remove a colored coin, the total amount of money should be set to zero.
+	 * The entire amount of funds must be on the balance of the sender
+	 */
+	public static final int ColoredCoinSupply = 520;
+
 	private static Set<Integer> types = null;
 	private static final int MODIFIER = Modifier.PUBLIC | Modifier.STATIC | Modifier.FINAL;
 

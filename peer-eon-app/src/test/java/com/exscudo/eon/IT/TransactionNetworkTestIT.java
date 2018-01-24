@@ -7,7 +7,7 @@ import com.exscudo.peer.core.data.mapper.crypto.SignedObjectMapper;
 import com.exscudo.peer.core.utils.Format;
 import com.exscudo.peer.eon.TimeProvider;
 import com.exscudo.peer.eon.crypto.Ed25519SignatureVerifier;
-import com.exscudo.peer.eon.transactions.Payment;
+import com.exscudo.peer.eon.transactions.builders.PaymentBuilder;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
@@ -58,7 +58,7 @@ public class TransactionNetworkTestIT {
 		Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 + 1);
 		CryptoProvider.init(cryptoProvider2);
 
-		Transaction tx = Payment.newPayment(100L, Format.MathID.pick(ctx2.getSigner().getPublicKey())).forFee(1L)
+		Transaction tx = PaymentBuilder.createNew(100L, Format.MathID.pick(ctx2.getSigner().getPublicKey())).forFee(1L)
 				.validity(lastBlock.getTimestamp(), 3600).build(ctx1.getSigner());
 
 		CryptoProvider.init(cryptoProvider1);
@@ -81,7 +81,7 @@ public class TransactionNetworkTestIT {
 		Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 + 1);
 		CryptoProvider.init(cryptoProvider2);
 
-		Transaction tx = Payment.newPayment(100L, Format.MathID.pick(ctx2.getSigner().getPublicKey())).forFee(1L)
+		Transaction tx = PaymentBuilder.createNew(100L, Format.MathID.pick(ctx2.getSigner().getPublicKey())).forFee(1L)
 				.validity(lastBlock.getTimestamp(), 3600).build(ctx1.getSigner());
 
 		ctx1.transactionBotService.putTransaction(tx);
@@ -117,7 +117,7 @@ public class TransactionNetworkTestIT {
 
 		Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 * 2 + 1);
 
-		Transaction tx = Payment.newPayment(100L, Format.MathID.pick(ctx2.getSigner().getPublicKey())).forFee(1L)
+		Transaction tx = PaymentBuilder.createNew(100L, Format.MathID.pick(ctx2.getSigner().getPublicKey())).forFee(1L)
 				.validity(lastBlock.getTimestamp(), 3600).build(ctx1.getSigner());
 
 		ctx1.transactionBotService.putTransaction(tx);

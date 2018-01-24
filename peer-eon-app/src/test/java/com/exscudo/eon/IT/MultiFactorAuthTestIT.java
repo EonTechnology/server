@@ -16,11 +16,11 @@ import com.exscudo.peer.eon.TimeProvider;
 import com.exscudo.peer.eon.TransactionType;
 import com.exscudo.peer.eon.crypto.Ed25519Signer;
 import com.exscudo.peer.eon.crypto.ISigner;
-import com.exscudo.peer.eon.transactions.Delegate;
-import com.exscudo.peer.eon.transactions.Payment;
-import com.exscudo.peer.eon.transactions.Quorum;
-import com.exscudo.peer.eon.transactions.Registration;
-import com.exscudo.peer.eon.transactions.Rejection;
+import com.exscudo.peer.eon.transactions.builders.AccountRegistrationBuilder;
+import com.exscudo.peer.eon.transactions.builders.DelegateBuilder;
+import com.exscudo.peer.eon.transactions.builders.PaymentBuilder;
+import com.exscudo.peer.eon.transactions.builders.QuorumBuilder;
+import com.exscudo.peer.eon.transactions.builders.RejectionBuilder;
 import com.exscudo.peer.store.sqlite.Storage;
 import org.junit.Assert;
 import org.junit.Before;
@@ -69,11 +69,11 @@ public class MultiFactorAuthTestIT {
 
 		Mockito.when(mockTimeProvider.get()).thenReturn(timestamp + 180 + 1);
 
-		Transaction tx1 = Registration.newAccount(delegate_1.getPublicKey()).validity(timestamp + 1, 3600).forFee(1L)
-				.build(ctx.getSigner());
+		Transaction tx1 = AccountRegistrationBuilder.createNew(delegate_1.getPublicKey()).validity(timestamp + 1, 3600)
+				.forFee(1L).build(ctx.getSigner());
 		ctx.transactionBotService.putTransaction(tx1);
-		Transaction tx2 = Registration.newAccount(delegate_2.getPublicKey()).validity(timestamp + 1, 3600).forFee(1L)
-				.build(ctx.getSigner());
+		Transaction tx2 = AccountRegistrationBuilder.createNew(delegate_2.getPublicKey()).validity(timestamp + 1, 3600)
+				.forFee(1L).build(ctx.getSigner());
 		ctx.transactionBotService.putTransaction(tx2);
 
 		ctx.generateBlockForNow();
@@ -83,10 +83,10 @@ public class MultiFactorAuthTestIT {
 		// payments
 		Mockito.when(mockTimeProvider.get()).thenReturn(timestamp + 2 * 180 + 1);
 
-		Transaction tx3 = Payment.newPayment(1000L, Format.MathID.pick(delegate_1.getPublicKey())).forFee(1L)
+		Transaction tx3 = PaymentBuilder.createNew(1000L, Format.MathID.pick(delegate_1.getPublicKey())).forFee(1L)
 				.validity(timestamp + 180 + 1, 3600).build(ctx.getSigner());
 		ctx.transactionBotService.putTransaction(tx3);
-		Transaction tx4 = Payment.newPayment(1000L, Format.MathID.pick(delegate_2.getPublicKey())).forFee(1L)
+		Transaction tx4 = PaymentBuilder.createNew(1000L, Format.MathID.pick(delegate_2.getPublicKey())).forFee(1L)
 				.validity(timestamp + 180 + 1, 3600).build(ctx.getSigner());
 		ctx.transactionBotService.putTransaction(tx4);
 
@@ -97,13 +97,13 @@ public class MultiFactorAuthTestIT {
 		// set quorum and delegates
 		Mockito.when(mockTimeProvider.get()).thenReturn(timestamp + 3 * 180 + 1);
 
-		Transaction tx6 = Delegate.addAccount(Format.MathID.pick(delegate_1.getPublicKey()), 30)
+		Transaction tx6 = DelegateBuilder.createNew(Format.MathID.pick(delegate_1.getPublicKey()), 30)
 				.validity(timestamp + 2 * 180 + 1, 3600).build(ctx.getSigner());
 		ctx.transactionBotService.putTransaction(tx6);
-		Transaction tx7 = Delegate.addAccount(Format.MathID.pick(delegate_2.getPublicKey()), 20)
+		Transaction tx7 = DelegateBuilder.createNew(Format.MathID.pick(delegate_2.getPublicKey()), 20)
 				.validity(timestamp + 2 * 180 + 1, 3600).build(ctx.getSigner());
 		ctx.transactionBotService.putTransaction(tx7);
-		Transaction tx8 = Quorum.newQuorum(50).quorumForType(TransactionType.OrdinaryPayment, 85)
+		Transaction tx8 = QuorumBuilder.createNew(50).quorumForType(TransactionType.OrdinaryPayment, 85)
 				.validity(timestamp + 2 * 180 + 1, 3600).build(ctx.getSigner());
 		ctx.transactionBotService.putTransaction(tx8);
 
@@ -122,7 +122,7 @@ public class MultiFactorAuthTestIT {
 		// enable mfa
 		Mockito.when(mockTimeProvider.get()).thenReturn(timestamp + 4 * 180 + 1);
 
-		Transaction tx5 = Delegate.addAccount(Format.MathID.pick(ctx.getSigner().getPublicKey()), 50)
+		Transaction tx5 = DelegateBuilder.createNew(Format.MathID.pick(ctx.getSigner().getPublicKey()), 50)
 				.validity(timestamp + 3 * 180 + 1, 3600).build(ctx.getSigner());
 		ctx.transactionBotService.putTransaction(tx5);
 
@@ -134,10 +134,10 @@ public class MultiFactorAuthTestIT {
 		ISigner delegate_new = new Ed25519Signer(DELEGATE_NEW);
 		Mockito.when(mockTimeProvider.get()).thenReturn(timestamp + 180 * 5 + 1);
 
-		Transaction tx9 = Registration.newAccount(delegate_new.getPublicKey()).validity(timestamp + 4 * 180 + 1, 3600)
-				.build(ctx.getSigner());
+		Transaction tx9 = AccountRegistrationBuilder.createNew(delegate_new.getPublicKey())
+				.validity(timestamp + 4 * 180 + 1, 3600).build(ctx.getSigner());
 		ctx.transactionBotService.putTransaction(tx9);
-		Transaction tx10 = Payment.newPayment(100L, Format.MathID.pick(delegate_1.getPublicKey()))
+		Transaction tx10 = PaymentBuilder.createNew(100L, Format.MathID.pick(delegate_1.getPublicKey()))
 				.validity(timestamp + 4 * 180 + 1, 3600).build(ctx.getSigner());
 		try {
 			ctx.transactionBotService.putTransaction(tx10);
@@ -152,7 +152,7 @@ public class MultiFactorAuthTestIT {
 		// try put transaction
 		Mockito.when(mockTimeProvider.get()).thenReturn(timestamp + 180 * 6 + 1);
 
-		Transaction tx11 = Payment.newPayment(100L, Format.MathID.pick(delegate_1.getPublicKey()))
+		Transaction tx11 = PaymentBuilder.createNew(100L, Format.MathID.pick(delegate_1.getPublicKey()))
 				.validity(timestamp + 180 * 5 + 1, 3600).build(ctx.getSigner(), new ISigner[] { delegate_1 });
 		try {
 			ctx.transactionBotService.putTransaction(tx11);
@@ -167,7 +167,7 @@ public class MultiFactorAuthTestIT {
 		// put transaction
 		Mockito.when(mockTimeProvider.get()).thenReturn(timestamp + 180 * 7 + 1);
 
-		Transaction tx12 = Payment.newPayment(100L, Format.MathID.pick(delegate_1.getPublicKey()))
+		Transaction tx12 = PaymentBuilder.createNew(100L, Format.MathID.pick(delegate_1.getPublicKey()))
 				.validity(timestamp + 180 * 6 + 1, 3600)
 				.build(ctx.getSigner(), new ISigner[] { delegate_1, delegate_2 });
 		ctx.transactionBotService.putTransaction(tx12);
@@ -179,7 +179,7 @@ public class MultiFactorAuthTestIT {
 		// reject
 		Mockito.when(mockTimeProvider.get()).thenReturn(timestamp + 180 * 8 + 1);
 
-		Transaction tx13 = Rejection.multiFactor(Format.MathID.pick(ctx.getSigner().getPublicKey()))
+		Transaction tx13 = RejectionBuilder.createNew(Format.MathID.pick(ctx.getSigner().getPublicKey()))
 				.validity(timestamp + 180 * 7 + 1, 3600).build(delegate_2);
 		ctx.transactionBotService.putTransaction(tx13);
 

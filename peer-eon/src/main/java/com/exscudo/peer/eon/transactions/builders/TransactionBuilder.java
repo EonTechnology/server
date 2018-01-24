@@ -1,4 +1,4 @@
-package com.exscudo.peer.eon.transactions;
+package com.exscudo.peer.eon.transactions.builders;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -12,7 +12,7 @@ import com.exscudo.peer.eon.crypto.ISigner;
  * Constructor to build a new transaction. <b> The allows base fields of the
  * resulting transaction to be configured
  */
-public class TransactionBuilder {
+public class TransactionBuilder<TConcreteBuilder extends TransactionBuilder<?>> {
 
 	private long fee = EonConstant.TRANSACTION_MIN_FEE;
 	private int timestamp = (int) (System.currentTimeMillis() / 1000L);
@@ -26,30 +26,31 @@ public class TransactionBuilder {
 		this.data = data;
 	}
 
-	protected TransactionBuilder(int type) {
-		this.type = type;
+	public TransactionBuilder(int type) {
+		this(type, new HashMap<>());
 	}
 
-	protected void setData(Map<String, Object> data) {
-		this.data = data;
-	}
-
-	public TransactionBuilder forFee(long fee) {
+	public TConcreteBuilder forFee(long fee) {
 		this.fee = fee;
-		return this;
+		return (TConcreteBuilder) this;
 	}
 
-	public TransactionBuilder validity(int timestamp, int deadline) {
+	public TConcreteBuilder validity(int timestamp, int deadline) {
 
 		return validity(timestamp, deadline, this.version);
 	}
 
-	public TransactionBuilder validity(int timestamp, int deadline, int version) {
+	public TConcreteBuilder withParam(String name, Object value) {
+		this.data.put(name, value);
+		return (TConcreteBuilder) this;
+	}
+
+	public TConcreteBuilder validity(int timestamp, int deadline, int version) {
 		this.deadline = deadline;
 		this.timestamp = timestamp;
 		this.version = version;
 
-		return this;
+		return (TConcreteBuilder) this;
 	}
 
 	public Transaction build(ISigner signer) throws Exception {

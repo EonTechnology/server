@@ -28,4 +28,14 @@ public class PropertyType {
 	 */
 	public static final String VOTER = "voter";
 
+	/**
+	 * Contains parameters specified when registering a colored coin. Optional.
+	 */
+	public static final String COLORED_COIN = "colored-coin";
+
+	/**
+	 * Contains a list of coin balances by colors. Optional.
+	 */
+	public static final String COLORED_BALANCE = "colored-balance";
+
 }

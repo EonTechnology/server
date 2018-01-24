@@ -396,7 +396,8 @@ public final class SyncBlockListTask implements Runnable {
 			if (diff.compareTo(currentState) > 0) {
 				uow.commit();
 				Loggers.info(SyncBlockListTask.class, "Sync complete. [{}]{} -> [{}]{}", commonBlock.getHeight(),
-						commonBlock.getID(), currBlock.getHeight(), diff.getLastBlockID());
+						Format.ID.blockId(commonBlock.getID()), currBlock.getHeight(),
+						Format.ID.blockId(diff.getLastBlockID()));
 			} else {
 
 				// There were problems with the addition of the block. The node

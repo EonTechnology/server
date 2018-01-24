@@ -4,11 +4,6 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.Map;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mockito;
-
 import com.dampcake.bencode.Bencode;
 import com.dampcake.bencode.Type;
 import com.exscudo.peer.MockSigner;
@@ -16,43 +11,28 @@ import com.exscudo.peer.core.crypto.CryptoProvider;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.mapper.transport.TransactionMapper;
 import com.exscudo.peer.core.utils.Format;
+import com.exscudo.peer.eon.TransactionType;
 import com.exscudo.peer.eon.crypto.ISigner;
+import com.exscudo.peer.eon.transactions.builders.*;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mockito;
 
 public class TransactionConverterTest {
-
+	private MockSigner signer;
 	private Bencode bencode = new Bencode();
 
 	@Before
 	public void setUp() {
+		signer = new MockSigner(123L);
 		CryptoProvider cryptoProvider = Mockito.mock(CryptoProvider.class);
 		CryptoProvider.init(cryptoProvider);
 	}
 
 	@Test
-	public void transaction_payment() throws Exception {
-		MockSigner signer = new MockSigner(123L);
-
-		Transaction tran = Payment.newPayment(100L, 12345L).forFee(1L).validity(12345, 60, 1).build(signer);
-
-		checkTransaction(tran,
-				"d10:attachmentd6:amounti100e9:recipient21:EON-T3E22-22222-22JUJe8:deadlinei60e3:feei1e6:sender21:EON-RMNF4-KLGQ7-9Y65X9:signature128:c3764dce8a9c539f5f0d1be0fcd49e8c90f44eb7daf786297b276912eb478bae58c2d7cb22f1844404cb269400d11a3eb4eb7ae82bca2e9a29441f26d4c574379:timestampi12345e4:typei200e7:versioni1ee");
-	}
-
-	@Test
-	public void transaction_payment_v2() throws Exception {
-		MockSigner signer = new MockSigner(123L);
-
-		Transaction tran = Payment.newPayment(100L, 12345L).forFee(1L).validity(12345, 3600, 2).build(signer);
-
-		checkTransaction(tran,
-				"d10:attachmentd6:amounti100e9:recipient21:EON-T3E22-22222-22JUJe8:deadlinei3600e3:feei1e6:sender21:EON-RMNF4-KLGQ7-9Y65X9:signature128:c3764dce8a9c539f5f0d1be0fcd49e8c90f44eb7daf786297b276912eb478bae58c2d7cb22f1844404cb269400d11a3eb4eb7ae82bca2e9a29441f26d4c574379:timestampi12345e4:typei200e7:versioni2ee");
-	}
-
-	@Test
 	public void transaction_payment_referenced() throws Exception {
-		MockSigner signer = new MockSigner(123L);
-
-		Transaction tran = Payment.newPayment(100L, 12345L).forFee(1L).validity(12345, 60, 1).build(signer);
+		Transaction tran = PaymentBuilder.createNew(100L, 12345L).forFee(1L).validity(12345, 60, 1).build(signer);
 		tran.setReference(-1);
 
 		checkTransaction(tran,
@@ -60,43 +40,115 @@ public class TransactionConverterTest {
 	}
 
 	@Test
-	public void transaction_register() throws Exception {
-		MockSigner signer = new MockSigner(123L);
+	public void transaction_confirmations() throws Exception {
+		Transaction tran = DepositWithdrawBuilder.createNew(999L).validity(12345, 60, 1).build(signer,
+				new ISigner[] { signer });
 
-		Transaction tran = Registration.newAccount(signer.getPublicKey()).validity(12345 + 60, 60, 1).build(signer);
+		checkTransaction(tran,
+				"d10:attachmentd6:amounti999ee13:confirmationsd21:EON-RMNF4-KLGQ7-9Y65X128:c3764dce8a9c539f5f0d1be0fcd49e8c90f44eb7daf786297b276912eb478bae58c2d7cb22f1844404cb269400d11a3eb4eb7ae82bca2e9a29441f26d4c57437e8:deadlinei60e3:feei10e6:sender21:EON-RMNF4-KLGQ7-9Y65X9:signature128:c3764dce8a9c539f5f0d1be0fcd49e8c90f44eb7daf786297b276912eb478bae58c2d7cb22f1844404cb269400d11a3eb4eb7ae82bca2e9a29441f26d4c574379:timestampi12345e4:typei320e7:versioni1ee");
+	}
+
+	//
+	// Transaction Types
+	//
+
+	@Test
+	public void transaction_payment() throws Exception {
+		Transaction tran = PaymentBuilder.createNew(100L, 12345L).forFee(1L).validity(12345, 60, 1).build(signer);
+
+		checkTransaction(tran,
+				"d10:attachmentd6:amounti100e9:recipient21:EON-T3E22-22222-22JUJe8:deadlinei60e3:feei1e6:sender21:EON-RMNF4-KLGQ7-9Y65X9:signature128:c3764dce8a9c539f5f0d1be0fcd49e8c90f44eb7daf786297b276912eb478bae58c2d7cb22f1844404cb269400d11a3eb4eb7ae82bca2e9a29441f26d4c574379:timestampi12345e4:typei200e7:versioni1ee");
+	}
+
+	@Test
+	public void transaction_payment_v2() throws Exception {
+		Transaction tran = PaymentBuilder.createNew(100L, 12345L).forFee(1L).validity(12345, 3600, 2).build(signer);
+
+		checkTransaction(tran,
+				"d10:attachmentd6:amounti100e9:recipient21:EON-T3E22-22222-22JUJe8:deadlinei3600e3:feei1e6:sender21:EON-RMNF4-KLGQ7-9Y65X9:signature128:c3764dce8a9c539f5f0d1be0fcd49e8c90f44eb7daf786297b276912eb478bae58c2d7cb22f1844404cb269400d11a3eb4eb7ae82bca2e9a29441f26d4c574379:timestampi12345e4:typei200e7:versioni2ee");
+	}
+
+	@Test
+	public void transaction_account_registration() throws Exception {
+		Transaction tran = AccountRegistrationBuilder.createNew(signer.getPublicKey()).validity(12345 + 60, 60, 1)
+				.build(signer);
 
 		checkTransaction(tran,
 				"d10:attachmentd21:EON-RMNF4-KLGQ7-9Y65X64:ddf121b99504bc3cd18cabfdaaf0334d16d1d7403226fa924557da9b3a0f4642e8:deadlinei60e3:feei1e6:sender21:EON-RMNF4-KLGQ7-9Y65X9:signature128:c3764dce8a9c539f5f0d1be0fcd49e8c90f44eb7daf786297b276912eb478bae58c2d7cb22f1844404cb269400d11a3eb4eb7ae82bca2e9a29441f26d4c574379:timestampi12405e4:typei100e7:versioni1ee");
 	}
 
 	@Test
-	public void transaction_deposit() throws Exception {
-		MockSigner signer = new MockSigner(123L);
-
-		Transaction tran = Deposit.refill(999L).validity(12345, 60, 1).build(signer);
+	public void transaction_deposit_refill() throws Exception {
+		Transaction tran = DepositRefillBuilder.createNew(999L).validity(12345, 60, 1).build(signer);
 
 		checkTransaction(tran,
 				"d10:attachmentd6:amounti999ee8:deadlinei60e3:feei10e6:sender21:EON-RMNF4-KLGQ7-9Y65X9:signature128:c3764dce8a9c539f5f0d1be0fcd49e8c90f44eb7daf786297b276912eb478bae58c2d7cb22f1844404cb269400d11a3eb4eb7ae82bca2e9a29441f26d4c574379:timestampi12345e4:typei310e7:versioni1ee");
 	}
 
 	@Test
-	public void transaction_deposit_issue() throws Exception {
-		MockSigner signer = new MockSigner(123L);
-
-		Transaction tran = Deposit.withdraw(999L).validity(12345, 60, 1).build(signer);
+	public void transaction_deposit_withdraw() throws Exception {
+		Transaction tran = DepositWithdrawBuilder.createNew(999L).validity(12345, 60, 1).build(signer);
 
 		checkTransaction(tran,
 				"d10:attachmentd6:amounti999ee8:deadlinei60e3:feei10e6:sender21:EON-RMNF4-KLGQ7-9Y65X9:signature128:c3764dce8a9c539f5f0d1be0fcd49e8c90f44eb7daf786297b276912eb478bae58c2d7cb22f1844404cb269400d11a3eb4eb7ae82bca2e9a29441f26d4c574379:timestampi12345e4:typei320e7:versioni1ee");
 	}
 
 	@Test
-	public void transaction_confirmations() throws Exception {
-		MockSigner signer = new MockSigner(123L);
+	public void transaction_quorum() throws Exception {
+		Transaction tx = QuorumBuilder.createNew(80).quorumForType(TransactionType.Quorum, 70).validity(12345, 3600, 2)
+				.build(signer);
 
-		Transaction tran = Deposit.withdraw(999L).validity(12345, 60, 1).build(signer, new ISigner[]{signer});
+		checkTransaction(tx,
+				"d10:attachmentd3:400i70e3:alli80ee8:deadlinei3600e3:feei1e6:sender21:EON-RMNF4-KLGQ7-9Y65X9:signature128:c3764dce8a9c539f5f0d1be0fcd49e8c90f44eb7daf786297b276912eb478bae58c2d7cb22f1844404cb269400d11a3eb4eb7ae82bca2e9a29441f26d4c574379:timestampi12345e4:typei400e7:versioni2ee");
+	}
 
-		checkTransaction(tran,
-				"d10:attachmentd6:amounti999ee13:confirmationsd21:EON-RMNF4-KLGQ7-9Y65X128:c3764dce8a9c539f5f0d1be0fcd49e8c90f44eb7daf786297b276912eb478bae58c2d7cb22f1844404cb269400d11a3eb4eb7ae82bca2e9a29441f26d4c57437e8:deadlinei60e3:feei10e6:sender21:EON-RMNF4-KLGQ7-9Y65X9:signature128:c3764dce8a9c539f5f0d1be0fcd49e8c90f44eb7daf786297b276912eb478bae58c2d7cb22f1844404cb269400d11a3eb4eb7ae82bca2e9a29441f26d4c574379:timestampi12345e4:typei320e7:versioni1ee");
+	@Test
+	public void transaction_delegate() throws Exception {
+		Transaction tx = DelegateBuilder.createNew(1L, 10).validity(12345, 3600, 2).build(signer);
+
+		checkTransaction(tx,
+				"d10:attachmentd21:EON-32222-22222-22J2Ji10ee8:deadlinei3600e3:feei1e6:sender21:EON-RMNF4-KLGQ7-9Y65X9:signature128:c3764dce8a9c539f5f0d1be0fcd49e8c90f44eb7daf786297b276912eb478bae58c2d7cb22f1844404cb269400d11a3eb4eb7ae82bca2e9a29441f26d4c574379:timestampi12345e4:typei425e7:versioni2ee");
+	}
+
+	@Test
+	public void transaction_rejection() throws Exception {
+		Transaction tx = RejectionBuilder.createNew(1L).validity(12345, 3600, 2).build(signer);
+
+		checkTransaction(tx,
+				"d10:attachmentd7:account21:EON-32222-22222-22J2Je8:deadlinei3600e3:feei1e6:sender21:EON-RMNF4-KLGQ7-9Y65X9:signature128:c3764dce8a9c539f5f0d1be0fcd49e8c90f44eb7daf786297b276912eb478bae58c2d7cb22f1844404cb269400d11a3eb4eb7ae82bca2e9a29441f26d4c574379:timestampi12345e4:typei450e7:versioni2ee");
+	}
+
+	@Test
+	public void transaction_account_publication() throws Exception {
+		Transaction tx = AccountPublicationBuilder.createNew("112233445566778899qqwweerrttyyuu")
+				.validity(12345, 3600, 2).build(signer);
+
+		checkTransaction(tx,
+				"d10:attachmentd4:seed32:112233445566778899qqwweerrttyyuue8:deadlinei3600e3:feei1e6:sender21:EON-RMNF4-KLGQ7-9Y65X9:signature128:c3764dce8a9c539f5f0d1be0fcd49e8c90f44eb7daf786297b276912eb478bae58c2d7cb22f1844404cb269400d11a3eb4eb7ae82bca2e9a29441f26d4c574379:timestampi12345e4:typei475e7:versioni2ee");
+	}
+
+	@Test
+	public void transaction_colored_coin_registration() throws Exception {
+		Transaction tx = ColoredCoinRegistrationBuilder.createNew(1000L, 2).validity(12345, 3600, 2).build(signer);
+
+		checkTransaction(tx,
+				"d10:attachmentd12:decimalPointi2e8:emissioni1000ee8:deadlinei3600e3:feei1e6:sender21:EON-RMNF4-KLGQ7-9Y65X9:signature128:c3764dce8a9c539f5f0d1be0fcd49e8c90f44eb7daf786297b276912eb478bae58c2d7cb22f1844404cb269400d11a3eb4eb7ae82bca2e9a29441f26d4c574379:timestampi12345e4:typei500e7:versioni2ee");
+	}
+
+	@Test
+	public void transaction_colored_coin_payment() throws Exception {
+		Transaction tx = ColoredPaymentBuilder.createNew(100L, 9999999L, 1111L).validity(12345, 3600, 2).build(signer);
+
+		checkTransaction(tx,
+				"d10:attachmentd6:amounti100e5:color23:EON-C-ZM7KB-22222-22JBK9:recipient21:EON-R4322-22222-222DKe8:deadlinei3600e3:feei1e6:sender21:EON-RMNF4-KLGQ7-9Y65X9:signature128:c3764dce8a9c539f5f0d1be0fcd49e8c90f44eb7daf786297b276912eb478bae58c2d7cb22f1844404cb269400d11a3eb4eb7ae82bca2e9a29441f26d4c574379:timestampi12345e4:typei510e7:versioni2ee");
+	}
+
+	@Test
+	public void transaction_colored_coin_supply() throws Exception {
+		Transaction tx = ColoredCoinSupplyBuilder.createNew(2000L).validity(12345, 3600, 2).build(signer);
+
+		checkTransaction(tx,
+				"d10:attachmentd11:moneySupplyi2000ee8:deadlinei3600e3:feei1e6:sender21:EON-RMNF4-KLGQ7-9Y65X9:signature128:c3764dce8a9c539f5f0d1be0fcd49e8c90f44eb7daf786297b276912eb478bae58c2d7cb22f1844404cb269400d11a3eb4eb7ae82bca2e9a29441f26d4c574379:timestampi12345e4:typei520e7:versioni2ee");
 	}
 
 	private void checkTransaction(Transaction tran, String data) throws IllegalArgumentException {

@@ -8,12 +8,18 @@ import com.exscudo.peer.eon.AccountPropertyDeserializer;
 import com.exscudo.peer.eon.AccountPropertyMapper;
 import com.exscudo.peer.eon.AccountPropertySerializer;
 import com.exscudo.peer.eon.state.Balance;
+import com.exscudo.peer.eon.state.ColoredBalance;
+import com.exscudo.peer.eon.state.ColoredCoin;
 import com.exscudo.peer.eon.state.GeneratingBalance;
 import com.exscudo.peer.eon.state.RegistrationData;
 import com.exscudo.peer.eon.state.ValidationMode;
 import com.exscudo.peer.eon.state.Voter;
 import com.exscudo.peer.eon.state.serialization.BalancePropertyDeserializer;
 import com.exscudo.peer.eon.state.serialization.BalancePropertySerializer;
+import com.exscudo.peer.eon.state.serialization.ColoredBalanceDeserializer;
+import com.exscudo.peer.eon.state.serialization.ColoredBalanceSerializer;
+import com.exscudo.peer.eon.state.serialization.ColoredCoinDeserializer;
+import com.exscudo.peer.eon.state.serialization.ColoredCoinSerializer;
 import com.exscudo.peer.eon.state.serialization.GeneratingBalancePropertyDeserializer;
 import com.exscudo.peer.eon.state.serialization.GeneratingBalancePropertySerializer;
 import com.exscudo.peer.eon.state.serialization.RegistrationDataPropertyDeserializer;
@@ -31,11 +37,15 @@ public class AccountProperties {
 			.addDeserializer(RegistrationData.class, new RegistrationDataPropertyDeserializer())
 			.addDeserializer(ValidationMode.class, new ValidationModePropertyDeserializer())
 			.addDeserializer(Voter.class, new VoterPropertyDeserializer())
+			.addDeserializer(ColoredCoin.class, new ColoredCoinDeserializer())
+			.addDeserializer(ColoredBalance.class, new ColoredBalanceDeserializer())
 			.addSerializer(new BalancePropertySerializer())
 			.addSerializer(new GeneratingBalancePropertySerializer())
 			.addSerializer(new RegistrationDataPropertySerializer())
 			.addSerializer(new ValidationModePropertySerializer())
-			.addSerializer(new VoterPropertySerializer());
+			.addSerializer(new VoterPropertySerializer())
+			.addSerializer(new ColoredCoinSerializer())
+			.addSerializer(new ColoredBalanceSerializer());
 
 	static <TValue> TValue get(IAccount account, Class<TValue> clazz) {
 		AccountPropertyDeserializer deserializer = properties.findDeserializer(clazz);
@@ -141,4 +151,20 @@ public class AccountProperties {
 		return get(account, Voter.class);
 	}
 
+	public static ColoredCoin getColoredCoinRegistrationData(IAccount account) {
+		ColoredCoin coin = AccountProperties.get(account, ColoredCoin.class);
+		return coin;
+	}
+
+	public static void setColoredCoinRegistrationData(IAccount account, ColoredCoin coloredCoin) {
+		AccountProperties.set(account, coloredCoin);
+	}
+
+	public static ColoredBalance getColoredBalance(IAccount account) {
+		return AccountProperties.get(account, ColoredBalance.class);
+	}
+
+	public static void setColoredBalance(IAccount account, ColoredBalance coloredBalance ) {
+		set(account, coloredBalance);
+	}
 }

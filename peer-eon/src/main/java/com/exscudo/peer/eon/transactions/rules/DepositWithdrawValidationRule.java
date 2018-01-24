@@ -8,7 +8,7 @@ import com.exscudo.peer.core.services.ILedger;
 import com.exscudo.peer.core.services.TransactionContext;
 import com.exscudo.peer.eon.state.Balance;
 import com.exscudo.peer.eon.state.GeneratingBalance;
-import com.exscudo.peer.eon.transactions.Deposit;
+import com.exscudo.peer.eon.transactions.builders.DepositRefillBuilder;
 import com.exscudo.peer.eon.transactions.utils.AccountProperties;
 
 public class DepositWithdrawValidationRule implements IValidationRule {
@@ -16,7 +16,7 @@ public class DepositWithdrawValidationRule implements IValidationRule {
 	@Override
 	public ValidationResult validate(Transaction tx, ILedger ledger, TransactionContext context) {
 
-		if (tx.getFee() != Deposit.DEPOSIT_TRANSACTION_FEE) {
+		if (tx.getFee() != DepositRefillBuilder.DEPOSIT_TRANSACTION_FEE) {
 			return ValidationResult.error("The field value Fee is not valid.");
 		}
 

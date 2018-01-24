@@ -90,9 +90,7 @@ public class BlockGenerator implements IPeerEventListener, IBlockEventListener {
 		while (indexes.hasNext() && map.size() < EonConstant.BLOCK_TRANSACTION_LIMIT) {
 			Long id = indexes.next();
 			Transaction tx = backlog.get(id);
-			if (tx != null && !tx.isFuture(currentTimestamp)
-					&& (tx.getReference() == 0
-							|| blockchain.transactionMapper().containsTransaction(tx.getReference()))) {
+			if (tx != null && !tx.isFuture(currentTimestamp)) {
 				map.put(id, tx);
 			}
 		}
@@ -101,8 +99,7 @@ public class BlockGenerator implements IPeerEventListener, IBlockEventListener {
 		while (parallelBlock != null) {
 			for (Transaction tx : parallelBlock.getTransactions()) {
 
-				if (!tx.isFuture(currentTimestamp) && (tx.getReference() == 0
-						|| blockchain.transactionMapper().containsTransaction(tx.getReference()))) {
+				if (!tx.isFuture(currentTimestamp)) {
 					map.put(tx.getID(), tx);
 				}
 			}

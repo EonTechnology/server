@@ -6,6 +6,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.HashMap;
 
+import com.exscudo.peer.eon.transactions.builders.PaymentBuilder;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -19,16 +20,17 @@ import com.exscudo.peer.eon.crypto.Ed25519Signer;
 import com.exscudo.peer.eon.crypto.ISigner;
 import com.exscudo.peer.eon.state.Balance;
 import com.exscudo.peer.eon.state.RegistrationData;
-import com.exscudo.peer.eon.transactions.Payment;
 import com.exscudo.peer.eon.transactions.utils.AccountProperties;
 
 public class OrdinaryPaymentValidationRuleTest extends AbstractValidationRuleTest {
 	private OrdinaryPaymentValidationRule rule = new OrdinaryPaymentValidationRule();
 
-	private ISigner senderSigner = new Ed25519Signer("112233445566778899aabbccddeeff00112233445566778899aabbccddeeff00");
+	private ISigner senderSigner = new Ed25519Signer(
+			"112233445566778899aabbccddeeff00112233445566778899aabbccddeeff00");
 	private IAccount sender;
 
-	private ISigner recipientSigner = new Ed25519Signer("00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff");
+	private ISigner recipientSigner = new Ed25519Signer(
+			"00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff");
 	private IAccount recipient;
 
 	@Override
@@ -59,7 +61,7 @@ public class OrdinaryPaymentValidationRuleTest extends AbstractValidationRuleTes
 
 		when(ledger.getAccount(eq(Format.MathID.pick(senderSigner.getPublicKey())))).thenReturn(null);
 
-		Transaction tx = Payment.newPayment(100L, 12345L).forFee(1L).validity(timeProvider.get(), (short) 60, 1)
+		Transaction tx = PaymentBuilder.createNew(100L, 12345L).forFee(1L).validity(timeProvider.get(), (short) 60, 1)
 				.build(senderSigner);
 		validate(tx);
 	}
@@ -69,7 +71,7 @@ public class OrdinaryPaymentValidationRuleTest extends AbstractValidationRuleTes
 		expectedException.expect(ValidateException.class);
 		expectedException.expectMessage("Unknown recipient.");
 
-		Transaction tx = Payment.newPayment(100L, 12345L).forFee(1L).validity(timeProvider.get(), (short) 60, 1)
+		Transaction tx = PaymentBuilder.createNew(100L, 12345L).forFee(1L).validity(timeProvider.get(), (short) 60, 1)
 				.build(senderSigner);
 		validate(tx);
 	}
@@ -79,8 +81,8 @@ public class OrdinaryPaymentValidationRuleTest extends AbstractValidationRuleTes
 		expectedException.expect(ValidateException.class);
 		expectedException.expectMessage("Attachment of unknown type.");
 
-		Transaction tx = spy(Payment.newPayment(100L, 12345L).forFee(1L).validity(timeProvider.get(), (short) 60, 1)
-				.build(senderSigner));
+		Transaction tx = spy(PaymentBuilder.createNew(100L, 12345L).forFee(1L)
+				.validity(timeProvider.get(), (short) 60, 1).build(senderSigner));
 		when(tx.getData()).thenReturn(new HashMap<>());
 		resolveSignature(tx);
 
@@ -94,9 +96,8 @@ public class OrdinaryPaymentValidationRuleTest extends AbstractValidationRuleTes
 
 		AccountProperties.setBalance(sender, new Balance(103L));
 
-		Transaction tx = Payment.newPayment(100L, recipient.getID()).forFee(5L)
-				.validity(timeProvider.get(), (short) 60, 1)
-				.build(senderSigner);
+		Transaction tx = PaymentBuilder.createNew(100L, recipient.getID()).forFee(5L)
+				.validity(timeProvider.get(), (short) 60, 1).build(senderSigner);
 		validate(tx);
 	}
 

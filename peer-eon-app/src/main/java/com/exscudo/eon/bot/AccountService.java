@@ -13,10 +13,13 @@ import com.exscudo.peer.core.services.ILedger;
 import com.exscudo.peer.core.utils.Format;
 import com.exscudo.peer.eon.TransactionType;
 import com.exscudo.peer.eon.state.Balance;
+import com.exscudo.peer.eon.state.ColoredBalance;
+import com.exscudo.peer.eon.state.ColoredCoin;
 import com.exscudo.peer.eon.state.GeneratingBalance;
 import com.exscudo.peer.eon.state.ValidationMode;
 import com.exscudo.peer.eon.state.Voter;
 import com.exscudo.peer.eon.transactions.utils.AccountProperties;
+import com.exscudo.peer.eon.utils.ColoredCoinId;
 import com.exscudo.peer.store.sqlite.Storage;
 import com.exscudo.peer.store.sqlite.merkle.Ledgers;
 
@@ -74,7 +77,7 @@ public class AccountService {
 		public Quorum quorum;
 		public String seed;
 		public Map<String, Integer> voter;
-
+		public String coloredCoin;
 	}
 
 	/**
@@ -122,6 +125,7 @@ public class AccountService {
 	public static class EONBalance {
 		public State state;
 		public long amount;
+		public Map<String, Long> coloredCoins;
 	}
 
 	private final Storage storage;
@@ -243,6 +247,11 @@ public class AccountService {
 				info.voter = vMap;
 			}
 
+			ColoredCoin coloredCoin = AccountProperties.getColoredCoinRegistrationData(account);
+			if (coloredCoin != null) {
+				info.coloredCoin = ColoredCoinId.convert(account.getID());
+			}
+
 			// TODO: add current generating balance
 			GeneratingBalance generatingBalance = AccountProperties.getDeposit(account);
 			if (generatingBalance == null) {
@@ -285,6 +294,17 @@ public class AccountService {
 				balance.amount = 0;
 			} else {
 				balance.amount = b.getValue();
+			}
+
+			ColoredBalance coloredBalance = AccountProperties.getColoredBalance(account);
+			if(coloredBalance != null) {
+				Map<String, Long> cMap = new HashMap<>();
+				for(Map.Entry<Long, Long> e : coloredBalance.balancesEntrySet()) {
+					cMap.put(ColoredCoinId.convert(e.getKey()), e.getValue());
+				}
+				if(!cMap.isEmpty()){
+					balance.coloredCoins = cMap;
+				}
 			}
 		}
 		return balance;

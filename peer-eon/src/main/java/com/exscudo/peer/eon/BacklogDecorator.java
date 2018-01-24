@@ -31,6 +31,11 @@ public class BacklogDecorator implements IBacklogService {
 	@Override
 	public boolean put(Transaction transaction) throws ValidateException {
 
+		long txID = transaction.getID();
+		if (backlog.contains(txID)) {
+			return false;
+		}
+
 		long accountID = transaction.getSenderID();
 
 		Block block = blockchain.getLastBlock();
@@ -56,28 +61,14 @@ public class BacklogDecorator implements IBacklogService {
 		handler.run(transaction, state, ctx);
 
 		ITransactionMapper mapper = blockchain.transactionMapper();
-		long id = transaction.getID();
-		if (backlog.contains(id)) {
-
-			return false;
-
-		} else if (mapper.containsTransaction(id)) {
-
+		if (mapper.containsTransaction(txID)) {
 			return true;
-
-		} else {
-
-			long refID = transaction.getReference();
-			if (refID != 0 && !backlog.contains(refID) && mapper.containsTransaction(refID)) {
-				return false;
-			}
-
-			transaction.setHeight(0);
-			backlog.put(transaction);
-
-			return true;
-
 		}
+
+		transaction.setHeight(0);
+		backlog.put(transaction);
+
+		return true;
 
 	}
 

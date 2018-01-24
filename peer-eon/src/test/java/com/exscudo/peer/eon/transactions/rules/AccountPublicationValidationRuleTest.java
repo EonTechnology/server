@@ -17,8 +17,8 @@ import com.exscudo.peer.eon.crypto.ISigner;
 import com.exscudo.peer.eon.state.RegistrationData;
 import com.exscudo.peer.eon.state.ValidationMode;
 import com.exscudo.peer.eon.state.Voter;
-import com.exscudo.peer.eon.transactions.Registration;
-import com.exscudo.peer.eon.transactions.TransactionBuilder;
+import com.exscudo.peer.eon.transactions.builders.AccountPublicationBuilder;
+import com.exscudo.peer.eon.transactions.builders.TransactionBuilder;
 import com.exscudo.peer.eon.transactions.utils.AccountProperties;
 import org.junit.Before;
 import org.junit.Test;
@@ -45,7 +45,7 @@ public class AccountPublicationValidationRuleTest extends AbstractValidationRule
 	public void setUp() throws Exception {
 		super.setUp();
 
-		account = Mockito.spy(new Account( Format.MathID.pick(signer.getPublicKey())));
+		account = Mockito.spy(new Account(Format.MathID.pick(signer.getPublicKey())));
 		AccountProperties.setRegistrationData(account, new RegistrationData(signer.getPublicKey()));
 
 		Account account_1 = new Account(Format.MathID.pick(signer_1.getPublicKey()));
@@ -74,7 +74,6 @@ public class AccountPublicationValidationRuleTest extends AbstractValidationRule
 		validate(tx);
 	}
 
-
 	@Test
 	public void invalid_seed() throws Exception {
 		expectedException.expect(ValidateException.class);
@@ -91,7 +90,7 @@ public class AccountPublicationValidationRuleTest extends AbstractValidationRule
 		expectedException.expect(ValidateException.class);
 		expectedException.expectMessage("Seed for sender account must be specified in attachment.");
 
-		Transaction tx = Registration.newPublicAccount(seed).build(signer_1);
+		Transaction tx = AccountPublicationBuilder.createNew(seed).build(signer_1);
 		validate(tx);
 	}
 
@@ -100,7 +99,7 @@ public class AccountPublicationValidationRuleTest extends AbstractValidationRule
 		expectedException.expect(ValidateException.class);
 		expectedException.expectMessage("Invalid use of transaction.");
 
-		Transaction tx = Registration.newPublicAccount(seed).build(signer);
+		Transaction tx = AccountPublicationBuilder.createNew(seed).build(signer);
 		validate(tx);
 	}
 
@@ -114,7 +113,7 @@ public class AccountPublicationValidationRuleTest extends AbstractValidationRule
 		validationMode.setWeightForAccount(Format.MathID.pick(signer_1.getPublicKey()), 100);
 		AccountProperties.setValidationMode(account, validationMode);
 
-		Transaction tx = Registration.newPublicAccount(seed).build(signer);
+		Transaction tx = AccountPublicationBuilder.createNew(seed).build(signer);
 		validate(tx);
 	}
 
@@ -132,7 +131,8 @@ public class AccountPublicationValidationRuleTest extends AbstractValidationRule
 		AccountProperties.setValidationMode(account, validationMode);
 
 		int timestamp1 = timestamp + Constant.BLOCK_IN_DAY * Constant.BLOCK_PERIOD;
-		Transaction tx = Registration.newPublicAccount(seed).validity( timestamp1 - 30 * 60,60 * 60).build(signer);
+		Transaction tx = AccountPublicationBuilder.createNew(seed).validity(timestamp1 - 30 * 60, 60 * 60)
+				.build(signer);
 
 		when(timeProvider.get()).thenReturn(timestamp1 - 1);
 		validate(tx);
@@ -141,8 +141,8 @@ public class AccountPublicationValidationRuleTest extends AbstractValidationRule
 	@Test
 	public void invalid_uses_empty_delegate_list() throws Exception {
 		expectedException.expect(ValidateException.class);
-		expectedException.expectMessage("Illegal validation mode."
-				+ " Do not use this seed more for personal operations.");
+		expectedException
+				.expectMessage("Illegal validation mode." + " Do not use this seed more for personal operations.");
 
 		int timestamp = Constant.BLOCK_IN_DAY * Constant.BLOCK_PERIOD;
 
@@ -151,7 +151,8 @@ public class AccountPublicationValidationRuleTest extends AbstractValidationRule
 		AccountProperties.setValidationMode(account, validationMode);
 
 		int timestamp1 = timestamp + Constant.BLOCK_IN_DAY * Constant.BLOCK_PERIOD;
-		Transaction tx = Registration.newPublicAccount(seed).validity( timestamp1 - 30 * 60,60 * 60).build(signer);
+		Transaction tx = AccountPublicationBuilder.createNew(seed).validity(timestamp1 - 30 * 60, 60 * 60)
+				.build(signer);
 
 		when(timeProvider.get()).thenReturn(timestamp1 + 1);
 		validate(tx);
@@ -160,8 +161,8 @@ public class AccountPublicationValidationRuleTest extends AbstractValidationRule
 	@Test
 	public void invalid_uses_sender_weight_not_equal_zero() throws Exception {
 		expectedException.expect(ValidateException.class);
-		expectedException.expectMessage("Illegal validation mode."
-				+ " Do not use this seed more for personal operations.");
+		expectedException
+				.expectMessage("Illegal validation mode." + " Do not use this seed more for personal operations.");
 
 		int timestamp = Constant.BLOCK_IN_DAY * Constant.BLOCK_PERIOD;
 
@@ -172,7 +173,8 @@ public class AccountPublicationValidationRuleTest extends AbstractValidationRule
 		AccountProperties.setValidationMode(account, validationMode);
 
 		int timestamp1 = timestamp + Constant.BLOCK_IN_DAY * Constant.BLOCK_PERIOD;
-		Transaction tx = Registration.newPublicAccount(seed).validity( timestamp1 - 30 * 60,60 * 60).build(signer);
+		Transaction tx = AccountPublicationBuilder.createNew(seed).validity(timestamp1 - 30 * 60, 60 * 60)
+				.build(signer);
 
 		when(timeProvider.get()).thenReturn(timestamp1 + 1);
 		validate(tx);
@@ -195,7 +197,8 @@ public class AccountPublicationValidationRuleTest extends AbstractValidationRule
 		AccountProperties.setVoter(account, voter);
 
 		int timestamp1 = timestamp + Constant.BLOCK_IN_DAY * Constant.BLOCK_PERIOD;
-		Transaction tx = Registration.newPublicAccount(seed).validity( timestamp1 - 30 * 60,60 * 60).build(signer);
+		Transaction tx = AccountPublicationBuilder.createNew(seed).validity(timestamp1 - 30 * 60, 60 * 60)
+				.build(signer);
 
 		when(timeProvider.get()).thenReturn(timestamp1 + 1);
 		validate(tx);
@@ -211,11 +214,11 @@ public class AccountPublicationValidationRuleTest extends AbstractValidationRule
 		AccountProperties.setValidationMode(account, validationMode);
 
 		int timestamp1 = timestamp + Constant.BLOCK_IN_DAY * Constant.BLOCK_PERIOD;
-		Transaction tx = Registration.newPublicAccount(seed).validity( timestamp1 - 30 * 60,60 * 60).build(signer);
+		Transaction tx = AccountPublicationBuilder.createNew(seed).validity(timestamp1 - 30 * 60, 60 * 60)
+				.build(signer);
 
 		when(timeProvider.get()).thenReturn(timestamp1 + 1);
 		validate(tx);
 	}
-
 
 }

@@ -2,6 +2,9 @@ package com.exscudo.eon.IT;
 
 import java.util.Arrays;
 
+import com.exscudo.peer.eon.transactions.builders.AccountRegistrationBuilder;
+import com.exscudo.peer.eon.transactions.builders.DepositRefillBuilder;
+import com.exscudo.peer.eon.transactions.builders.PaymentBuilder;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
@@ -19,9 +22,6 @@ import com.exscudo.peer.core.data.TransactionComparator;
 import com.exscudo.peer.core.utils.Format;
 import com.exscudo.peer.eon.EonConstant;
 import com.exscudo.peer.eon.TimeProvider;
-import com.exscudo.peer.eon.transactions.Deposit;
-import com.exscudo.peer.eon.transactions.Payment;
-import com.exscudo.peer.eon.transactions.Registration;
 
 @Category(IIntegrationTest.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -183,7 +183,7 @@ public class GenerationTestIT {
 		PeerContext ctxNew = new PeerContext(GENERATOR_NEW, mockTimeProvider);
 		Block lastBlock = ctx.context.getInstance().getBlockchainService().getLastBlock();
 
-		Transaction tx = Registration.newAccount(ctxNew.getSigner().getPublicKey())
+		Transaction tx = AccountRegistrationBuilder.createNew(ctxNew.getSigner().getPublicKey())
 				.validity(lastBlock.getTimestamp() + 100, 3600).forFee(1L).build(ctx.getSigner());
 		Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 + 1);
 		ctx.transactionBotService.putTransaction(tx);
@@ -192,8 +192,8 @@ public class GenerationTestIT {
 		Assert.assertEquals("Registration in block", 1,
 				ctx.context.getInstance().getBlockchainService().getLastBlock().getTransactions().size());
 
-		Transaction tx2 = Payment
-				.newPayment(EonConstant.MIN_DEPOSIT_SIZE + 1000L, Format.MathID.pick(ctxNew.getSigner().getPublicKey()))
+		Transaction tx2 = PaymentBuilder
+				.createNew(EonConstant.MIN_DEPOSIT_SIZE + 1000L, Format.MathID.pick(ctxNew.getSigner().getPublicKey()))
 				.forFee(1L).validity(lastBlock.getTimestamp() + 200, 3600).build(ctx.getSigner());
 		Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 * 2 + 1);
 		ctx.transactionBotService.putTransaction(tx2);
@@ -202,8 +202,8 @@ public class GenerationTestIT {
 		Assert.assertEquals("Payment in block", 1,
 				ctx.context.getInstance().getBlockchainService().getLastBlock().getTransactions().size());
 
-		Transaction tx3 = Deposit.refill(EonConstant.MIN_DEPOSIT_SIZE).validity(lastBlock.getTimestamp() + 200, 3600)
-				.build(ctxNew.getSigner());
+		Transaction tx3 = DepositRefillBuilder.createNew(EonConstant.MIN_DEPOSIT_SIZE)
+				.validity(lastBlock.getTimestamp() + 200, 3600).build(ctxNew.getSigner());
 		Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 * 3 + 1);
 		ctx.transactionBotService.putTransaction(tx3);
 		ctx.generateBlockForNow();
@@ -250,7 +250,7 @@ public class GenerationTestIT {
 				ctx.context.getInstance().getBlockchainService().getLastBlock().getID(),
 				ctxNew.context.getInstance().getBlockchainService().getLastBlock().getID());
 
-		Transaction tx4 = Deposit.refill(100L).validity(lastBlock2.getTimestamp() + 200, 3600)
+		Transaction tx4 = DepositRefillBuilder.createNew(100L).validity(lastBlock2.getTimestamp() + 200, 3600)
 				.build(ctxNew.getSigner());
 		Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock2.getTimestamp() + 180 * 3 + 1);
 		ctxNew.transactionBotService.putTransaction(tx4);
@@ -357,8 +357,8 @@ public class GenerationTestIT {
 				ctx2.context.getInstance().getBlockchainService().getLastBlock().getID());
 
 		// put tx1 to ctx2
-		Transaction tx1 = Payment.newPayment(10000L, Format.MathID.pick(ctx2.getSigner().getPublicKey())).forFee(1L)
-				.validity(netStart + 180 * 1 + 2, 3600).build(ctx1.getSigner());
+		Transaction tx1 = PaymentBuilder.createNew(10000L, Format.MathID.pick(ctx2.getSigner().getPublicKey()))
+				.forFee(1L).validity(netStart + 180 * 1 + 2, 3600).build(ctx1.getSigner());
 		ctx2.transactionBotService.putTransaction(tx1);
 
 		// ctx2 generates block 2 with tx1
@@ -373,8 +373,8 @@ public class GenerationTestIT {
 				ctx2.context.getInstance().getBlockchainService().getLastBlock().getID());
 
 		// put tx2 to ctx1
-		Transaction tx2 = Payment.newPayment(10000L, Format.MathID.pick(ctx2.getSigner().getPublicKey())).forFee(1L)
-				.validity(netStart + 180 * 1 + 3, 3600).build(ctx1.getSigner());
+		Transaction tx2 = PaymentBuilder.createNew(10000L, Format.MathID.pick(ctx2.getSigner().getPublicKey()))
+				.forFee(1L).validity(netStart + 180 * 1 + 3, 3600).build(ctx1.getSigner());
 		ctx1.transactionBotService.putTransaction(tx2);
 
 		// ctx1 generates 'parallel' block 2 with tx1 and tx2
@@ -413,8 +413,8 @@ public class GenerationTestIT {
 
 		Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 + 1);
 
-		Transaction tx = Payment
-				.newPayment(1000L,
+		Transaction tx = PaymentBuilder
+				.createNew(1000L,
 						Format.MathID.pick(ctx1.context.getInstance().getGenerator().getSigner().getPublicKey()))
 				.forFee(1L).validity(mockTimeProvider.get() - 1, 3600)
 				.build(ctx2.context.getInstance().getGenerator().getSigner());

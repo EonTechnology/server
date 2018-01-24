@@ -8,7 +8,7 @@ import com.exscudo.peer.core.services.ILedger;
 import com.exscudo.peer.core.services.TransactionContext;
 import com.exscudo.peer.core.utils.Format;
 import com.exscudo.peer.eon.state.Balance;
-import com.exscudo.peer.eon.transactions.Payment;
+import com.exscudo.peer.eon.transactions.builders.PaymentBuilder;
 import com.exscudo.peer.eon.transactions.utils.AccountProperties;
 
 public class OrdinaryPaymentValidationRule implements IValidationRule {
@@ -32,7 +32,7 @@ public class OrdinaryPaymentValidationRule implements IValidationRule {
 		} catch (NumberFormatException e) {
 			return ValidationResult.error("Attachment of unknown type. The amount format is not supports.");
 		}
-		if (amount < Payment.MIN_PAYMENT || amount > Payment.MAX_PAYMENT) {
+		if (amount < PaymentBuilder.MIN_PAYMENT || amount > PaymentBuilder.MAX_PAYMENT) {
 			return ValidationResult.error("Invalid amount size.");
 		}
 

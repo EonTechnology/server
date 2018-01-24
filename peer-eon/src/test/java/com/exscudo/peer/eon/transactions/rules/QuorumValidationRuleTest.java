@@ -15,8 +15,8 @@ import com.exscudo.peer.eon.crypto.ISigner;
 import com.exscudo.peer.eon.state.Balance;
 import com.exscudo.peer.eon.state.RegistrationData;
 import com.exscudo.peer.eon.state.ValidationMode;
-import com.exscudo.peer.eon.transactions.Quorum;
-import com.exscudo.peer.eon.transactions.TransactionBuilder;
+import com.exscudo.peer.eon.transactions.builders.QuorumBuilder;
+import com.exscudo.peer.eon.transactions.builders.TransactionBuilder;
 import com.exscudo.peer.eon.transactions.utils.AccountProperties;
 import org.junit.Before;
 import org.junit.Test;
@@ -61,7 +61,7 @@ public class QuorumValidationRuleTest extends AbstractValidationRuleTest {
 		expectedException.expectMessage("Unknown sender.");
 
 		when(ledger.getAccount(Format.MathID.pick(sender.getPublicKey()))).thenReturn(null);
-		Transaction tx = Quorum.newQuorum(70).build(sender);
+		Transaction tx = QuorumBuilder.createNew(70).build(sender);
 		validate(tx);
 	}
 
@@ -116,7 +116,7 @@ public class QuorumValidationRuleTest extends AbstractValidationRuleTest {
 		expectedException.expect(ValidateException.class);
 		expectedException.expectMessage("Unable to set quorum.");
 
-		Transaction tx = Quorum.newQuorum(90).build(sender);
+		Transaction tx = QuorumBuilder.createNew(90).build(sender);
 		validate(tx);
 	}
 

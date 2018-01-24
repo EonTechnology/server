@@ -15,8 +15,8 @@ import com.exscudo.peer.eon.crypto.ISigner;
 import com.exscudo.peer.eon.state.Balance;
 import com.exscudo.peer.eon.state.RegistrationData;
 import com.exscudo.peer.eon.state.ValidationMode;
-import com.exscudo.peer.eon.transactions.Payment;
-import com.exscudo.peer.eon.transactions.Registration;
+import com.exscudo.peer.eon.transactions.builders.AccountRegistrationBuilder;
+import com.exscudo.peer.eon.transactions.builders.PaymentBuilder;
 import com.exscudo.peer.eon.transactions.utils.AccountProperties;
 import org.junit.Before;
 import org.junit.Test;
@@ -73,7 +73,8 @@ public class ConfirmationsValidationRuleTest extends AbstractValidationRuleTest 
 		validationMode.setBaseWeight(ValidationMode.MAX_WEIGHT);
 		AccountProperties.setValidationMode(senderAccount, validationMode);
 
-		Transaction tx = Registration.newAccount(new byte[32]).build(sender, new ISigner[] { delegate_1, delegate_2 });
+		Transaction tx = AccountRegistrationBuilder.createNew(new byte[32]).build(sender,
+				new ISigner[] { delegate_1, delegate_2 });
 		validate(tx);
 
 	}
@@ -84,7 +85,7 @@ public class ConfirmationsValidationRuleTest extends AbstractValidationRuleTest 
 		expectedException.expect(ValidateException.class);
 		expectedException.expectMessage("Duplicates.");
 
-		Transaction tx = Registration.newAccount(new byte[32]).build(sender, new ISigner[] { sender });
+		Transaction tx = AccountRegistrationBuilder.createNew(new byte[32]).build(sender, new ISigner[] { sender });
 		validate(tx);
 
 	}
@@ -98,7 +99,7 @@ public class ConfirmationsValidationRuleTest extends AbstractValidationRuleTest 
 
 		when(ledger.getAccount(id)).thenReturn(null);
 
-		Transaction tx = Registration.newAccount(new byte[32]).build(sender, new ISigner[] { delegate_1 });
+		Transaction tx = AccountRegistrationBuilder.createNew(new byte[32]).build(sender, new ISigner[] { delegate_1 });
 		validate(tx);
 
 	}
@@ -117,7 +118,8 @@ public class ConfirmationsValidationRuleTest extends AbstractValidationRuleTest 
 		validationMode.setQuorum(TransactionType.OrdinaryPayment, 70);
 		AccountProperties.setValidationMode(senderAccount, validationMode);
 
-		Transaction tx = Registration.newAccount(new byte[32]).build(sender, new ISigner[] { delegate_1, delegate_2 });
+		Transaction tx = AccountRegistrationBuilder.createNew(new byte[32]).build(sender,
+				new ISigner[] { delegate_1, delegate_2 });
 		validate(tx);
 
 	}
@@ -126,7 +128,8 @@ public class ConfirmationsValidationRuleTest extends AbstractValidationRuleTest 
 	public void illegal_confirmation() throws Exception {
 		expectedException.expect(IllegalSignatureException.class);
 
-		Transaction tx = Registration.newAccount(new byte[32]).build(sender, new ISigner[] { delegate_1, delegate_2 });
+		Transaction tx = AccountRegistrationBuilder.createNew(new byte[32]).build(sender,
+				new ISigner[] { delegate_1, delegate_2 });
 		String key = tx.getConfirmations().keySet().iterator().next();
 		tx.getConfirmations().put(key, Format.convert(new byte[32]));
 		validate(tx);
@@ -141,7 +144,7 @@ public class ConfirmationsValidationRuleTest extends AbstractValidationRuleTest 
 		IAccount mockAccount = mock(IAccount.class);
 		when(ledger.getAccount(12345L)).thenReturn(mockAccount);
 
-		Transaction tx = Payment.newPayment(100, 12345L).build(sender, new ISigner[] {});
+		Transaction tx = PaymentBuilder.createNew(100, 12345L).build(sender, new ISigner[] {});
 		validate(tx);
 	}
 
@@ -153,7 +156,7 @@ public class ConfirmationsValidationRuleTest extends AbstractValidationRuleTest 
 		IAccount mockAccount = mock(IAccount.class);
 		when(ledger.getAccount(12345L)).thenReturn(mockAccount);
 
-		Transaction tx = Payment.newPayment(100, 12345L).build(sender, new ISigner[] { delegate_1 });
+		Transaction tx = PaymentBuilder.createNew(100, 12345L).build(sender, new ISigner[] { delegate_1 });
 		validate(tx);
 	}
 
@@ -162,7 +165,7 @@ public class ConfirmationsValidationRuleTest extends AbstractValidationRuleTest 
 		IAccount mockAccount = mock(IAccount.class);
 		when(ledger.getAccount(12345L)).thenReturn(mockAccount);
 
-		Transaction tx = Payment.newPayment(100, 12345L).build(sender, new ISigner[] { delegate_1, delegate_2 });
+		Transaction tx = PaymentBuilder.createNew(100, 12345L).build(sender, new ISigner[] { delegate_1, delegate_2 });
 		validate(tx);
 	}
 
@@ -179,13 +182,13 @@ public class ConfirmationsValidationRuleTest extends AbstractValidationRuleTest 
 		validationMode.setQuorum(TransactionType.OrdinaryPayment, 70);
 		AccountProperties.setValidationMode(senderAccount, validationMode);
 
-		Transaction tx = Payment.newPayment(100, 12345L).build(sender, new ISigner[] { delegate_1 });
+		Transaction tx = PaymentBuilder.createNew(100, 12345L).build(sender, new ISigner[] { delegate_1 });
 		validate(tx);
 	}
 
 	@Test
 	public void quorum_without_confirmation() throws Exception {
-		Transaction tx = Registration.newAccount(new byte[32]).build(sender, new ISigner[] {});
+		Transaction tx = AccountRegistrationBuilder.createNew(new byte[32]).build(sender, new ISigner[] {});
 		validate(tx);
 	}
 

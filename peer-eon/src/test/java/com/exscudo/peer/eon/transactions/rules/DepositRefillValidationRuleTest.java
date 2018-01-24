@@ -16,7 +16,7 @@ import com.exscudo.peer.eon.crypto.ISigner;
 import com.exscudo.peer.eon.state.Balance;
 import com.exscudo.peer.eon.state.GeneratingBalance;
 import com.exscudo.peer.eon.state.RegistrationData;
-import com.exscudo.peer.eon.transactions.Deposit;
+import com.exscudo.peer.eon.transactions.builders.DepositRefillBuilder;
 import com.exscudo.peer.eon.transactions.utils.AccountProperties;
 import org.junit.Before;
 import org.junit.Test;
@@ -25,7 +25,8 @@ import org.mockito.Mockito;
 public class DepositRefillValidationRuleTest extends AbstractValidationRuleTest {
 	private DepositRefillValidationRule rule = new DepositRefillValidationRule();
 
-	private ISigner senderSigner = new Ed25519Signer("112233445566778899aabbccddeeff00112233445566778899aabbccddeeff00");
+	private ISigner senderSigner = new Ed25519Signer(
+			"112233445566778899aabbccddeeff00112233445566778899aabbccddeeff00");
 	private IAccount sender;
 
 	@Override
@@ -50,7 +51,7 @@ public class DepositRefillValidationRuleTest extends AbstractValidationRuleTest 
 		expectedException.expect(ValidateException.class);
 		expectedException.expectMessage("The field value Fee is not valid.");
 
-		Transaction tx = spy(Deposit.refill(999L).build(senderSigner));
+		Transaction tx = spy(DepositRefillBuilder.createNew(999L).build(senderSigner));
 		when(tx.getFee()).thenReturn(5L);
 		resolveSignature(tx);
 
@@ -62,7 +63,7 @@ public class DepositRefillValidationRuleTest extends AbstractValidationRuleTest 
 		expectedException.expect(ValidateException.class);
 		expectedException.expectMessage("Attachment of unknown type.");
 
-		Transaction tx = spy(Deposit.refill(999L).build(senderSigner));
+		Transaction tx = spy(DepositRefillBuilder.createNew(999L).build(senderSigner));
 		HashMap<String, Object> map = new HashMap<String, Object>();
 		map.put("amount", "test");
 		when(tx.getData()).thenReturn(map);
@@ -76,7 +77,7 @@ public class DepositRefillValidationRuleTest extends AbstractValidationRuleTest 
 		expectedException.expect(ValidateException.class);
 		expectedException.expectMessage("Unknown sender.");
 
-		Transaction tx = Deposit.refill(1L).build(senderSigner);
+		Transaction tx = DepositRefillBuilder.createNew(1L).build(senderSigner);
 		when(ledger.getAccount(eq(tx.getSenderID()))).thenReturn(null);
 		validate(tx);
 	}
@@ -87,9 +88,10 @@ public class DepositRefillValidationRuleTest extends AbstractValidationRuleTest 
 		expectedException.expectMessage("Not enough funds.");
 
 		long depositAmount = 999L;
-		AccountProperties.setBalance(sender, new Balance(depositAmount + Deposit.DEPOSIT_TRANSACTION_FEE - 1));
+		AccountProperties.setBalance(sender,
+				new Balance(depositAmount + DepositRefillBuilder.DEPOSIT_TRANSACTION_FEE - 1));
 		AccountProperties.setDeposit(sender, new GeneratingBalance(0L, 0));
-		Transaction tx = Deposit.refill(depositAmount).build(senderSigner);
+		Transaction tx = DepositRefillBuilder.createNew(depositAmount).build(senderSigner);
 
 		validate(tx);
 	}
@@ -97,8 +99,8 @@ public class DepositRefillValidationRuleTest extends AbstractValidationRuleTest 
 	@Test
 	public void deposit_refill_with_arbitrary_amount_is_ok() throws Exception {
 		long refillAmount = 900;
-		AccountProperties.setBalance(sender, new Balance(refillAmount + Deposit.DEPOSIT_TRANSACTION_FEE));
-		Transaction tx = Deposit.refill(refillAmount).build(senderSigner);
+		AccountProperties.setBalance(sender, new Balance(refillAmount + DepositRefillBuilder.DEPOSIT_TRANSACTION_FEE));
+		Transaction tx = DepositRefillBuilder.createNew(refillAmount).build(senderSigner);
 
 		validate(tx);
 	}
@@ -109,9 +111,9 @@ public class DepositRefillValidationRuleTest extends AbstractValidationRuleTest 
 		long refillAmount = 100500;
 		long depositAmount = 1;
 
-		AccountProperties.setBalance(sender, new Balance(refillAmount + Deposit.DEPOSIT_TRANSACTION_FEE));
+		AccountProperties.setBalance(sender, new Balance(refillAmount + DepositRefillBuilder.DEPOSIT_TRANSACTION_FEE));
 		AccountProperties.setDeposit(sender, new GeneratingBalance(depositAmount, 0));
-		Transaction tx = Deposit.refill(refillAmount).build(senderSigner);
+		Transaction tx = DepositRefillBuilder.createNew(refillAmount).build(senderSigner);
 
 		validate(tx);
 

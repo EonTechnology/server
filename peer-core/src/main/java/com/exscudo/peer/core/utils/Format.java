@@ -76,6 +76,7 @@ public class Format {
 					bigInteger = bigInteger.xor(bi);
 				}
 
+				// TODO: Fix in MainNet 0xFFFFFFFL (7xF) to 0xFFFFFFFFL (8xF)!
 				long val = ((long) bigInteger.intValue() << 32) | ((long) timestamp & 0xFFFFFFFL);
 
 				return val;
@@ -102,11 +103,11 @@ public class Format {
 		}
 	}
 
-	static class UserFriendlyID {
+	public static class UserFriendlyID {
 
 		private static final String alphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
 
-		static String Encode(long plain, final String prefix) {
+		public static String Encode(long plain, final String prefix) {
 
 			BigInteger id = BigInteger.valueOf(plain);
 			if (plain < 0) {
@@ -140,7 +141,7 @@ public class Format {
 
 		private final static int ID_LEN = 18;
 
-		static long Decode(String idString, final String prefix) throws IllegalArgumentException {
+		public static long Decode(String idString, final String prefix) throws IllegalArgumentException {
 
 			idString = idString.trim().toUpperCase();
 

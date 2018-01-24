@@ -25,6 +25,7 @@ public class TransactionComparator implements Comparator<Transaction> {
 		long aRate = a.getFee() * SIZE_UNIT / aBytesLen;
 		long bRate = b.getFee() * SIZE_UNIT / bBytesLen;
 
+		// TODO: reverse comparator with aRate / bRate
 		int res = Long.compare(aRate, bRate);
 
 		// Comparison by time stamp

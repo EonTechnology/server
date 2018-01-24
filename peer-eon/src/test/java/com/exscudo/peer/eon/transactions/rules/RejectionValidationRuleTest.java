@@ -14,7 +14,7 @@ import com.exscudo.peer.eon.state.RegistrationData;
 import com.exscudo.peer.eon.state.ValidationMode;
 import com.exscudo.peer.eon.state.Voter;
 import com.exscudo.peer.eon.state.serialization.PropertyType;
-import com.exscudo.peer.eon.transactions.Rejection;
+import com.exscudo.peer.eon.transactions.builders.RejectionBuilder;
 import com.exscudo.peer.eon.transactions.utils.AccountProperties;
 import org.junit.Before;
 import org.junit.Test;
@@ -70,7 +70,7 @@ public class RejectionValidationRuleTest extends AbstractValidationRuleTest {
 		expectedException.expectMessage("Unknown sender.");
 		when(ledger.getAccount(Format.MathID.pick(delegate.getPublicKey()))).thenReturn(null);
 
-		Transaction tx = Rejection.multiFactor(baseAccount.getID()).build(delegate);
+		Transaction tx = RejectionBuilder.createNew(baseAccount.getID()).build(delegate);
 		validate(tx);
 	}
 
@@ -80,7 +80,7 @@ public class RejectionValidationRuleTest extends AbstractValidationRuleTest {
 		expectedException.expectMessage("Unknown account.");
 		when(ledger.getAccount(baseAccount.getID())).thenReturn(null);
 
-		Transaction tx = Rejection.multiFactor(baseAccount.getID()).build(delegate);
+		Transaction tx = RejectionBuilder.createNew(baseAccount.getID()).build(delegate);
 		validate(tx);
 	}
 
@@ -90,7 +90,7 @@ public class RejectionValidationRuleTest extends AbstractValidationRuleTest {
 		expectedException.expectMessage("The delegates list is not specified.");
 		when(baseAccount.getProperty(PropertyType.MODE)).thenReturn(null);
 
-		Transaction tx = Rejection.multiFactor(baseAccount.getID()).build(delegate);
+		Transaction tx = RejectionBuilder.createNew(baseAccount.getID()).build(delegate);
 		validate(tx);
 	}
 
@@ -99,13 +99,13 @@ public class RejectionValidationRuleTest extends AbstractValidationRuleTest {
 		expectedException.expect(ValidateException.class);
 		expectedException.expectMessage("Account does not participate in transaction confirmation.");
 
-		Transaction tx = Rejection.multiFactor(baseAccount.getID()).build(delegate_1);
+		Transaction tx = RejectionBuilder.createNew(baseAccount.getID()).build(delegate_1);
 		validate(tx);
 	}
 
 	@Test
 	public void reject() throws Exception {
-		Transaction tx = Rejection.multiFactor(baseAccount.getID()).build(delegate);
+		Transaction tx = RejectionBuilder.createNew(baseAccount.getID()).build(delegate);
 		validate(tx);
 	}
 
@@ -114,7 +114,7 @@ public class RejectionValidationRuleTest extends AbstractValidationRuleTest {
 		expectedException.expect(ValidateException.class);
 		expectedException.expectMessage("Illegal account.");
 
-		Transaction tx = Rejection.multiFactor(baseAccount.getID()).build(base);
+		Transaction tx = RejectionBuilder.createNew(baseAccount.getID()).build(base);
 		validate(tx);
 	}
 
@@ -128,7 +128,7 @@ public class RejectionValidationRuleTest extends AbstractValidationRuleTest {
 		validationMode.setWeightForAccount(Format.MathID.pick(delegate.getPublicKey()), 70);
 		AccountProperties.setValidationMode(baseAccount, validationMode);
 
-		Transaction tx = Rejection.multiFactor(baseAccount.getID()).build(delegate);
+		Transaction tx = RejectionBuilder.createNew(baseAccount.getID()).build(delegate);
 		validate(tx);
 	}
 
@@ -141,7 +141,7 @@ public class RejectionValidationRuleTest extends AbstractValidationRuleTest {
 		validationMode.setWeightForAccount(Format.MathID.pick(delegate.getPublicKey()), 70);
 		AccountProperties.setValidationMode(baseAccount, validationMode);
 
-		Transaction tx = Rejection.multiFactor(baseAccount.getID()).build(delegate);
+		Transaction tx = RejectionBuilder.createNew(baseAccount.getID()).build(delegate);
 		validate(tx);
 	}
 

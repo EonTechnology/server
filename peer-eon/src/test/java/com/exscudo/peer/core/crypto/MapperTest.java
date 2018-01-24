@@ -5,6 +5,11 @@ import static org.junit.Assert.assertEquals;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.exscudo.peer.eon.transactions.builders.AccountRegistrationBuilder;
+import com.exscudo.peer.eon.transactions.builders.DepositRefillBuilder;
+import com.exscudo.peer.eon.transactions.builders.DepositWithdrawBuilder;
+import com.exscudo.peer.eon.transactions.builders.PaymentBuilder;
+import com.exscudo.peer.eon.transactions.builders.QuorumBuilder;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -12,10 +17,6 @@ import com.exscudo.peer.MockSigner;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.mapper.crypto.SignedObjectMapper;
-import com.exscudo.peer.eon.transactions.Deposit;
-import com.exscudo.peer.eon.transactions.Payment;
-import com.exscudo.peer.eon.transactions.Quorum;
-import com.exscudo.peer.eon.transactions.Registration;
 
 @SuppressWarnings("SpellCheckingInspection")
 public class MapperTest {
@@ -58,7 +59,7 @@ public class MapperTest {
 	public void transaction_bencode_payment() throws Exception {
 		MockSigner signer = new MockSigner(123L);
 
-		Transaction tran = Payment.newPayment(100L, 12345L).forFee(1L).validity(12345, 60, 1).build(signer);
+		Transaction tran = PaymentBuilder.createNew(100L, 12345L).forFee(1L).validity(12345, 60, 1).build(signer);
 
 		byte[] bytes = tran.getBytes();
 		String s = new String(bytes);
@@ -72,7 +73,8 @@ public class MapperTest {
 	public void transaction_bencode_register() throws Exception {
 		MockSigner signer = new MockSigner(123L);
 
-		Transaction tran = Registration.newAccount(signer.getPublicKey()).validity(12345 + 60, 60, 1).build(signer);
+		Transaction tran = AccountRegistrationBuilder.createNew(signer.getPublicKey()).validity(12345 + 60, 60, 1)
+				.build(signer);
 
 		byte[] bytes = tran.getBytes();
 		String s = new String(bytes);
@@ -86,7 +88,7 @@ public class MapperTest {
 	public void transaction_bencode_deposit() throws Exception {
 		MockSigner signer = new MockSigner(123L);
 
-		Transaction tran = Deposit.refill(999L).validity(12345, 60, 1).build(signer);
+		Transaction tran = DepositRefillBuilder.createNew(999L).validity(12345, 60, 1).build(signer);
 
 		byte[] bytes = tran.getBytes();
 		String s = new String(bytes);
@@ -100,7 +102,7 @@ public class MapperTest {
 	public void transaction_bencode_deposit_issue() throws Exception {
 		MockSigner signer = new MockSigner(123L);
 
-		Transaction tran = Deposit.withdraw(999L).validity(12345, 60, 1).build(signer);
+		Transaction tran = DepositWithdrawBuilder.createNew(999L).validity(12345, 60, 1).build(signer);
 
 		byte[] bytes = tran.getBytes();
 		String s = new String(bytes);
@@ -114,7 +116,7 @@ public class MapperTest {
 	public void transaction_quorum() throws Exception {
 		MockSigner signer = new MockSigner(123L);
 
-		Transaction tran = Quorum.newQuorum(50).quorumForType(200, 70).validity(12345, 60, 1).build(signer);
+		Transaction tran = QuorumBuilder.createNew(50).quorumForType(200, 70).validity(12345, 60, 1).build(signer);
 
 		byte[] bytes = tran.getBytes();
 		String s = new String(bytes);

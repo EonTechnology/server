@@ -394,8 +394,6 @@ public class UnitOfWork implements IUnitOfWork {
 
 			if (transactionSet.contains(tx.getID())) {
 				throw new ValidateException(Format.ID.transactionId(txID) + " already in block.");
-			} else if (tx.getReference() != 0 && !transactionSet.contains(tx.getReference())) {
-				throw new ValidateException(Format.ID.transactionId(txID) + ". Can not find referenced transaction.");
 			}
 
 			backlog.remove(txID);
