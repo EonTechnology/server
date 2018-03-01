@@ -11,20 +11,21 @@ import org.springframework.util.StringUtils;
  */
 public abstract class ConfigHelper {
 
-	/**
-	 * Converts content of last existing file in files to string array
-	 * 
-	 * @throws IOException
-	 */
-	public static String[] getStringsFromLastExists(String delimiter, File... files) throws IOException {
-		String[] ret = new String[0];
-		for (File f : files) {
-			if (!f.exists())
-				continue;
+    /**
+     * Converts content of last existing file in files to string array
+     *
+     * @throws IOException
+     */
+    public static String[] getStringsFromLastExists(String delimiter, File... files) throws IOException {
+        String[] ret = new String[0];
+        for (File f : files) {
+            if (!f.exists()) {
+                continue;
+            }
 
-			String str = new String(FileCopyUtils.copyToByteArray(f), "UTF-8");
-			ret = StringUtils.tokenizeToStringArray(str, delimiter);
-		}
-		return ret;
-	}
+            String str = new String(FileCopyUtils.copyToByteArray(f), "UTF-8");
+            ret = StringUtils.tokenizeToStringArray(str, delimiter);
+        }
+        return ret;
+    }
 }

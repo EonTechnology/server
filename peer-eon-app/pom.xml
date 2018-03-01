@@ -1,217 +1,203 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-	<parent>
-		<groupId>com.exscudo</groupId>
-		<artifactId>peer-all</artifactId>
-		<version>0.8.0-SNAPSHOT</version>
-	</parent>
+    <parent>
+        <groupId>com.exscudo</groupId>
+        <artifactId>peer-all</artifactId>
+        <version>0.9.0-SNAPSHOT</version>
+    </parent>
 
-	<artifactId>peer-eon-app</artifactId>
-	<version>0.8.0-SNAPSHOT</version>
-	<packaging>war</packaging>
+    <artifactId>peer-eon-app</artifactId>
+    <version>0.9.0-SNAPSHOT</version>
+    <packaging>war</packaging>
 
-	<name>peer-eon-app</name>
-	<url>http://maven.apache.org</url>
+    <name>peer-eon-app</name>
+    <url>http://maven.apache.org</url>
 
-	<properties>
-		<org.springframework-version>4.3.9.RELEASE</org.springframework-version>
-	</properties>
+    <properties>
+        <org.springframework-version>4.3.9.RELEASE</org.springframework-version>
+    </properties>
 
-	<dependencies>
+    <dependencies>
 
-		<!-- Exscudo -->
+        <!-- Exscudo -->
 
-		<dependency>
-			<groupId>com.exscudo</groupId>
-			<artifactId>peer-eon</artifactId>
-			<version>0.8.0-SNAPSHOT</version>
-		</dependency>
+        <dependency>
+            <groupId>com.exscudo</groupId>
+            <artifactId>peer-eon</artifactId>
+            <version>0.9.0-SNAPSHOT</version>
+        </dependency>
 
-		<dependency>
-			<groupId>com.exscudo</groupId>
-			<artifactId>peer-core</artifactId>
-			<version>0.8.0-SNAPSHOT</version>
-		</dependency>
+        <dependency>
+            <groupId>com.exscudo</groupId>
+            <artifactId>peer-core</artifactId>
+            <version>0.9.0-SNAPSHOT</version>
+        </dependency>
 
-		<dependency>
-			<groupId>com.exscudo</groupId>
-			<artifactId>peer-store-sqlite</artifactId>
-			<version>0.8.0-SNAPSHOT</version>
-		</dependency>
+        <!-- Spring -->
 
-		<!-- Spring -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-core</artifactId>
+            <version>${org.springframework-version}</version>
+        </dependency>
 
-		<dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring-core</artifactId>
-			<version>${org.springframework-version}</version>
-		</dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <version>${org.springframework-version}</version>
+        </dependency>
 
-		<dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring-context</artifactId>
-			<version>${org.springframework-version}</version>
-		</dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-web</artifactId>
+            <version>${org.springframework-version}</version>
+        </dependency>
 
-		<dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring-web</artifactId>
-			<version>${org.springframework-version}</version>
-		</dependency>
-
-		<dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring-webmvc</artifactId>
-			<version>${org.springframework-version}</version>
-		</dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webmvc</artifactId>
+            <version>${org.springframework-version}</version>
+        </dependency>
 
 
-		<!--Spring security -->
+        <!--Spring security -->
 
-		<dependency>
-			<groupId>org.springframework.security</groupId>
-			<artifactId>spring-security-web</artifactId>
-			<version>4.2.3.RELEASE</version>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.security</groupId>
-			<artifactId>spring-security-config</artifactId>
-			<version>4.2.3.RELEASE</version>
-		</dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-web</artifactId>
+            <version>4.2.3.RELEASE</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-config</artifactId>
+            <version>4.2.3.RELEASE</version>
+        </dependency>
 
-		<!-- Servlet -->
+        <!-- Servlet -->
 
-		<dependency>
-			<groupId>javax.servlet</groupId>
-			<artifactId>javax.servlet-api</artifactId>
-			<version>3.1.0</version>
-			<scope>provided</scope>
-		</dependency>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>3.1.0</version>
+            <scope>provided</scope>
+        </dependency>
 
-		<!-- JSON Processor -->
+        <!-- JSON Processor -->
 
-		<dependency>
-			<groupId>com.fasterxml.jackson.core</groupId>
-			<artifactId>jackson-databind</artifactId>
-			<version>2.9.0</version>
-		</dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.9.0</version>
+        </dependency>
 
-		<!-- gzip compression for servlets -->
+    </dependencies>
+    <build>
 
-		<dependency>
-			<groupId>com.github.ziplet</groupId>
-			<artifactId>ziplet</artifactId>
-			<version>2.2.0</version>
-		</dependency>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.eclipse.m2e</groupId>
+                    <artifactId>lifecycle-mapping</artifactId>
+                    <version>1.0.0</version>
+                    <configuration>
+                        <lifecycleMappingMetadata>
+                            <pluginExecutions>
+                                <pluginExecution>
+                                    <pluginExecutionFilter>
+                                        <groupId>org.codehaus.mojo</groupId>
+                                        <artifactId>keytool-maven-plugin</artifactId>
+                                        <versionRange>1.5</versionRange>
+                                        <goals>
+                                            <goal>clean</goal>
+                                        </goals>
+                                    </pluginExecutionFilter>
+                                    <action>
+                                        <ignore/>
+                                    </action>
+                                </pluginExecution>
+                                <pluginExecution>
+                                    <pluginExecutionFilter>
+                                        <groupId>org.codehaus.mojo</groupId>
+                                        <artifactId>keytool-maven-plugin</artifactId>
+                                        <versionRange>1.5</versionRange>
+                                        <goals>
+                                            <goal>generateKeyPair</goal>
+                                        </goals>
+                                    </pluginExecutionFilter>
+                                    <action>
+                                        <ignore/>
+                                    </action>
+                                </pluginExecution>
+                            </pluginExecutions>
+                        </lifecycleMappingMetadata>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+        <plugins>
 
-	</dependencies>
-	<build>
-	
-		<pluginManagement>
-			<plugins>
-				<plugin>
-					<groupId>org.eclipse.m2e</groupId>
-					<artifactId>lifecycle-mapping</artifactId>
-					<version>1.0.0</version>
-					<configuration>
-						<lifecycleMappingMetadata>
-							<pluginExecutions>
-								<pluginExecution>
-									<pluginExecutionFilter>
-										<groupId>org.codehaus.mojo</groupId>
-										<artifactId>keytool-maven-plugin</artifactId>
-										<versionRange>1.5</versionRange>
-										<goals>
-											<goal>clean</goal>
-										</goals>
-									</pluginExecutionFilter>
-									<action>
-										<ignore />
-									</action>
-								</pluginExecution>
-								<pluginExecution>
-									<pluginExecutionFilter>
-										<groupId>org.codehaus.mojo</groupId>
-										<artifactId>keytool-maven-plugin</artifactId>
-										<versionRange>1.5</versionRange>
-										<goals>
-											<goal>generateKeyPair</goal>
-										</goals>
-									</pluginExecutionFilter>
-									<action>
-										<ignore />
-									</action>
-								</pluginExecution>
-							</pluginExecutions>
-						</lifecycleMappingMetadata>
-					</configuration>
-				</plugin>
-			</plugins>
-		</pluginManagement>
-		<plugins>
-		
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>keytool-maven-plugin</artifactId>
-				<version>1.5</version>
-				<executions>
-					<execution>
-						<phase>generate-resources</phase>
-						<id>clean</id>
-						<goals>
-							<goal>clean</goal>
-						</goals>
-					</execution>
-					<execution>
-						<phase>generate-resources</phase>
-						<id>generateKeyPair</id>
-						<goals>
-							<goal>generateKeyPair</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<keystore>${project.build.directory}/jetty-ssl.keystore</keystore>
-					<dname>cn=localhost</dname>
-					<!--Both `keypass` and `storepass` must be at least 6 characters long. -->
-					<keypass>jetty8</keypass>
-					<storepass>jetty8</storepass>
-					<alias>jetty8</alias>
-					<keyalg>RSA</keyalg>
-				</configuration>
-			</plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>keytool-maven-plugin</artifactId>
+                <version>1.5</version>
+                <executions>
+                    <execution>
+                        <phase>generate-resources</phase>
+                        <id>clean</id>
+                        <goals>
+                            <goal>clean</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <phase>generate-resources</phase>
+                        <id>generateKeyPair</id>
+                        <goals>
+                            <goal>generateKeyPair</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <keystore>${project.build.directory}/jetty-ssl.keystore</keystore>
+                    <dname>cn=localhost</dname>
+                    <!--Both `keypass` and `storepass` must be at least 6 characters long. -->
+                    <keypass>jetty8</keypass>
+                    <storepass>jetty8</storepass>
+                    <alias>jetty8</alias>
+                    <keyalg>RSA</keyalg>
+                </configuration>
+            </plugin>
 
-			<plugin>
-				<groupId>org.eclipse.jetty</groupId>
-				<artifactId>jetty-maven-plugin</artifactId>
-				<version>9.4.7.v20170914</version>
-				<configuration>
-					<skip>false</skip>
-					<webApp>
-						<contextPath>/</contextPath>
-						<descriptor>${project.basedir}/src/main/webapp/WEB-INF/web.xml</descriptor>
-					</webApp>
-					<classesDirectory>${project.build.outputDirectory}</classesDirectory>
-					<jettyXml>${project.basedir}/jetty.xml</jettyXml>
-				</configuration>
-			</plugin>
+            <plugin>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-maven-plugin</artifactId>
+                <version>9.4.7.v20170914</version>
+                <configuration>
+                    <skip>false</skip>
+                    <webApp>
+                        <contextPath>/</contextPath>
+                        <descriptor>${project.basedir}/src/main/webapp/WEB-INF/web.xml</descriptor>
+                    </webApp>
+                    <classesDirectory>${project.build.outputDirectory}</classesDirectory>
+                    <jettyXml>${project.basedir}/jetty.xml</jettyXml>
+                </configuration>
+            </plugin>
 
-			<plugin>
-				<groupId>org.apache.tomcat.maven</groupId>
-				<artifactId>tomcat7-maven-plugin</artifactId>
-				<version>2.2</version>
-				<configuration>
-					<skip>false</skip>
-					<!--<port>8080</port>-->
-					<path>/</path>
-					<httpsPort>9443</httpsPort>
-					<keystoreFile>${project.build.directory}/jetty-ssl.keystore</keystoreFile>
-					<keystorePass>jetty8</keystorePass>
-				</configuration>
-			</plugin>
+            <plugin>
+                <groupId>org.apache.tomcat.maven</groupId>
+                <artifactId>tomcat7-maven-plugin</artifactId>
+                <version>2.2</version>
+                <configuration>
+                    <skip>false</skip>
+                    <!--<port>8080</port>-->
+                    <path>/</path>
+                    <httpsPort>9443</httpsPort>
+                    <keystoreFile>${project.build.directory}/jetty-ssl.keystore</keystoreFile>
+                    <keystorePass>jetty8</keystorePass>
+                </configuration>
+            </plugin>
 
-		</plugins>
-	</build>
+        </plugins>
+    </build>
 </project>

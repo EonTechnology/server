@@ -6,6 +6,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+## 0.9.0 - 2018-03-01 - TestNet2 fork 1
+### Added
+- Transaction type "300 - Deposit" - sets deposit size.
+
+### Changed
+- Update transaction type codes
+- Change "coloredCoin.getInfo(...)" in bot API.
+- Change minimal transaction fee as 10mikroEON per 1kb data.
+- ORM for DB access.
+- Multiple blockchains in DB.
+
+### Removed
+- Transaction type "310 - DepositRefill".
+- Transaction type "320 - DepositWithdraw".
+
 ## 0.8.0 - 2018-01-25 - TestNet fork 4
 ### Added
 - Colored Coin functionality.

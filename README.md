@@ -47,12 +47,11 @@ Directory Layout
 
 **peer-core** - Core of the node without binding to the organization of data storage and the implementation of the transport.
 
-**peer-eon** - EON-specific code. Contains implementation of transaction handlers, EDS algorithm end etc.
+**peer-eon** - EON-specific code. Contains implementation of transaction handlers.
 
 **peer-eon-app** - Implementation of simple bot API and JSON-RPC transport.
 
-**peer-store-sqlite** - Simple data storage in SQLite and corresponding algorithms. 
-
+**json-rpc** - Simple implementation of the JRPC protocol.
 
 License
 -------

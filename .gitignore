@@ -23,7 +23,7 @@ target/
 log4j2-*
 
 # DB files
-main.db
-main.db-shm
-main.db-wal
+/db/*.db
+/db/*.db-shm
+/db/*.db-wal
 backlog_snapshot.bak

@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration>
-	<Appenders>
-		<Console name="console" target="SYSTEM_OUT">
-			<PatternLayout
-					pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
-		</Console>
-	</Appenders>
+    <Appenders>
+        <Console name="console" target="SYSTEM_OUT">
+            <PatternLayout
+                    pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+        </Console>
+    </Appenders>
 
-	<Loggers>
-		<Logger name="com.exscudo.eon.jsonrpc.JrpcService" level="DEBUG" additivity="true">
-			<AppenderRef ref="console"/>
-		</Logger>
-		<Root level="trace">
-			<AppenderRef ref="console" level="TRACE"/>
-		</Root>
-	</Loggers>
+    <Loggers>
+        <Logger name="com.exscudo.jsonrpc.JrpcService" level="DEBUG" additivity="true">
+            <AppenderRef ref="console"/>
+        </Logger>
+        <Root level="trace">
+            <AppenderRef ref="console" level="TRACE"/>
+        </Root>
+    </Loggers>
 </Configuration>

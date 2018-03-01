@@ -7,13 +7,11 @@ import java.util.Map;
  */
 public interface ISignedObjectMapper {
 
-	/**
-	 * Converts object to Map.
-	 *
-	 * @param object
-	 *            object to convert
-	 * @return Map
-	 */
-	Map<String, Object> convert(Object object);
-
+    /**
+     * Converts object to Map.
+     *
+     * @param object object to convert
+     * @return Map
+     */
+    Map<String, Object> convert(Object object);
 }

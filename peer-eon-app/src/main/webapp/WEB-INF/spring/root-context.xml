@@ -1,131 +1,58 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<beans xmlns="http://www.springframework.org/schema/beans"
-	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-	<bean id="propertyConfigurer"
-		  class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
-		<property name="locations">
-			<list>
-				<value>WEB-INF/spring/host.properties</value>
-				<value>WEB-INF/spring/connection.properties</value>
-			</list>
-		</property>
-	</bean>
+    <bean id="propertyConfigurer"
+          class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="locations">
+            <list>
+                <value>WEB-INF/spring/host.properties</value>
+                <value>WEB-INF/spring/connection.properties</value>
+            </list>
+        </property>
+    </bean>
 
-	<!-- Time Provider -->
-	<bean id="timeProvider" name="TimeProvider" class="com.exscudo.peer.eon.TimeProvider"/>
+    <bean id="config" class="com.exscudo.eon.cfg.Config">
+        <property name="dbUrl" value="${database.path}"/>
+        <property name="host" value="${host.address}"/>
+        <property name="blacklistingPeriod" value="${connection.blacklistingPeriod}"/>
+        <property name="readTimeout" value="${connection.readTimeout}"/>
+        <property name="connectTimeout" value="${connection.connectTimeout}"/>
+        <property name="seed" value="#{systemProperties['SECRET_SEED']}"/>
+        <property name="genesisFile" value="${host.genesis}"/>
 
-	<bean id="backlog" name="backlog" class="com.exscudo.peer.store.sqlite.Backlog"/>
+        <property name="publicPeers">
+            <bean class="com.exscudo.eon.utils.ConfigHelper" factory-method="getStringsFromLastExists">
+                <constructor-arg value=";"/>
+                <constructor-arg>
+                    <list>
+                        <value type="java.io.File">WEB-INF/spring/public-peer.list</value>
+                        <value type="java.io.File">WEB-INF/spring/public-peer-debug.list</value>
+                    </list>
+                </constructor-arg>
+            </bean>
+        </property>
+        <property name="innerPeers">
+            <bean class="com.exscudo.eon.utils.ConfigHelper" factory-method="getStringsFromLastExists">
+                <constructor-arg type="java.lang.String" value=";"/>
+                <constructor-arg>
+                    <list>
+                        <value type="java.io.File">WEB-INF/spring/type-peer.list</value>
+                        <value type="java.io.File">WEB-INF/spring/type-peer-debug.list</value>
+                    </list>
+                </constructor-arg>
+            </bean>
+        </property>
+    </bean>
 
-	<!-- Data Connector -->
-	<bean id="storage" class="com.exscudo.peer.store.sqlite.Storage"
-		  destroy-method="destroy" factory-method="create">
-		<constructor-arg>
-			<value type="java.lang.String">jdbc:sqlite:db/main.db</value>
-		</constructor-arg>
-		<property name="backlog" ref="backlog"/>
-	</bean>
-	<bean class="com.exscudo.peer.store.sqlite.MaintenanceTasksManager"
-		  factory-method="run" destroy-method="destroy" depends-on="storage">
-		<constructor-arg ref="storage"/>
-	</bean>
+    <bean id="peerStarter" class="com.exscudo.eon.cfg.PeerStarter">
+        <constructor-arg ref="config"/>
+    </bean>
 
-	<!-- ForkInitializer -->
-	<bean id="fork" class="com.exscudo.eon.cfg.ForkInitializer" factory-method="init" depends-on="storage">
-		<constructor-arg ref="storage"/>
-	</bean>
-
-	<!-- Engine Configuration -->
-	<bean id="engineConfiguration" class="com.exscudo.eon.cfg.EngineConfigurator">
-
-		<property name="host">
-			<!-- Host Properties -->
-			<bean class="com.exscudo.peer.eon.ExecutionContext.Host">
-				<constructor-arg value="${host.address}"/>
-			</bean>
-		</property>
-		<property name="blacklistingPeriod" value="${connection.blacklistingPeriod}"/>
-		<property name="publicPeers">
-			<bean class="com.exscudo.eon.utils.ConfigHelper" factory-method="getStringsFromLastExists">
-				<constructor-arg type="java.lang.String" value=";"/>
-				<constructor-arg>
-					<list>
-						<value type="java.io.File">WEB-INF/spring/public-peer.list</value>
-						<value type="java.io.File">WEB-INF/spring/public-peer-debug.list</value>
-					</list>
-				</constructor-arg>
-			</bean>
-		</property>
-		<property name="innerPeers">
-			<bean class="com.exscudo.eon.utils.ConfigHelper" factory-method="getStringsFromLastExists">
-				<constructor-arg type="java.lang.String" value=";"/>
-				<constructor-arg>
-					<list>
-						<value type="java.io.File">WEB-INF/spring/type-peer.list</value>
-						<value type="java.io.File">WEB-INF/spring/type-peer-debug.list</value>
-					</list>
-				</constructor-arg>
-			</bean>
-		</property>
-
-		<property name="proxyFactory">
-			<!-- Json RPC -->
-			<bean id="jrpcProxyFactory" class="com.exscudo.eon.jsonrpc.JrpcServiceProxyFactory">
-				<constructor-arg>
-					<map key-type="java.lang.String" value-type="java.lang.String">
-						<entry key="com.exscudo.peer.eon.services.IMetadataService"
-							   value="metadata"/>
-						<entry
-								key="com.exscudo.peer.eon.services.ITransactionSynchronizationService"
-								value="transactions"/>
-						<entry
-								key="com.exscudo.peer.core.services.IBlockSynchronizationService"
-								value="blocks"/>
-					</map>
-				</constructor-arg>
-				<constructor-arg>
-					<map key-type="java.lang.String" value-type="java.lang.String">
-						<entry key="com.exscudo.peer.eon.services.IMetadataService"
-							   value="com.exscudo.eon.jsonrpc.proxy.MetadataServiceProxy"/>
-						<entry
-								key="com.exscudo.peer.eon.services.ITransactionSynchronizationService"
-								value="com.exscudo.eon.jsonrpc.proxy.TransactionSynchronizationServiceProxy"/>
-						<entry
-								key="com.exscudo.peer.core.services.IBlockSynchronizationService"
-								value="com.exscudo.eon.jsonrpc.proxy.BlockSynchronizationServiceProxy"/>
-					</map>
-				</constructor-arg>
-				<property name="readTimeout" value="${connection.readTimeout}"/>
-				<property name="connectTimeout" value="${connection.connectTimeout}"/>
-			</bean>
-		</property>
-		<property name="timeProvider" ref="timeProvider"/>
-		<property name="signer">
-			<!-- The signature algorithm used when creating new blocks -->
-			<bean id="signer" factory-method="createNew"
-				  class="com.exscudo.peer.eon.crypto.Ed25519Signer">
-				<constructor-arg value="#{systemProperties['SECRET_SEED']}"/>
-			</bean>
-		</property>
-		<property name="blockchain">
-			<bean class="com.exscudo.peer.store.sqlite.core.Blockchain">
-				<constructor-arg ref="storage"/>
-				<constructor-arg ref="fork"/>
-			</bean>
-		</property>
-		<property name="backlog" ref="backlog"/>
-		<property name="fork" ref="fork" />
-	</bean>
-
-	<bean id="executionContext" factory-bean="engineConfiguration"
-		  factory-method="build"/>
-
-
-	<!-- Run tasks -->
-	<bean id="engine" depends-on="engineConfiguration, storage"
-		  factory-method="init" destroy-method="destory" class="com.exscudo.eon.cfg.Engine">
-		<constructor-arg ref="executionContext"/>
-	</bean>
+    <!-- Run tasks -->
+    <bean id="engine" factory-method="init" destroy-method="destory" class="com.exscudo.eon.cfg.Engine">
+        <constructor-arg ref="peerStarter"/>
+    </bean>
 
 </beans>

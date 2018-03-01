@@ -1,43 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<beans xmlns="http://www.springframework.org/schema/beans"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-	<bean name="Service" class="com.exscudo.eon.jsonrpc.JrpcService">
-		<constructor-arg>
-			<map key-type="java.lang.String">
-				<entry key="transactions">
-					<!-- Transaction Service -->
-					<bean class="com.exscudo.eon.bot.TransactionService">
-						<constructor-arg ref="executionContext" />
-					</bean>
-				</entry>
-				<entry key="accounts">
-					<!-- IAccount Service -->
-					<bean class="com.exscudo.eon.bot.AccountService">
-						<constructor-arg ref="storage" />
-					</bean>
-				</entry>
-				<entry key="history">
-					<!-- History Service -->
-					<bean class="com.exscudo.eon.bot.TransactionHistoryService">
-						<constructor-arg ref="storage" />
-					</bean>
-				</entry>
-				<entry key="time">
-					<!-- Time Service -->
-					<bean class="com.exscudo.eon.bot.TimeService">
-						<constructor-arg ref="timeProvider" />
-					</bean>
-				</entry>
-				<entry key="coloredCoin">
-					<!-- Colored Coin Service -->
-					<bean class="com.exscudo.eon.bot.ColoredCoinService">
-						<constructor-arg ref="storage" />
-					</bean>
-				</entry>
-			</map>
-		</constructor-arg>
-	</bean>
+    <bean id="botServiceFactory" class="com.exscudo.eon.cfg.BotServiceFactory">
+        <constructor-arg ref="peerStarter"/>
+    </bean>
+
+    <bean name="Service" class="com.exscudo.eon.jsonrpc.EonService">
+        <constructor-arg>
+            <map key-type="java.lang.String">
+                <!-- Transaction Service -->
+                <entry key="transactions">
+                    <bean factory-bean="botServiceFactory" factory-method="getTransactionService"/>
+                </entry>
+                <!-- Account Service -->
+                <entry key="accounts">
+                    <bean factory-bean="botServiceFactory" factory-method="getAccountService"/>
+                </entry>
+                <!-- History Service -->
+                <entry key="history">
+                    <bean factory-bean="botServiceFactory" factory-method="getTransactionHistoryService"/>
+                </entry>
+                <!-- Time Service -->
+                <entry key="time">
+                    <bean factory-bean="botServiceFactory" factory-method="getTimeService"/>
+                </entry>
+                <!-- Colored Coin Service -->
+                <entry key="coloredCoin">
+                    <bean factory-bean="botServiceFactory" factory-method="getColoredCoinService"/>
+                </entry>
+            </map>
+        </constructor-arg>
+    </bean>
 
 </beans>

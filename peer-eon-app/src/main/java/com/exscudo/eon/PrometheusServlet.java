@@ -1,69 +1,74 @@
 package com.exscudo.eon;
 
 import java.io.PrintWriter;
-
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.exscudo.peer.core.Constant;
+import com.exscudo.peer.core.backlog.Backlog;
+import com.exscudo.peer.core.blockchain.IBlockchainService;
+import com.exscudo.peer.core.common.TimeProvider;
+import com.exscudo.peer.core.data.Block;
+import com.exscudo.peer.core.env.ExecutionContext;
+import com.exscudo.peer.core.env.PeerRegistry;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.servlet.FrameworkServlet;
-
-import com.exscudo.peer.core.Constant;
-import com.exscudo.peer.core.data.Block;
-import com.exscudo.peer.eon.ExecutionContext;
-import com.exscudo.peer.eon.PeerRegistry;
-import com.exscudo.peer.store.sqlite.Storage;
 
 /**
  * Servlet for prometheus monitoring system
  */
 public class PrometheusServlet extends FrameworkServlet {
-	private static final long serialVersionUID = 1L;
-	private static long startedAt = System.currentTimeMillis();
-	private Storage storage;
-	private ExecutionContext context;
+    private static final long serialVersionUID = 1L;
+    private static long startedAt = System.currentTimeMillis();
 
-	@Override
-	public void init(ServletConfig servletConfig) throws ServletException {
-		super.init(servletConfig);
+    private ExecutionContext context;
+    private Backlog backlog;
+    private IBlockchainService blockchain;
+    private TimeProvider timeProvider;
 
-		WebApplicationContext appContext = getWebApplicationContext();
-		this.storage = (Storage) appContext.getBean("storage");
-		this.context = (ExecutionContext) appContext.getBean("executionContext");
-	}
+    @Override
+    public void init(ServletConfig servletConfig) throws ServletException {
+        super.init(servletConfig);
 
-	@Override
-	protected void doService(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        WebApplicationContext appContext = getWebApplicationContext();
+        this.context = (ExecutionContext) appContext.getBean("executionContext");
+        this.backlog = (Backlog) appContext.getBean("backlog");
+        this.blockchain = (IBlockchainService) appContext.getBean("blockchain");
+        this.timeProvider = (TimeProvider) appContext.getBean("timeProvider");
+    }
 
-		Runtime runtime = Runtime.getRuntime();
-		long freeMemory = runtime.freeMemory();
-		long totalMemory = runtime.totalMemory();
-		long maxMemory = runtime.maxMemory();
+    @Override
+    protected void doService(HttpServletRequest request, HttpServletResponse response) throws Exception {
 
-		Block lastBlock = storage.getLastBlock();
-		PeerRegistry registry = context.getPeers();
-		String[] list = registry.getPeersList();
+        Runtime runtime = Runtime.getRuntime();
+        long freeMemory = runtime.freeMemory();
+        long totalMemory = runtime.totalMemory();
+        long maxMemory = runtime.maxMemory();
 
-		int count = storage.getBacklog().size();
+        Block lastBlock = blockchain.getLastBlock();
+        PeerRegistry registry = context.getPeers();
+        String[] list = registry.getPeersList();
 
-		try (PrintWriter out = response.getWriter()) {
-			out.println(String.format("eon_memory_used %d", totalMemory - freeMemory));
-			out.println(String.format("eon_memory_total %d", totalMemory));
-			out.println(String.format("eon_memory_max %d", maxMemory));
-			out.println(String.format("eon_last_block_id %d", lastBlock.getID()));
-			out.println(String.format("eon_last_block_height %d", lastBlock.getHeight()));
-			out.println(String.format("eon_last_block_generator %d", lastBlock.getSenderID()));
-			out.println(String.format("eon_last_block_transactions_count %d", lastBlock.getTransactions().size()));
-			out.println(String.format("eon_cumulative_difficulty %d", lastBlock.getCumulativeDifficulty()));
-			out.println(String.format("eon_transactions_count %d", count));
-			out.println(String.format("eon_peer_count %d", list.length));
-			out.println(String.format("eon_uptime %d", (System.currentTimeMillis() - startedAt) / 1000L));
+        int count = backlog.size();
 
-			int timeDiff = context.getCurrentTime() - lastBlock.getTimestamp();
-			int targetHeight = lastBlock.getHeight() + timeDiff / Constant.BLOCK_PERIOD;
-			out.println(String.format("eon_target_height %d", targetHeight));
-		}
-	}
+        try (PrintWriter out = response.getWriter()) {
+            out.println(String.format("eon_memory_used %d", totalMemory - freeMemory));
+            out.println(String.format("eon_memory_total %d", totalMemory));
+            out.println(String.format("eon_memory_max %d", maxMemory));
+            out.println(String.format("eon_last_block_id %d", lastBlock.getID().getValue()));
+            out.println(String.format("eon_last_block_height %d", lastBlock.getHeight()));
+            out.println(String.format("eon_last_block_generator %d", lastBlock.getSenderID().getValue()));
+            out.println(String.format("eon_last_block_transactions_count %d", lastBlock.getTransactions().size()));
+            out.println(String.format("eon_cumulative_difficulty %d", lastBlock.getCumulativeDifficulty()));
+            out.println(String.format("eon_transactions_count %d", count));
+            out.println(String.format("eon_peer_count %d", list.length));
+            out.println(String.format("eon_uptime %d", (System.currentTimeMillis() - startedAt) / 1000L));
+
+            int timeDiff = timeProvider.get() - lastBlock.getTimestamp();
+            int targetHeight = lastBlock.getHeight() + timeDiff / Constant.BLOCK_PERIOD;
+            out.println(String.format("eon_target_height %d", targetHeight));
+        }
+    }
 }

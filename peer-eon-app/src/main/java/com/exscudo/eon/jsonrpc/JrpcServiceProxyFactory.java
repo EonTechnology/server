@@ -7,12 +7,12 @@ import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-
 import javax.net.ssl.*;
 
 import com.exscudo.eon.jsonrpc.proxy.PeerServiceProxy;
-import com.exscudo.peer.eon.IServiceProxyFactory;
-import com.exscudo.peer.eon.PeerInfo;
+import com.exscudo.jsonrpc.JrpcServiceProxy;
+import com.exscudo.peer.core.env.IServiceProxyFactory;
+import com.exscudo.peer.core.env.PeerInfo;
 
 /**
  * Implementation of {@code IServiceProxyFactory} with {@code JrpcServiceProxy}.
@@ -23,133 +23,133 @@ import com.exscudo.peer.eon.PeerInfo;
  * @see JrpcServiceProxy
  */
 public class JrpcServiceProxyFactory implements IServiceProxyFactory {
-	private final Map<Class<?>, String> clazzMap = new HashMap<>();
-	private final Map<Class<?>, Class<?>> clazzMapImpl = new HashMap<>();
-	private int readTimeout = 1000;
-	private int connectTimeout = 3000;
+    private final Map<Class<?>, String> clazzMap = new HashMap<>();
+    private final Map<Class<?>, Class<?>> clazzMapImpl = new HashMap<>();
+    private int readTimeout = 1000;
+    private int connectTimeout = 3000;
 
-	public JrpcServiceProxyFactory(Map<String, String> clazzMap, Map<String, String> clazzMapImpl) {
-		clazzMap.forEach((String k, String v) -> {
-			try {
-				Class<?> c = Class.forName(k);
-				this.clazzMap.put(c, v);
-			} catch (ClassNotFoundException e) {
-				throw new RuntimeException(e);
-			}
-		});
-		clazzMapImpl.forEach((String k, String v) -> {
-			try {
-				Class<?> ck = Class.forName(k);
-				Class<?> cv = Class.forName(v);
-				this.clazzMapImpl.put(ck, cv);
-			} catch (ClassNotFoundException e) {
-				throw new RuntimeException(e);
-			}
-		});
+    public JrpcServiceProxyFactory(Map<String, String> clazzMap, Map<String, String> clazzMapImpl) {
+        clazzMap.forEach((String k, String v) -> {
+            try {
+                Class<?> c = Class.forName(k);
+                this.clazzMap.put(c, v);
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        clazzMapImpl.forEach((String k, String v) -> {
+            try {
+                Class<?> ck = Class.forName(k);
+                Class<?> cv = Class.forName(v);
+                this.clazzMapImpl.put(ck, cv);
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        });
 
-		// TODO: should be removed in release network
-		// Create a trust manager that does not validate certificate chains
-		TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
-			public X509Certificate[] getAcceptedIssuers() {
-				return null;
-			}
+        // TODO: should be removed in release network
+        // Create a trust manager that does not validate certificate chains
+        TrustManager[] trustAllCerts = new TrustManager[] {
+                new X509TrustManager() {
+                    public void checkClientTrusted(X509Certificate[] certs, String authType) {
+                    }
 
-			public void checkClientTrusted(X509Certificate[] certs, String authType) {
-			}
+                    public void checkServerTrusted(X509Certificate[] certs, String authType) {
+                    }
 
-			public void checkServerTrusted(X509Certificate[] certs, String authType) {
-			}
-		}};
+                    public X509Certificate[] getAcceptedIssuers() {
+                        return null;
+                    }
+                }
+        };
 
-		try {
-			SSLContext sc = SSLContext.getInstance("SSL");
-			sc.init(null, trustAllCerts, new java.security.SecureRandom());
-			HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+        try {
+            SSLContext sc = SSLContext.getInstance("SSL");
+            sc.init(null, trustAllCerts, new java.security.SecureRandom());
+            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
 
-			// Install the all-trusting host verifier
-			HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier() {
-				public boolean verify(String hostname, SSLSession session) {
-					return true;
-				}
-			});
-		} catch (GeneralSecurityException e) {
-			e.printStackTrace();
-		}
+            // Install the all-trusting host verifier
+            HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier() {
+                public boolean verify(String hostname, SSLSession session) {
+                    return true;
+                }
+            });
+        } catch (GeneralSecurityException e) {
+            e.printStackTrace();
+        }
+    }
 
-	}
+    public int getReadTimeout() {
+        return readTimeout;
+    }
 
-	public int getReadTimeout() {
-		return readTimeout;
-	}
+    public void setReadTimeout(int readTimeout) {
+        this.readTimeout = readTimeout;
+    }
 
-	public void setReadTimeout(int readTimeout) {
-		this.readTimeout = readTimeout;
-	}
+    public int getConnectTimeout() {
+        return connectTimeout;
+    }
 
-	public int getConnectTimeout() {
-		return connectTimeout;
-	}
+    public void setConnectTimeout(int connectTimeout) {
+        this.connectTimeout = connectTimeout;
+    }
 
-	public void setConnectTimeout(int connectTimeout) {
-		this.connectTimeout = connectTimeout;
-	}
+    private URL getUrl(PeerInfo peer, String endpoint) {
 
-	private URL getUrl(PeerInfo peer, String endpoint) {
+        URL url;
+        try {
 
-		URL url;
-		try {
+            url = new URL("https://" +
+                                  peer.getAddress() +
+                                  ((new URL("https://" + peer.getAddress())).getPort() < 0 ? ":8443" : "") +
+                                  endpoint);
+        } catch (MalformedURLException e) {
+            throw new RuntimeException(e);
+        }
+        return url;
+    }
 
-			url = new URL("https://" + peer.getAddress()
-					+ ((new URL("https://" + peer.getAddress())).getPort() < 0 ? ":8443" : "") + endpoint);
+    JrpcServiceProxy getProxy(URL url) {
+        JrpcServiceProxy proxy = new JrpcServiceProxy(url, ObjectMapperProvider.createModule());
 
-		} catch (MalformedURLException e) {
-			throw new RuntimeException(e);
-		}
-		return url;
+        proxy.setReadTimeout(getReadTimeout());
+        proxy.setConnectTimeout(getConnectTimeout());
 
-	}
+        return proxy;
+    }
 
-	JrpcServiceProxy getProxy(URL url) {
-		JrpcServiceProxy proxy = new JrpcServiceProxy(url);
+    @Override
+    public <TService> TService createProxy(PeerInfo peer, Class<TService> clazz) {
+        Objects.requireNonNull(peer);
+        Objects.requireNonNull(clazz);
 
-		proxy.setReadTimeout(getReadTimeout());
-		proxy.setConnectTimeout(getConnectTimeout());
+        String endpoint = "/peer";
+        return createProxy(getUrl(peer, endpoint), clazz);
+    }
 
-		return proxy;
-	}
+    <TService> TService createProxy(URL url, Class<TService> clazz) {
 
-	@Override
-	public <TService> TService createProxy(PeerInfo peer, Class<TService> clazz) {
-		Objects.requireNonNull(peer);
-		Objects.requireNonNull(clazz);
+        try {
 
-		String endpoint = "/peer";
-		return createProxy(getUrl(peer, endpoint), clazz);
-	}
+            JrpcServiceProxy proxy = getProxy(url);
 
-	<TService> TService createProxy(URL url, Class<TService> clazz) {
+            String serviceName = clazzMap.get(clazz);
 
-		try {
+            Class<?> implClass = clazzMapImpl.get(clazz);
+            Object instance = implClass.newInstance();
 
-			JrpcServiceProxy proxy = getProxy(url);
+            if (instance instanceof PeerServiceProxy) {
+                ((PeerServiceProxy) instance).setProxy(proxy);
+                ((PeerServiceProxy) instance).setServiceName(serviceName);
+            }
 
-			String serviceName = clazzMap.get(clazz);
+            @SuppressWarnings("unchecked")
+            TService service = (TService) instance;
 
-			Class<?> implClass = clazzMapImpl.get(clazz);
-			Object instance = implClass.newInstance();
-
-			if (instance instanceof PeerServiceProxy) {
-				((PeerServiceProxy) instance).setProxy(proxy);
-				((PeerServiceProxy) instance).setServiceName(serviceName);
-			}
-
-			@SuppressWarnings("unchecked")
-			TService service = (TService) instance;
-
-			return service;
-
-		} catch (IllegalAccessException | InstantiationException e) {
-			throw new RuntimeException(e);
-		}
-	}
+            return service;
+        } catch (IllegalAccessException | InstantiationException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

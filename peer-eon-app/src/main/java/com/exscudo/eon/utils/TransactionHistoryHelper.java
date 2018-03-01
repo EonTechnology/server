@@ -1,55 +1,47 @@
 package com.exscudo.eon.utils;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
+import com.exscudo.peer.core.backlog.IBacklogService;
 import com.exscudo.peer.core.data.Transaction;
-import com.exscudo.peer.core.exceptions.RemotePeerException;
-import com.exscudo.peer.core.services.IBacklogService;
-import com.exscudo.peer.core.utils.Format;
-import com.exscudo.peer.store.sqlite.ConnectionProxy;
-import com.exscudo.peer.store.sqlite.Storage;
-import com.exscudo.peer.store.sqlite.utils.TransactionHelper;
+import com.exscudo.peer.core.data.identifier.AccountID;
+import com.exscudo.peer.core.data.identifier.TransactionID;
+import com.exscudo.peer.core.storage.utils.AccountHelper;
 
 public class TransactionHistoryHelper {
-	private final static int PAGE_SIZE = 20;
+    private final static int PAGE_SIZE = 20;
 
-	public static long getAccountId(String accountId) throws RemotePeerException {
-		try {
-			return Format.ID.accountId(accountId);
-		} catch (IllegalArgumentException e) {
-			throw new RemotePeerException(e);
-		}
-	}
+    public static AccountID getAccountId(String accountId) {
+        return new AccountID(accountId);
+    }
 
-	public static List<Transaction> getCommittedPage(Storage storage, String accountId, int page)
-			throws RemotePeerException {
-		long accID = getAccountId(accountId);
-		ConnectionProxy connection = storage.getConnection();
-		return TransactionHelper.findByAccount(connection, accID, page * PAGE_SIZE, PAGE_SIZE);
-	}
+    public static List<Transaction> getCommittedPage(AccountHelper accountHelper,
+                                                     String accountId,
+                                                     int page) throws SQLException {
+        AccountID accID = getAccountId(accountId);
+        return accountHelper.getTransactions(accID, page * PAGE_SIZE, PAGE_SIZE);
+    }
 
-	public static List<Transaction> getUncommitted(Storage storage, String accountId) throws RemotePeerException {
-		List<Transaction> items = new ArrayList<>();
+    public static List<Transaction> getUncommitted(IBacklogService backlog, String accountId) {
+        List<Transaction> items = new ArrayList<>();
 
-		long accID = getAccountId(accountId);
+        AccountID accID = getAccountId(accountId);
 
-		IBacklogService backlog = storage.getBacklog();
-		final Iterator<Long> indexes = backlog.iterator();
+        for (TransactionID item : backlog) {
+            Transaction transaction = backlog.get(item);
+            if (transaction != null) {
+                if (transaction.getSenderID().equals(accID)) {
+                    items.add(transaction);
+                } else if (transaction.getData() != null &&
+                        transaction.getData().containsKey("recipient") &&
+                        accountId.equals(transaction.getData().get("recipient").toString())) {
+                    items.add(transaction);
+                }
+            }
+        }
 
-		while (indexes.hasNext()) {
-			long item = indexes.next();
-			Transaction transaction = backlog.get(item);
-			if (transaction != null) {
-				if (transaction.getSenderID() == accID) {
-					items.add(transaction);
-				} else if (transaction.getData() != null && accountId.equals(transaction.getData().get("recipient"))) {
-					items.add(transaction);
-				}
-			}
-		}
-
-		return items;
-	}
+        return items;
+    }
 }

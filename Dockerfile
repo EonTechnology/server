@@ -9,7 +9,7 @@ WORKDIR /app
 # Copy pom.xml files
 COPY pom.xml /app/pom.xml
 
-COPY peer-store-sqlite/pom.xml /app/peer-store-sqlite/pom.xml
+COPY json-rpc/pom.xml /app/json-rpc/pom.xml
 COPY peer-core/pom.xml /app/peer-core/pom.xml
 COPY peer-eon/pom.xml /app/peer-eon/pom.xml
 COPY peer-eon-app/pom.xml /app/peer-eon-app/pom.xml
@@ -23,8 +23,8 @@ COPY peer-eon-app/jetty.xml /app/peer-eon-app/jetty.xml
 RUN mkdir /app/db
 
 # Copy sources
+COPY json-rpc/src /app/json-rpc/src
 COPY peer-eon-app/src /app/peer-eon-app/src
-COPY peer-store-sqlite/src /app/peer-store-sqlite/src
 COPY peer-core/src /app/peer-core/src
 COPY peer-eon/src /app/peer-eon/src
 
@@ -32,9 +32,7 @@ COPY peer-eon/src /app/peer-eon/src
 RUN mvn -o -Dmaven.repo.local=/repository package install -DskipTests
 
 # Run tests
-RUN mvn -Dmaven.repo.local=/repository -DfailIfNoTests=false test
-# Run integration tests
-RUN mvn -Dmaven.repo.local=/repository -Dtest="**/*TestIT.java" -DfailIfNoTests=false test
+RUN mvn -Dmaven.repo.local=/repository test
 
 VOLUME /app/peer-eon-app/src/main/webapp/WEB-INF
 EXPOSE 9443

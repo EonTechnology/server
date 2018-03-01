@@ -1,25 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<beans xmlns="http://www.springframework.org/schema/beans"
-	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-	<bean name="Service" class="com.exscudo.eon.jsonrpc.JrpcService">
-		<constructor-arg>
-			<map key-type="java.lang.String">
-				<entry key="accounts">
-					<!-- IAccount Service -->
-					<bean class="com.exscudo.eon.bot.AccountService">
-						<constructor-arg ref="storage"/>
-					</bean>
-				</entry>
-				<entry key="explorer">
-					<!-- Blockchain explorer Service -->
-					<bean class="com.exscudo.eon.explorer.BlockchainExplorerService">
-						<constructor-arg ref="storage"/>
-					</bean>
-				</entry>
-			</map>
-		</constructor-arg>
-	</bean>
+    <bean id="botServiceFactory" class="com.exscudo.eon.cfg.BotServiceFactory">
+        <constructor-arg ref="peerStarter"/>
+    </bean>
+
+    <bean name="Service" class="com.exscudo.eon.jsonrpc.EonService">
+        <constructor-arg>
+            <map key-type="java.lang.String">
+                <!-- Account Service -->
+                <entry key="accounts">
+                    <bean factory-bean="botServiceFactory" factory-method="getAccountService"/>
+                </entry>
+                <!-- Blockchain explorer Service -->
+                <entry key="explorer">
+                    <bean factory-bean="botServiceFactory" factory-method="getBlockchainExplorerService"/>
+                </entry>
+            </map>
+        </constructor-arg>
+    </bean>
 
 </beans>

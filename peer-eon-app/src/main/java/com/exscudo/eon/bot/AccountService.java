@@ -2,329 +2,307 @@ package com.exscudo.eon.bot;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
+import com.exscudo.peer.core.TransactionType;
+import com.exscudo.peer.core.backlog.IBacklogService;
+import com.exscudo.peer.core.blockchain.IBlockchainService;
+import com.exscudo.peer.core.common.Format;
+import com.exscudo.peer.core.common.exceptions.RemotePeerException;
+import com.exscudo.peer.core.data.Account;
 import com.exscudo.peer.core.data.Transaction;
-import com.exscudo.peer.core.exceptions.RemotePeerException;
-import com.exscudo.peer.core.services.IAccount;
-import com.exscudo.peer.core.services.IBacklogService;
-import com.exscudo.peer.core.services.ILedger;
-import com.exscudo.peer.core.utils.Format;
-import com.exscudo.peer.eon.TransactionType;
-import com.exscudo.peer.eon.state.Balance;
-import com.exscudo.peer.eon.state.ColoredBalance;
-import com.exscudo.peer.eon.state.ColoredCoin;
-import com.exscudo.peer.eon.state.GeneratingBalance;
-import com.exscudo.peer.eon.state.ValidationMode;
-import com.exscudo.peer.eon.state.Voter;
-import com.exscudo.peer.eon.transactions.utils.AccountProperties;
-import com.exscudo.peer.eon.utils.ColoredCoinId;
-import com.exscudo.peer.store.sqlite.Storage;
-import com.exscudo.peer.store.sqlite.merkle.Ledgers;
+import com.exscudo.peer.core.data.identifier.AccountID;
+import com.exscudo.peer.core.data.identifier.TransactionID;
+import com.exscudo.peer.core.ledger.ILedger;
+import com.exscudo.peer.core.ledger.LedgerProvider;
+import com.exscudo.peer.eon.ledger.AccountProperties;
+import com.exscudo.peer.eon.ColoredCoinID;
+import com.exscudo.peer.eon.ledger.state.*;
 
 /**
  * Account status service.
  */
 public class AccountService {
 
-	/**
-	 * Account status
-	 */
-	public static class State {
+    private final IBacklogService backlogService;
+    private final IBlockchainService blockchainService;
+    private final LedgerProvider ledgerProvider;
 
-		/**
-		 * Account does not exist
-		 */
-		public static final State NotFound = new State(404, "Not Found");
+    public AccountService(IBacklogService backlogService,
+                          LedgerProvider ledgerProvider,
+                          IBlockchainService blockchainService) {
+        this.backlogService = backlogService;
+        this.blockchainService = blockchainService;
+        this.ledgerProvider = ledgerProvider;
+    }
 
-		/**
-		 * Account is in processing
-		 */
-		public static final State Processing = new State(102, "Processing");
+    /**
+     * Get account status
+     *
+     * @param id account ID
+     * @return
+     * @throws RemotePeerException
+     * @throws IOException
+     */
+    public State getState(String id) throws RemotePeerException, IOException {
 
-		/**
-		 * Account is registered
-		 */
-		public static final State OK = new State(200, "OK");
+        Account account = getAccount(id);
+        if (account != null) {
+            return State.OK;
+        }
 
-		/**
-		 * Account is unauthorized
-		 */
-		public static final State Unauthorized = new State(401, "Unauthorized");
+        IBacklogService backlog = backlogService;
+        for (TransactionID item : backlog) {
+            Transaction transaction = backlog.get(item);
 
-		public final int code;
-		public final String name;
+            if (transaction != null && transaction.getType() == TransactionType.Registration) {
 
-		private State(int code, String name) {
-			this.code = code;
-			this.name = name;
-		}
-	}
+                if (transaction.getData().keySet().contains(id)) {
+                    return State.Processing;
+                }
+            }
+        }
 
-	/**
-	 * Account state
-	 */
-	public static class Info {
+        return State.NotFound;
+    }
 
-		public State state;
-		public String publicKey;
-		public long amount;
-		public long deposit;
+    /**
+     * Get account state
+     *
+     * @param id account ID
+     * @return
+     * @throws RemotePeerException
+     * @throws IOException
+     */
+    public Info getInformation(String id) throws RemotePeerException, IOException {
 
-		public String signType;
-		public VotingRights votingRights;
-		public Quorum quorum;
-		public String seed;
-		public Map<String, Integer> voter;
-		public String coloredCoin;
-	}
+        Account account = getAccount(id);
 
-	/**
-	 * Type of transaction confirmation
-	 * <p>
-	 * The type determines the features of the account (e.g., Inbound transaction
-	 * processing rules)
-	 */
-	public static class SignType {
+        Info info = new Info();
+        if (account == null) {
+            info.state = State.Unauthorized;
+        } else {
 
-		public static final String Normal = "normal";
+            info.state = State.OK;
+            info.publicKey = Format.convert(AccountProperties.getRegistration(account).getPublicKey());
 
-		public static final String Public = "public";
+            ValidationModeProperty validationMode = AccountProperties.getValidationMode(account);
+            if (validationMode.getTimestamp() == -1) {
+                info.signType = SignType.Normal;
+            } else {
 
-		public static final String MFA = "mfa";
+                Quorum quorum = null;
+                VotingRights rights = null;
 
-	}
+                // rights
+                HashMap<String, Integer> delegates = new HashMap<>();
+                for (Map.Entry<AccountID, Integer> e : validationMode.delegatesEntrySet()) {
+                    delegates.put(e.getKey().toString(), e.getValue());
+                }
+                if (!delegates.isEmpty()) {
+                    rights = new VotingRights();
+                    rights.delegates = delegates;
+                }
 
-	/**
-	 * Determines the distribution of votes
-	 */
-	public static class VotingRights {
-		public Integer weight;
-		public Map<String, Integer> delegates;
-	}
+                // quorums
+                HashMap<Integer, Integer> types = new HashMap<>();
+                for (Map.Entry<Integer, Integer> e : validationMode.quorumsEntrySet()) {
+                    types.put(e.getKey(), e.getValue());
+                }
+                if (validationMode.getBaseQuorum() != ValidationModeProperty.MAX_QUORUM || !types.isEmpty()) {
+                    quorum = new Quorum();
+                    quorum.quorum = validationMode.getBaseQuorum();
+                    if (!types.isEmpty()) {
+                        quorum.quorumByTypes = types;
+                    }
+                }
 
-	/**
-	 * Transaction confirmation settings
-	 */
-	public static class Quorum {
-		public Integer quorum;
-		public Map<Integer, Integer> quorumByTypes;
-	}
+                if (validationMode.isNormal()) {
+                    info.signType = SignType.Normal;
+                } else if (validationMode.isPublic()) {
+                    if (rights.delegates == null) {
+                        throw new IllegalStateException(id);
+                    }
+                    info.signType = SignType.Public;
+                    info.seed = validationMode.getSeed();
+                } else if (validationMode.isMultiFactor()) {
+                    rights.weight = validationMode.getBaseWeight();
+                    info.signType = SignType.MFA;
+                }
 
-	/**
-	 * Account deposit
-	 */
-	public static class Deposit {
-		public Long value;
-	}
+                info.votingRights = rights;
+                info.quorum = quorum;
+            }
 
-	/**
-	 * Account balance
-	 */
-	public static class EONBalance {
-		public State state;
-		public long amount;
-		public Map<String, Long> coloredCoins;
-	}
+            VotePollsProperty voter = AccountProperties.getVoter(account);
+            if (voter.getTimestamp() != -1) {
+                HashMap<String, Integer> vMap = new HashMap<>();
+                for (Map.Entry<AccountID, Integer> entry : voter.pollsEntrySet()) {
+                    vMap.put(entry.getKey().toString(), entry.getValue());
+                }
+                info.voter = vMap;
+            }
 
-	private final Storage storage;
+            ColoredCoinProperty coloredCoin = AccountProperties.getColoredCoin(account);
+            if (coloredCoin.isIssued()) {
+                info.coloredCoin = new ColoredCoinID(account.getID()).toString();
+            }
 
-	public AccountService(Storage storage) {
-		this.storage = storage;
-	}
+            // TODO: add current generating balance
+            GeneratingBalanceProperty generatingBalance = AccountProperties.getDeposit(account);
+            info.deposit = generatingBalance.getValue();
 
-	/**
-	 * Get account status
-	 *
-	 * @param id
-	 *            account ID
-	 * @return
-	 * @throws RemotePeerException
-	 * @throws IOException
-	 */
-	public State getState(String id) throws RemotePeerException, IOException {
+            BalanceProperty balance = AccountProperties.getBalance(account);
+            info.amount = balance.getValue();
+        }
 
-		IAccount account = getAccount(id);
-		if (account != null) {
-			return State.OK;
-		}
+        return info;
+    }
 
-		IBacklogService backlog = storage.getBacklog();
-		final Iterator<Long> indexes = backlog.iterator();
-		while (indexes.hasNext()) {
-			long item = indexes.next();
-			Transaction transaction = backlog.get(item);
+    /**
+     * Gets account balance.
+     *
+     * @param id
+     * @return
+     * @throws RemotePeerException
+     * @throws IOException
+     */
+    public EONBalance getBalance(String id) throws RemotePeerException, IOException {
+        Account account = getAccount(id);
 
-			if (transaction != null && transaction.getType() == TransactionType.AccountRegistration) {
+        EONBalance balance = new EONBalance();
+        if (account == null) {
+            balance.state = State.Unauthorized;
+        } else {
+            balance.state = State.OK;
 
-				if (transaction.getData().keySet().contains(id)) {
-					return State.Processing;
-				}
+            BalanceProperty b = AccountProperties.getBalance(account);
+            balance.amount = b.getValue();
 
-			}
+            ColoredBalanceProperty coloredBalance = AccountProperties.getColoredBalance(account);
+            if (coloredBalance != null) {
+                Map<String, Long> cMap = new HashMap<>();
+                for (Map.Entry<ColoredCoinID, Long> e : coloredBalance.balancesEntrySet()) {
+                    cMap.put(e.getKey().toString(), e.getValue());
+                }
+                if (!cMap.isEmpty()) {
+                    balance.coloredCoins = cMap;
+                }
+            }
+        }
+        return balance;
+    }
 
-		}
+    Account getAccount(String id) throws RemotePeerException {
 
-		return State.NotFound;
-	}
+        AccountID accountID;
+        try {
+            accountID = new AccountID(id);
+        } catch (IllegalArgumentException e) {
+            throw new RemotePeerException(e);
+        }
 
-	/**
-	 * Get account state
-	 *
-	 * @param id
-	 *            account ID
-	 * @return
-	 * @throws RemotePeerException
-	 * @throws IOException
-	 */
-	public Info getInformation(String id) throws RemotePeerException, IOException {
+        final ILedger ledgerState = ledgerProvider.getLedger(blockchainService.getLastBlock());
 
-		IAccount account = getAccount(id);
+        return ledgerState.getAccount(accountID);
+    }
 
-		Info info = new Info();
-		if (account == null) {
-			info.state = State.Unauthorized;
-		} else {
+    /**
+     * Account status
+     */
+    public static class State {
 
-			info.state = State.OK;
-			info.publicKey = Format.convert(AccountProperties.getPublicKey(account));
+        /**
+         * Account does not exist
+         */
+        public static final State NotFound = new State(404, "Not Found");
 
-			ValidationMode validationMode = AccountProperties.getValidationMode(account);
-			if (validationMode == null) {
-				info.signType = SignType.Normal;
-			} else {
+        /**
+         * Account is in processing
+         */
+        public static final State Processing = new State(102, "Processing");
 
-				Quorum quorum = null;
-				VotingRights rights = null;
+        /**
+         * Account is registered
+         */
+        public static final State OK = new State(200, "OK");
 
-				// rights
-				HashMap<String, Integer> delegates = new HashMap<String, Integer>();
-				for (Map.Entry<Long, Integer> e : validationMode.delegatesEntrySet()) {
-					delegates.put(Format.ID.accountId(e.getKey()), e.getValue());
-				}
-				if (!delegates.isEmpty()) {
-					rights = new VotingRights();
-					rights.delegates = delegates;
-				}
+        /**
+         * Account is unauthorized
+         */
+        public static final State Unauthorized = new State(401, "Unauthorized");
 
-				// quorums
-				HashMap<Integer, Integer> types = new HashMap<Integer, Integer>();
-				for (Map.Entry<Integer, Integer> e : validationMode.quorumsEntrySet()) {
-					types.put(e.getKey(), e.getValue());
-				}
-				if (validationMode.getBaseQuorum() != ValidationMode.MAX_QUORUM || !types.isEmpty()) {
-					quorum = new Quorum();
-					quorum.quorum = validationMode.getBaseQuorum();
-					if (!types.isEmpty()) {
-						quorum.quorumByTypes = types;
-					}
-				}
+        public final int code;
+        public final String name;
 
-				if (validationMode.isNormal()) {
-					info.signType = SignType.Normal;
-				} else if (validationMode.isPublic()) {
-					if (rights.delegates == null) {
-						throw new IllegalStateException(id);
-					}
-					info.signType = SignType.Public;
-					info.seed = validationMode.getSeed();
-				} else if (validationMode.isMultiFactor()) {
-					rights.weight = validationMode.getBaseWeight();
-					info.signType = SignType.MFA;
-				}
+        private State(int code, String name) {
+            this.code = code;
+            this.name = name;
+        }
+    }
 
-				info.votingRights = rights;
-				info.quorum = quorum;
-			}
+    /**
+     * Account state
+     */
+    public static class Info {
 
-			Voter voter = AccountProperties.getVoter(account);
-			if (voter != null) {
-				HashMap<String, Integer> vMap = new HashMap<String, Integer>();
-				for (Map.Entry<Long, Integer> entry : voter.pollsEntrySet()) {
-					vMap.put(Format.ID.accountId(entry.getKey()), entry.getValue());
-				}
-				info.voter = vMap;
-			}
+        public State state;
+        public String publicKey;
+        public long amount;
+        public long deposit;
 
-			ColoredCoin coloredCoin = AccountProperties.getColoredCoinRegistrationData(account);
-			if (coloredCoin != null) {
-				info.coloredCoin = ColoredCoinId.convert(account.getID());
-			}
+        public String signType;
+        public VotingRights votingRights;
+        public Quorum quorum;
+        public String seed;
+        public Map<String, Integer> voter;
+        public String coloredCoin;
+    }
 
-			// TODO: add current generating balance
-			GeneratingBalance generatingBalance = AccountProperties.getDeposit(account);
-			if (generatingBalance == null) {
-				info.deposit = 0;
-			} else {
-				info.deposit = generatingBalance.getValue();
-			}
+    /**
+     * Type of transaction confirmation
+     * <p>
+     * The type determines the features of the account (e.g., Inbound transaction
+     * processing rules)
+     */
+    public static class SignType {
 
-			Balance balance = AccountProperties.getBalance(account);
-			if (balance == null) {
-				info.amount = 0;
-			} else {
-				info.amount = balance.getValue();
-			}
+        public static final String Normal = "normal";
 
-		}
+        public static final String Public = "public";
 
-		return info;
-	}
+        public static final String MFA = "mfa";
+    }
 
-	/**
-	 * Gets account balance.
-	 *
-	 * @param id
-	 * @return
-	 * @throws RemotePeerException
-	 * @throws IOException
-	 */
-	public EONBalance getBalance(String id) throws RemotePeerException, IOException {
-		IAccount account = getAccount(id);
+    /**
+     * Determines the distribution of votes
+     */
+    public static class VotingRights {
+        public Integer weight;
+        public Map<String, Integer> delegates;
+    }
 
-		EONBalance balance = new EONBalance();
-		if (account == null) {
-			balance.state = State.Unauthorized;
-		} else {
-			balance.state = State.OK;
+    /**
+     * Transaction confirmation settings
+     */
+    public static class Quorum {
+        public Integer quorum;
+        public Map<Integer, Integer> quorumByTypes;
+    }
 
-			Balance b = AccountProperties.getBalance(account);
-			if (b == null) {
-				balance.amount = 0;
-			} else {
-				balance.amount = b.getValue();
-			}
+    /**
+     * Account deposit
+     */
+    public static class Deposit {
+        public Long value;
+    }
 
-			ColoredBalance coloredBalance = AccountProperties.getColoredBalance(account);
-			if(coloredBalance != null) {
-				Map<String, Long> cMap = new HashMap<>();
-				for(Map.Entry<Long, Long> e : coloredBalance.balancesEntrySet()) {
-					cMap.put(ColoredCoinId.convert(e.getKey()), e.getValue());
-				}
-				if(!cMap.isEmpty()){
-					balance.coloredCoins = cMap;
-				}
-			}
-		}
-		return balance;
-
-	}
-
-	IAccount getAccount(String id) throws RemotePeerException {
-
-		long accountID;
-		try {
-			accountID = Format.ID.accountId(id);
-		} catch (IllegalArgumentException e) {
-			throw new RemotePeerException(e);
-		}
-
-		final ILedger ledgerState = Ledgers.newReadOnlyLedger(storage.getConnection(),
-				storage.getLastBlock().getSnapshot());
-
-		return ledgerState.getAccount(accountID);
-
-	}
-
+    /**
+     * Account balance
+     */
+    public static class EONBalance {
+        public State state;
+        public long amount;
+        public Map<String, Long> coloredCoins;
+    }
 }

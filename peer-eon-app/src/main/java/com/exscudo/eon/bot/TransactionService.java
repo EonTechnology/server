@@ -3,41 +3,43 @@ package com.exscudo.eon.bot;
 import java.io.IOException;
 
 import com.exscudo.peer.core.Constant;
+import com.exscudo.peer.core.backlog.IBacklogService;
+import com.exscudo.peer.core.common.TimeProvider;
+import com.exscudo.peer.core.common.exceptions.LifecycleException;
+import com.exscudo.peer.core.common.exceptions.RemotePeerException;
+import com.exscudo.peer.core.common.exceptions.ValidateException;
 import com.exscudo.peer.core.data.Transaction;
-import com.exscudo.peer.core.exceptions.LifecycleException;
-import com.exscudo.peer.core.exceptions.RemotePeerException;
-import com.exscudo.peer.core.exceptions.ValidateException;
-import com.exscudo.peer.eon.ExecutionContext;
 
 /**
  * Transaction processing service
  */
 public class TransactionService {
 
-	private final ExecutionContext context;
+    private final IBacklogService backlogService;
+    private final TimeProvider timeProvider;
 
-	public TransactionService(ExecutionContext context) {
-		this.context = context;
-	}
+    public TransactionService(TimeProvider timeProvider, IBacklogService backlogService) {
+        this.backlogService = backlogService;
+        this.timeProvider = timeProvider;
+    }
 
-	/**
-	 * Put transaction to Backlog list.
-	 * 
-	 * @param tx
-	 * @throws RemotePeerException
-	 * @throws IOException
-	 */
-	public void putTransaction(Transaction tx) throws RemotePeerException, IOException {
-		try {
-			// TODO: validate transaction
-			if (tx.isFuture(context.getCurrentTime() + Constant.MAX_LATENCY)) {
-				throw new LifecycleException();
-			}
+    /**
+     * Put transaction to Backlog list.
+     *
+     * @param tx
+     * @throws RemotePeerException
+     * @throws IOException
+     */
+    public void putTransaction(Transaction tx) throws RemotePeerException, IOException {
+        try {
+            // TODO: move to backlog
+            if (tx.isFuture(timeProvider.get() + Constant.MAX_LATENCY)) {
+                throw new LifecycleException();
+            }
 
-			context.getInstance().getBacklogService().put(tx);
-		} catch (ValidateException e) {
-			throw new RemotePeerException(e);
-		}
-	}
-
+            backlogService.put(tx);
+        } catch (ValidateException e) {
+            throw new RemotePeerException(e);
+        }
+    }
 }

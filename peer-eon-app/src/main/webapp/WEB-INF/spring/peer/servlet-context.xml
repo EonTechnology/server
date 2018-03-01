@@ -1,31 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<beans xmlns="http://www.springframework.org/schema/beans"
-	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-	<bean name="Service" class="com.exscudo.eon.jsonrpc.JrpcService">
-		<constructor-arg>
-			<map key-type="java.lang.String">
-				<entry key="transactions">
-					<!-- Transaction Synchronization Service -->
-					<bean class="com.exscudo.peer.eon.stubs.SyncTransactionService">
-						<constructor-arg ref="executionContext" />
-					</bean>
-				</entry>
-				<entry key="metadata">
-					<!-- Metadata Synchronization Service -->
-					<bean class="com.exscudo.peer.eon.stubs.SyncMetadataService" >
-						<constructor-arg ref="executionContext" />
-					</bean>
-				</entry>
-				<entry key="blocks">
-					<!-- Block Synchronization Service -->
-					<bean class="com.exscudo.peer.eon.stubs.SyncBlockService">
-						<constructor-arg ref="executionContext" />
-					</bean>
-				</entry>
-			</map>
-		</constructor-arg>
-	</bean>
+    <bean id="peerServiceFactory" class="com.exscudo.eon.cfg.PeerServiceFactory">
+        <constructor-arg ref="peerStarter"/>
+    </bean>
+
+    <bean name="Service" class="com.exscudo.eon.jsonrpc.EonService">
+        <constructor-arg>
+            <map key-type="java.lang.String">
+                <!-- Transaction Synchronization Service -->
+                <entry key="transactions">
+                    <bean factory-bean="peerServiceFactory" factory-method="getSyncTransactionService"/>
+                </entry>
+                <!-- Metadata Synchronization Service -->
+                <entry key="metadata">
+                    <bean factory-bean="peerServiceFactory" factory-method="getSyncMetadataService"/>
+                </entry>
+                <!-- Block Synchronization Service -->
+                <entry key="blocks">
+                    <bean factory-bean="peerServiceFactory" factory-method="getSyncBlockService"/>
+                </entry>
+            </map>
+        </constructor-arg>
+    </bean>
 
 </beans>

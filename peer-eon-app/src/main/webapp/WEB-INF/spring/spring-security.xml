@@ -1,31 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans:beans
-		xmlns="http://www.springframework.org/schema/security"
-		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-		xmlns:beans="http://www.springframework.org/schema/beans"
-		xsi:schemaLocation="
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:beans="http://www.springframework.org/schema/beans"
+        xmlns="http://www.springframework.org/schema/security"
+        xsi:schemaLocation="
       http://www.springframework.org/schema/security
       http://www.springframework.org/schema/security/spring-security-4.2.xsd
       http://www.springframework.org/schema/beans
       http://www.springframework.org/schema/beans/spring-beans-4.3.xsd">
 
-	<http auto-config="true" use-expressions="true">
-		<!--Uncomment to restrict access to metrics-->
-		<!--<intercept-url pattern="/metrics/**" access="hasIpAddress('127.0.0.1') or hasRole('ROLE_ADMIN')"/>-->
+    <http auto-config="true" use-expressions="true">
+        <!--Uncomment to restrict access to metrics-->
+        <!--<intercept-url pattern="/metrics/**" access="hasIpAddress('127.0.0.1') or hasRole('ROLE_ADMIN')"/>-->
 
-		<!--Restrict access to explorer from not localhost-->
-		<intercept-url pattern="/explorer/**" access="hasIpAddress('127.0.0.1')"/>
+        <!--Restrict access to explorer from not localhost-->
+        <intercept-url pattern="/explorer/**" access="hasIpAddress('127.0.0.1')"/>
 
-		<csrf disabled="true"/>
-	</http>
+        <csrf disabled="true"/>
+    </http>
 
-	<authentication-manager>
-		<authentication-provider>
-			<user-service>
-				<user name="admin" password="pass"
-					  authorities="ROLE_ADMIN"/>   <!-- Basic-authorization: the request of the client must contain the header Authorization=Basic base64("admin:pass")-->
-			</user-service>
-		</authentication-provider>
-	</authentication-manager>
+    <authentication-manager>
+        <authentication-provider>
+            <user-service>
+                <user name="admin" password="pass"
+                      authorities="ROLE_ADMIN"/>   <!-- Basic-authorization: the request of the client must contain the header Authorization=Basic base64("admin:pass")-->
+            </user-service>
+        </authentication-provider>
+    </authentication-manager>
 
 </beans:beans>

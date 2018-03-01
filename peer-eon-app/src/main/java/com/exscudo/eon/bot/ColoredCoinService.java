@@ -2,99 +2,102 @@ package com.exscudo.eon.bot;
 
 import java.io.IOException;
 
-import com.exscudo.peer.core.exceptions.RemotePeerException;
-import com.exscudo.peer.core.services.IAccount;
-import com.exscudo.peer.core.services.ILedger;
-import com.exscudo.peer.eon.state.ColoredCoin;
-import com.exscudo.peer.eon.transactions.utils.AccountProperties;
-import com.exscudo.peer.eon.utils.ColoredCoinId;
-import com.exscudo.peer.store.sqlite.Storage;
-import com.exscudo.peer.store.sqlite.merkle.Ledgers;
+import com.exscudo.peer.core.blockchain.IBlockchainService;
+import com.exscudo.peer.core.common.exceptions.RemotePeerException;
+import com.exscudo.peer.core.data.Account;
+import com.exscudo.peer.core.data.identifier.AccountID;
+import com.exscudo.peer.core.env.ExecutionContext;
+import com.exscudo.peer.core.ledger.ILedger;
+import com.exscudo.peer.core.ledger.LedgerProvider;
+import com.exscudo.peer.eon.ledger.AccountProperties;
+import com.exscudo.peer.eon.ColoredCoinID;
+import com.exscudo.peer.eon.ledger.state.ColoredCoinProperty;
 
 /**
  * Colored coin service.
  */
 public class ColoredCoinService {
 
-	public static class State {
+    private final ExecutionContext context;
+    private final IBlockchainService blockchainService;
+    private final LedgerProvider ledgerProvider;
 
-		/**
-		 * Colored coin is registered
-		 */
-		public static final State OK = new State(200, "OK");
+    public ColoredCoinService(ExecutionContext context,
+                              LedgerProvider ledgerProvider,
+                              IBlockchainService blockchainService) {
+        this.context = context;
+        this.blockchainService = blockchainService;
+        this.ledgerProvider = ledgerProvider;
+    }
 
-		/**
-		 * No associated colored coins
-		 */
-		public static final State Unauthorized = new State(401, "Unauthorized");
+    /**
+     * Get a colored coin information.
+     *
+     * @param id
+     * @return
+     * @throws RemotePeerException
+     * @throws IOException
+     */
+    public Info getInfo(String id) throws RemotePeerException, IOException {
+        Account account = getColoredAccount(id);
 
-		public final int code;
-		public final String name;
+        Info info = new Info();
+        info.state = State.Unauthorized;
 
-		private State(int code, String name) {
-			this.code = code;
-			this.name = name;
-		}
-	}
+        if (account == null) {
+            return info;
+        }
 
-	public static class Info {
-		public State state;
-		public Long moneySupply;
-		public Integer decimalPoint;
-	}
+        ColoredCoinProperty coloredCoin = AccountProperties.getColoredCoin(account);
+        if (!coloredCoin.isIssued()) {
+            return info;
+        }
 
-	private final Storage storage;
+        info.state = State.OK;
+        info.decimalPoint = coloredCoin.getDecimalPoint();
+        info.moneySupply = coloredCoin.getMoneySupply();
+        info.timestamp = coloredCoin.getTimestamp();
 
-	public ColoredCoinService(Storage storage) {
-		this.storage = storage;
-	}
+        return info;
+    }
 
-	/**
-	 * Get a colored coin information.
-	 *
-	 * @param id
-	 * @return
-	 * @throws RemotePeerException
-	 * @throws IOException
-	 */
-	public Info getInfo(String id, int timestamp) throws RemotePeerException, IOException {
-		IAccount account = getColoredAccount(id);
+    Account getColoredAccount(String id) throws RemotePeerException {
+        AccountID accountID;
+        try {
+            accountID = new ColoredCoinID(id).getIssierAccount();
+        } catch (IllegalArgumentException e) {
+            throw new RemotePeerException(e);
+        }
 
-		Info info = new Info();
-		info.state = State.Unauthorized;
+        final ILedger ledgerState = ledgerProvider.getLedger(blockchainService.getLastBlock());
+        return ledgerState.getAccount(accountID);
+    }
 
-		if (account == null) {
-			return info;
-		}
+    public static class State {
 
-		ColoredCoin coloredCoin = AccountProperties.getColoredCoinRegistrationData(account);
-		if (coloredCoin == null) {
-			return info;
-		}
+        /**
+         * Colored coin is registered
+         */
+        public static final State OK = new State(200, "OK");
 
-		if (coloredCoin.getTimestamp() > timestamp) {
-			return info;
-		}
+        /**
+         * No associated colored coins
+         */
+        public static final State Unauthorized = new State(401, "Unauthorized");
 
-		info.state = State.OK;
-		info.decimalPoint = coloredCoin.getDecimalPoint();
-		info.moneySupply = coloredCoin.getMoneySupply();
+        public final int code;
+        public final String name;
 
-		return info;
+        private State(int code, String name) {
+            this.code = code;
+            this.name = name;
+        }
+    }
 
-	}
-
-	IAccount getColoredAccount(String id) throws RemotePeerException {
-		long accountID;
-		try {
-			accountID = ColoredCoinId.convert(id);
-		} catch (IllegalArgumentException e) {
-			throw new RemotePeerException(e);
-		}
-
-		final ILedger ledgerState = Ledgers.newReadOnlyLedger(storage.getConnection(),
-				storage.getLastBlock().getSnapshot());
-		return ledgerState.getAccount(accountID);
-	}
-
+    public static class Info {
+        public State state;
+        public Long moneySupply;
+        public Integer decimalPoint;
+        public Integer timestamp;
+    }
 }

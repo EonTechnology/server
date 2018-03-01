@@ -12,24 +12,21 @@ import com.dampcake.bencode.BencodeOutputStream;
  */
 public class BencodeFormatter {
 
-	public static byte[] getBytes(Map<String, Object> map) {
-		Objects.requireNonNull(map);
-		try {
+    public static byte[] getBytes(Map<String, Object> map) {
+        Objects.requireNonNull(map);
+        try {
 
-			try (ByteArrayOutputStream outStream = new ByteArrayOutputStream()) {
+            try (ByteArrayOutputStream outStream = new ByteArrayOutputStream()) {
 
-				try (BencodeOutputStream bencodeStream = new BencodeOutputStream(outStream)) {
-					bencodeStream.writeDictionary(map);
-				}
+                try (BencodeOutputStream bencodeStream = new BencodeOutputStream(outStream)) {
+                    bencodeStream.writeDictionary(map);
+                }
 
-				String str = outStream.toString();
-				return str.toUpperCase().getBytes();
-
-			}
-
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
+                String str = outStream.toString();
+                return str.toUpperCase().getBytes();
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

@@ -6,222 +6,251 @@ import java.sql.SQLException;
 import com.exscudo.eon.bot.AccountService;
 import com.exscudo.eon.bot.ColoredCoinService;
 import com.exscudo.eon.bot.TransactionService;
-import com.exscudo.eon.cfg.EngineConfigurator;
+import com.exscudo.eon.cfg.*;
 import com.exscudo.eon.jsonrpc.ObjectMapperProvider;
 import com.exscudo.peer.core.Constant;
-import com.exscudo.peer.core.IFork;
+import com.exscudo.peer.core.api.*;
+import com.exscudo.peer.core.api.impl.SyncBlockService;
+import com.exscudo.peer.core.api.impl.SyncMetadataService;
+import com.exscudo.peer.core.api.impl.SyncTransactionService;
+import com.exscudo.peer.core.backlog.Backlog;
+import com.exscudo.peer.core.backlog.tasks.SyncForkedTransactionListTask;
+import com.exscudo.peer.core.backlog.tasks.SyncTransactionListTask;
+import com.exscudo.peer.core.blockchain.IBlockchainService;
+import com.exscudo.peer.core.blockchain.TransactionProvider;
+import com.exscudo.peer.core.common.TimeProvider;
+import com.exscudo.peer.core.common.exceptions.RemotePeerException;
 import com.exscudo.peer.core.crypto.CryptoProvider;
+import com.exscudo.peer.core.crypto.ISigner;
 import com.exscudo.peer.core.data.Block;
-import com.exscudo.peer.core.data.Difficulty;
 import com.exscudo.peer.core.data.Transaction;
-import com.exscudo.peer.core.data.mapper.crypto.SignedObjectMapper;
-import com.exscudo.peer.core.exceptions.RemotePeerException;
-import com.exscudo.peer.core.services.IBlockSynchronizationService;
-import com.exscudo.peer.core.tasks.SyncBlockListTask;
-import com.exscudo.peer.eon.ExecutionContext;
-import com.exscudo.peer.eon.IServiceProxyFactory;
-import com.exscudo.peer.eon.PeerInfo;
-import com.exscudo.peer.eon.TimeProvider;
-import com.exscudo.peer.eon.crypto.Ed25519SignatureVerifier;
-import com.exscudo.peer.eon.crypto.Ed25519Signer;
-import com.exscudo.peer.eon.crypto.ISigner;
-import com.exscudo.peer.eon.services.IMetadataService;
-import com.exscudo.peer.eon.services.ITransactionSynchronizationService;
-import com.exscudo.peer.eon.services.SalientAttributes;
-import com.exscudo.peer.eon.stubs.SyncBlockService;
-import com.exscudo.peer.eon.stubs.SyncMetadataService;
-import com.exscudo.peer.eon.stubs.SyncTransactionService;
-import com.exscudo.peer.eon.tasks.GenerateBlockTask;
-import com.exscudo.peer.eon.tasks.PeerConnectTask;
-import com.exscudo.peer.eon.tasks.PeerRemoveTask;
-import com.exscudo.peer.eon.tasks.SyncPeerListTask;
-import com.exscudo.peer.eon.tasks.SyncTransactionListTask;
-import com.exscudo.peer.store.sqlite.Storage;
-import com.exscudo.peer.store.sqlite.core.Blockchain;
+import com.exscudo.peer.core.data.identifier.BlockID;
+import com.exscudo.peer.core.env.ExecutionContext;
+import com.exscudo.peer.core.env.IServiceProxyFactory;
+import com.exscudo.peer.core.env.PeerInfo;
+import com.exscudo.peer.core.env.tasks.PeerConnectTask;
+import com.exscudo.peer.core.env.tasks.PeerRemoveTask;
+import com.exscudo.peer.core.env.tasks.SyncPeerListTask;
+import com.exscudo.peer.core.importer.BlockGenerator;
+import com.exscudo.peer.core.importer.IFork;
+import com.exscudo.peer.core.importer.tasks.GenerateBlockTask;
+import com.exscudo.peer.core.importer.tasks.SyncBlockListTask;
+import com.exscudo.peer.core.ledger.LedgerProvider;
+import com.exscudo.peer.core.storage.Storage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.mockito.Mockito;
 
 class PeerContext {
-	ExecutionContext context;//
+    Backlog backlog;
+    BlockGenerator generator;
+    ExecutionContext context;
+    TimeProvider timeProvider;
+    IBlockchainService blockchain;
+    TransactionProvider transactionProvider;
+    LedgerProvider ledgerProvider;
 
-	PeerRemoveTask peerRemoveTask;
-	PeerConnectTask peerConnectTask;
-	SyncPeerListTask syncPeerListTask;
-	SyncBlockListTask syncBlockListTask;
-	GenerateBlockTask generateBlockTask;
-	SyncTransactionListTask syncTransactionListTask;
+    PeerRemoveTask peerRemoveTask;
+    PeerConnectTask peerConnectTask;
+    SyncPeerListTask syncPeerListTask;
+    SyncBlockListTask syncBlockListTask;
+    GenerateBlockTask generateBlockTask;
+    SyncTransactionListTask syncTransactionListTask;
+    SyncForkedTransactionListTask syncForkedTransactionListTask;
 
-	IBlockSynchronizationService syncBlockPeerService;
-	IMetadataService syncMetadataPeerService;
-	ITransactionSynchronizationService syncTransactionPeerService;
+    IBlockSynchronizationService syncBlockPeerService;
+    IMetadataService syncMetadataPeerService;
+    ITransactionSynchronizationService syncTransactionPeerService;
 
-	TransactionService transactionBotService;
-	AccountService accountBotService;
-	ColoredCoinService coloredCoinService;
+    TransactionService transactionBotService;
+    AccountService accountBotService;
+    ColoredCoinService coloredCoinService;
 
-	ISigner signer;
-	IFork fork;
+    ISigner signer;
+    IFork fork;
+    Storage storage;
 
-	PeerContext(String seed, TimeProvider timeProvider) throws ClassNotFoundException, SQLException, IOException {
-		this(seed, timeProvider, Utils.createStorage());
-	}
+    PeerContext(String seed, TimeProvider timeProvider) throws ClassNotFoundException, SQLException, IOException {
+        this(seed, timeProvider, Utils.createStorage());
+    }
 
-	PeerContext(String seed, TimeProvider timeProvider, Storage storage)
-			throws ClassNotFoundException, SQLException, IOException {
-		this(seed, timeProvider, storage, Utils.createFork(storage));
-	}
+    PeerContext(String seed,
+                TimeProvider timeProvider,
+                Storage storage) throws ClassNotFoundException, SQLException, IOException {
+        this(seed, timeProvider, storage, Utils.createFork(storage));
+    }
 
-	PeerContext(String seed, TimeProvider timeProvider, Storage storage, IFork fork)
-			throws SQLException, IOException, ClassNotFoundException {
+    PeerContext(String seed,
+                TimeProvider timeProvider,
+                Storage storage,
+                IFork fork) throws SQLException, IOException, ClassNotFoundException {
 
-		final ObjectMapper mapper = ObjectMapperProvider.createDefaultMapper();
-		this.signer = new Ed25519Signer(seed);
-		this.fork = fork;
+        // Init peer configuration
+        Config config = new Config();
+        config.setHost("0");
+        config.setBlacklistingPeriod(30000);
+        config.setPublicPeers(new String[] {"1"});
+        config.setSeed(seed);
 
-		EngineConfigurator configurator = new EngineConfigurator();
-		configurator.setHost(new ExecutionContext.Host("0"));
-		configurator.setPublicPeers(new String[] { "1" });
-		configurator.setInnerPeers(new String[] {});
-		configurator.setTimeProvider(timeProvider);
-		configurator.setSigner(signer);
-		configurator.setFork(fork);
-		configurator.setBlockchain(new Blockchain(storage, fork));
-		configurator.setBacklog(storage.getBacklog());
+        // Init PeerStarter
+        PeerStarter starter = new PeerStarter(config);
+        starter.setTimeProvider(timeProvider);
+        starter.setFork(fork);
+        starter.setStorage(storage);
 
-		long networkID = fork.getGenesisBlockID();
-		Ed25519SignatureVerifier signatureVerifier = new Ed25519SignatureVerifier();
-		CryptoProvider cryptoProvider = new CryptoProvider(new SignedObjectMapper(networkID));
-		cryptoProvider.addProvider(signatureVerifier);
-		cryptoProvider.setDefaultProvider(signatureVerifier.getName());
-		CryptoProvider.init(cryptoProvider);
+        // Init crypto provider
+        CryptoProvider.init(starter.getCryptoProvider());
 
-		context = Mockito.spy(configurator.build());
+        // Init context
+        context = starter.getExecutionContext();
+        context.connectPeer(context.getAnyPeerToConnect(), 0);
+        context = Mockito.spy(context);
+        starter.setExecutionContext(context);
 
-		context.connectPeer(context.getAnyPeerToConnect(), 0);
+        // Factories
+        BotServiceFactory botServiceFactory = new BotServiceFactory(starter);
+        PeerServiceFactory peerServiceFactory = new PeerServiceFactory(starter);
+        TaskFactory taskFactory = new TaskFactory(starter);
 
-		generateBlockTask = new GenerateBlockTask(context);
-		syncBlockListTask = new SyncBlockListTask(context);
+        // Init local fields
+        this.signer = starter.getSigner();
+        this.fork = starter.getFork();
+        this.storage = starter.getStorage();
+        this.blockchain = starter.getBlockchain();
+        this.backlog = starter.getBacklog();
+        this.generator = starter.getBlockGenerator();
+        this.timeProvider = starter.getTimeProvider();
+        this.transactionProvider = starter.getTransactionProvider();
+        this.ledgerProvider = starter.getLedgerProvider();
 
-		syncTransactionPeerService = new ITransactionSynchronizationService() {
+        starter.getCleaner().setLogging(false);
 
-			private SyncTransactionService inner = new SyncTransactionService(context);
+        // Init bot services
+        accountBotService = botServiceFactory.getAccountService();
+        transactionBotService = botServiceFactory.getTransactionService();
+        coloredCoinService = botServiceFactory.getColoredCoinService();
 
-			@Override
-			public Transaction[] getTransactions(String lastBlockId, String[] ignoreList)
-					throws RemotePeerException, IOException {
-				Transaction[] value = inner.getTransactions(lastBlockId, ignoreList);
-				String valueStr = mapper.writeValueAsString(value);
+        // Init peer tasks
+        syncTransactionListTask = taskFactory.getSyncTransactionListTask();
+        syncForkedTransactionListTask = taskFactory.getSyncForkedTransactionListTask();
+        syncPeerListTask = taskFactory.getSyncPeerListTask();
+        peerConnectTask = taskFactory.getPeerConnectTask();
+        peerRemoveTask = taskFactory.getPeerRemoveTask();
+        generateBlockTask = taskFactory.getGenerateBlockTask();
+        syncBlockListTask = taskFactory.getSyncBlockListTask();
 
-				return mapper.readValue(valueStr, Transaction[].class);
-			}
-		};
+        final ObjectMapper mapper = ObjectMapperProvider.createMapper();
+        syncTransactionPeerService = new ITransactionSynchronizationService() {
 
-		syncBlockPeerService = new IBlockSynchronizationService() {
+            private SyncTransactionService inner = peerServiceFactory.getSyncTransactionService();
 
-			private SyncBlockService inner = new SyncBlockService(context);
+            @Override
+            public Transaction[] getTransactions(String lastBlockId,
+                                                 String[] ignoreList) throws RemotePeerException, IOException {
+                Transaction[] value = inner.getTransactions(lastBlockId, ignoreList);
+                String valueStr = mapper.writeValueAsString(value);
 
-			@Override
-			public Difficulty getDifficulty() throws RemotePeerException, IOException {
-				Difficulty value = inner.getDifficulty();
-				String valueStr = mapper.writeValueAsString(value);
+                return mapper.readValue(valueStr, Transaction[].class);
+            }
+        };
 
-				return mapper.readValue(valueStr, Difficulty.class);
-			}
+        syncBlockPeerService = new IBlockSynchronizationService() {
 
-			@Override
-			public Block[] getBlockHistory(String[] blockSequence) throws RemotePeerException, IOException {
-				Block[] value = inner.getBlockHistory(blockSequence);
-				String valueStr = mapper.writeValueAsString(value);
+            private SyncBlockService inner = peerServiceFactory.getSyncBlockService();
 
-				return mapper.readValue(valueStr, Block[].class);
-			}
+            @Override
+            public Difficulty getDifficulty() throws RemotePeerException, IOException {
+                Difficulty value = inner.getDifficulty();
+                String valueStr = mapper.writeValueAsString(value);
 
-			@Override
-			public Block getLastBlock() throws RemotePeerException, IOException {
-				Block value = inner.getLastBlock();
-				String valueStr = mapper.writeValueAsString(value);
+                return mapper.readValue(valueStr, Difficulty.class);
+            }
 
-				return mapper.readValue(valueStr, Block.class);
-			}
-		};
-		syncMetadataPeerService = new IMetadataService() {
-			private SyncMetadataService inner = new SyncMetadataService(context);
+            @Override
+            public Block[] getBlockHistory(String[] blockSequence) throws RemotePeerException, IOException {
+                Block[] value = inner.getBlockHistory(blockSequence);
+                String valueStr = mapper.writeValueAsString(value);
 
-			@Override
-			public SalientAttributes getAttributes() throws RemotePeerException, IOException {
-				SalientAttributes value = inner.getAttributes();
-				String valueStr = mapper.writeValueAsString(value);
+                return mapper.readValue(valueStr, Block[].class);
+            }
 
-				return mapper.readValue(valueStr, SalientAttributes.class);
-			}
+            @Override
+            public Block getLastBlock() throws RemotePeerException, IOException {
+                Block value = inner.getLastBlock();
+                String valueStr = mapper.writeValueAsString(value);
 
-			@Override
-			public String[] getWellKnownNodes() throws RemotePeerException, IOException {
-				String[] value = inner.getWellKnownNodes();
-				String valueStr = mapper.writeValueAsString(value);
+                return mapper.readValue(valueStr, Block.class);
+            }
+        };
+        syncMetadataPeerService = new IMetadataService() {
+            private SyncMetadataService inner = peerServiceFactory.getSyncMetadataService();
 
-				return mapper.readValue(valueStr, String[].class);
-			}
+            @Override
+            public SalientAttributes getAttributes() throws RemotePeerException, IOException {
+                SalientAttributes value = inner.getAttributes();
+                String valueStr = mapper.writeValueAsString(value);
 
-			@Override
-			public boolean addPeer(long peerID, String address) throws RemotePeerException, IOException {
-				return inner.addPeer(peerID, address);
-			}
+                return mapper.readValue(valueStr, SalientAttributes.class);
+            }
 
-		};
+            @Override
+            public String[] getWellKnownNodes() throws RemotePeerException, IOException {
+                String[] value = inner.getWellKnownNodes();
+                String valueStr = mapper.writeValueAsString(value);
 
-		accountBotService = new AccountService(storage);
-		transactionBotService = new TransactionService(context);
-		syncTransactionListTask = new SyncTransactionListTask(context);
-		coloredCoinService = new ColoredCoinService(storage);
+                return mapper.readValue(valueStr, String[].class);
+            }
 
-		syncPeerListTask = new SyncPeerListTask(context);
+            @Override
+            public boolean addPeer(long peerID, String address) throws RemotePeerException, IOException {
+                return inner.addPeer(peerID, address);
+            }
+        };
+    }
 
-		peerConnectTask = new PeerConnectTask(context);
-		peerRemoveTask = new PeerRemoveTask(context);
-	}
+    public void generateBlockForNow() {
+        Block lastBlock = blockchain.getLastBlock();
+        BlockID lastBlockID;
 
-	public void generateBlockForNow() {
-		Block lastBlock = context.getInstance().getBlockchainService().getLastBlock();
-		long lastBlockID = 0;
+        do {
+            lastBlockID = lastBlock.getID();
 
-		do {
-			lastBlockID = lastBlock.getID();
+            generator.allowGenerate();
+            generateBlockTask.run();
 
-			context.getInstance().getGenerator().allowGenerate();
-			generateBlockTask.run();
+            lastBlock = blockchain.getLastBlock();
+        } while (lastBlock.getTimestamp() + Constant.BLOCK_PERIOD < timeProvider.get() &&
+                !lastBlockID.equals(lastBlock.getID()));
+    }
 
-			lastBlock = context.getInstance().getBlockchainService().getLastBlock();
-		} while (lastBlock.getTimestamp() + Constant.BLOCK_PERIOD < context.getCurrentTime()
-				&& lastBlockID != lastBlock.getID());
-	}
+    public void fullBlockSync() {
+        BlockID lastBlockID;
+        do {
+            lastBlockID = blockchain.getLastBlock().getID();
+            syncBlockListTask.run();
+        } while (!blockchain.getLastBlock().getID().equals(lastBlockID));
+    }
 
-	public void fullBlockSync() {
-		long lastBlockID;
-		do {
-			lastBlockID = context.getInstance().getBlockchainService().getLastBlock().getID();
-			syncBlockListTask.run();
-		} while (context.getInstance().getBlockchainService().getLastBlock().getID() != lastBlockID);
-	}
+    public void setPeerToConnect(PeerContext ctx) {
+        context.setProxyFactory(new IServiceProxyFactory() {
+            @SuppressWarnings("unchecked")
+            @Override
+            public <TService> TService createProxy(PeerInfo peer, Class<TService> clazz) {
+                if (clazz.equals(IBlockSynchronizationService.class)) {
+                    return (TService) ctx.syncBlockPeerService;
+                }
+                if (clazz.equals(ITransactionSynchronizationService.class)) {
+                    return (TService) ctx.syncTransactionPeerService;
+                }
+                if (clazz.equals(IMetadataService.class)) {
+                    return (TService) ctx.syncMetadataPeerService;
+                }
 
-	public void setPeerToConnect(PeerContext ctx) {
-		context.setProxyFactory(new IServiceProxyFactory() {
-			@SuppressWarnings("unchecked")
-			@Override
-			public <TService> TService createProxy(PeerInfo peer, Class<TService> clazz) {
-				if (clazz.equals(IBlockSynchronizationService.class))
-					return (TService) ctx.syncBlockPeerService;
-				if (clazz.equals(ITransactionSynchronizationService.class))
-					return (TService) ctx.syncTransactionPeerService;
-				if (clazz.equals(IMetadataService.class))
-					return (TService) ctx.syncMetadataPeerService;
+                return null;
+            }
+        });
+    }
 
-				return null;
-			}
-		});
-	}
-
-	public ISigner getSigner() {
-		return signer;
-	}
+    public ISigner getSigner() {
+        return signer;
+    }
 }
