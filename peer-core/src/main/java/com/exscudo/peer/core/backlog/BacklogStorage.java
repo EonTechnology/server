@@ -14,7 +14,6 @@ import com.exscudo.peer.core.data.identifier.TransactionID;
 
 /**
  * Storage for unconfirmed transactions
- *
  */
 class BacklogStorage {
 

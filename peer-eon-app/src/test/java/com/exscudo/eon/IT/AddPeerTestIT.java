@@ -34,7 +34,7 @@ public class AddPeerTestIT {
         ctx1.setPeerToConnect(ctx2);
         ctx2.setPeerToConnect(ctx1);
 
-        Block lastBlock = ctx1.blockchain.getLastBlock();
+        Block lastBlock = ctx1.blockExplorerService.getLastBlock();
         Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 * 2 + 1);
 
         ctx1.generateBlockForNow();

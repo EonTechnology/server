@@ -40,7 +40,7 @@ public class BlockSyncTestIT {
     @Test
     public void step_1_one_block() throws Exception {
 
-        Block lastBlock = ctx1.blockchain.getLastBlock();
+        Block lastBlock = ctx1.blockExplorerService.getLastBlock();
 
         Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 + 1);
 
@@ -51,14 +51,14 @@ public class BlockSyncTestIT {
         Mockito.verify(ctx1.syncBlockPeerService, Mockito.times(0)).getBlockHistory(ArgumentMatchers.any());
 
         Assert.assertEquals("Blockchain synchronized",
-                            ctx1.blockchain.getLastBlock().getID(),
-                            ctx2.blockchain.getLastBlock().getID());
+                            ctx1.blockExplorerService.getLastBlock().getID(),
+                            ctx2.blockExplorerService.getLastBlock().getID());
     }
 
     @Test
     public void step_2_two_block() throws Exception {
 
-        Block lastBlock = ctx1.blockchain.getLastBlock();
+        Block lastBlock = ctx1.blockExplorerService.getLastBlock();
 
         Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 * 2 + 1);
 
@@ -69,14 +69,14 @@ public class BlockSyncTestIT {
         Mockito.verify(ctx1.syncBlockPeerService, Mockito.times(1)).getBlockHistory(ArgumentMatchers.any());
 
         Assert.assertEquals("Blockchain synchronized",
-                            ctx1.blockchain.getLastBlock().getID(),
-                            ctx2.blockchain.getLastBlock().getID());
+                            ctx1.blockExplorerService.getLastBlock().getID(),
+                            ctx2.blockExplorerService.getLastBlock().getID());
     }
 
     @Test
     public void step_3_replace_generated() throws Exception {
 
-        Block lastBlock = ctx1.blockchain.getLastBlock();
+        Block lastBlock = ctx1.blockExplorerService.getLastBlock();
 
         Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 + 1);
 
@@ -90,8 +90,8 @@ public class BlockSyncTestIT {
         ctx2.fullBlockSync();
 
         Assert.assertEquals("Blockchain synchronized",
-                            ctx1.blockchain.getLastBlock().getID(),
-                            ctx2.blockchain.getLastBlock().getID());
+                            ctx1.blockExplorerService.getLastBlock().getID(),
+                            ctx2.blockExplorerService.getLastBlock().getID());
         Mockito.verify(ctx1.syncBlockPeerService, Mockito.atLeast(1)).getDifficulty();
         Mockito.verify(ctx1.syncBlockPeerService, Mockito.atLeast(1)).getDifficulty();
 
@@ -107,7 +107,7 @@ public class BlockSyncTestIT {
     @Test
     public void step_4_replace_2_generated() throws Exception {
 
-        Block lastBlock = ctx1.blockchain.getLastBlock();
+        Block lastBlock = ctx1.blockExplorerService.getLastBlock();
 
         Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 * 2 + 1);
 
@@ -121,8 +121,8 @@ public class BlockSyncTestIT {
         ctx2.fullBlockSync();
 
         Assert.assertEquals("Blockchain synchronized",
-                            ctx1.blockchain.getLastBlock().getID(),
-                            ctx2.blockchain.getLastBlock().getID());
+                            ctx1.blockExplorerService.getLastBlock().getID(),
+                            ctx2.blockExplorerService.getLastBlock().getID());
         Mockito.verify(ctx1.syncBlockPeerService, Mockito.atLeast(1)).getDifficulty();
         Mockito.verify(ctx1.syncBlockPeerService, Mockito.atLeast(1)).getDifficulty();
 
@@ -138,7 +138,7 @@ public class BlockSyncTestIT {
     @Test
     public void step_5_too_many_blocks() throws Exception {
 
-        Block lastBlock = ctx1.blockchain.getLastBlock();
+        Block lastBlock = ctx1.blockExplorerService.getLastBlock();
 
         int time = lastBlock.getTimestamp() + Constant.BLOCK_PERIOD * Constant.BLOCK_IN_DAY * 2 + 1;
         Mockito.when(mockTimeProvider.get()).thenReturn(time);
@@ -152,14 +152,14 @@ public class BlockSyncTestIT {
         Mockito.verify(ctx1.syncBlockPeerService, Mockito.atLeast(2)).getDifficulty();
 
         Assert.assertEquals("Blockchain synchronized",
-                            ctx1.blockchain.getLastBlock().getID(),
-                            ctx2.blockchain.getLastBlock().getID());
+                            ctx1.blockExplorerService.getLastBlock().getID(),
+                            ctx2.blockExplorerService.getLastBlock().getID());
     }
 
     @Test
     public void step_6_sync_with_secondary_blockchain() throws Exception {
         // Step 1 - generate new block
-        Block lastBlock = ctx1.blockchain.getLastBlock();
+        Block lastBlock = ctx1.blockExplorerService.getLastBlock();
 
         Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 + 1);
 
@@ -170,11 +170,11 @@ public class BlockSyncTestIT {
         ctx2.fullBlockSync();
 
         Assert.assertEquals("Blockchain synchronized",
-                            ctx1.blockchain.getLastBlock().getID(),
-                            ctx2.blockchain.getLastBlock().getID());
+                            ctx1.blockExplorerService.getLastBlock().getID(),
+                            ctx2.blockExplorerService.getLastBlock().getID());
 
         // Step 2 - create chain branching
-        lastBlock = ctx1.blockchain.getLastBlock();
+        lastBlock = ctx1.blockExplorerService.getLastBlock();
 
         Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 + 1);
 
@@ -198,26 +198,24 @@ public class BlockSyncTestIT {
 
         ctx2Chain.generateBlockForNow();
 
-        Block lastBlock1 = ctx1Chain.blockchain.getLastBlock();
-        Block lastBlock2 = ctx2Chain.blockchain.getLastBlock();
+        Block lastBlock1 = ctx1Chain.blockExplorerService.getLastBlock();
+        Block lastBlock2 = ctx2Chain.blockExplorerService.getLastBlock();
 
         Assert.assertTrue("ctx2Chain generated better block",
                           lastBlock1.getCumulativeDifficulty().compareTo(lastBlock2.getCumulativeDifficulty()) < 0);
-        Assert.assertNotEquals("Blockchain different",
-                               ctx1Chain.blockchain.getLastBlock().getID(),
-                               ctx2Chain.blockchain.getLastBlock().getID());
+        Assert.assertNotEquals("Blockchain different", lastBlock1.getID(), lastBlock2.getID());
 
         // Step 3 - secondary branch is better
         while (lastBlock1.getCumulativeDifficulty().compareTo(lastBlock2.getCumulativeDifficulty()) < 0) {
             Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock1.getTimestamp() + 180 + 1);
             ctx1Chain.generateBlockForNow();
-            lastBlock1 = ctx1Chain.blockchain.getLastBlock();
+            lastBlock1 = ctx1Chain.blockExplorerService.getLastBlock();
         }
 
         ctx2Chain.fullBlockSync();
 
         Assert.assertEquals("Blockchain synchronized",
-                            ctx1Chain.blockchain.getLastBlock().getID(),
-                            ctx2Chain.blockchain.getLastBlock().getID());
+                            ctx1Chain.blockExplorerService.getLastBlock().getID(),
+                            ctx2Chain.blockExplorerService.getLastBlock().getID());
     }
 }

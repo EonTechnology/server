@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+## 0.10.0 - 2018-03-29 - TestNet2 fork 2
+### Added
+- Added the Note field to the transaction.
+- Partial synchronization.
+- API for partial synchronization.
+- Cleaning DB.
+
+### Changed
+- Optimizing the work of node.
+
 ## 0.9.0 - 2018-03-01 - TestNet2 fork 1
 ### Added
 - Transaction type "300 - Deposit" - sets deposit size.

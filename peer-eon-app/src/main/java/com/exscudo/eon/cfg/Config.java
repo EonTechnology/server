@@ -11,6 +11,7 @@ public class Config {
     private int connectTimeout = 5000;
     private String seed = "";
     private String genesisFile = "";
+    private boolean fullSync = true;
 
     public String getDbUrl() {
         return dbUrl;
@@ -82,5 +83,13 @@ public class Config {
 
     public void setGenesisFile(String genesisFile) {
         this.genesisFile = genesisFile;
+    }
+
+    public boolean isFullSync() {
+        return fullSync;
+    }
+
+    public void setFullSync(boolean fullSync) {
+        this.fullSync = fullSync;
     }
 }

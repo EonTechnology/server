@@ -14,7 +14,13 @@ import java.util.zip.GZIPOutputStream;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.Module;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
@@ -31,6 +37,8 @@ public class JrpcServiceProxy {
     private int connectTimeout = 1000;
     private int readTimeout = 1000;
     private URL url;
+
+    private Class loggerClazz = JrpcServiceProxy.class;
 
     public JrpcServiceProxy(URL endpoint) {
         this(endpoint, null);
@@ -52,6 +60,8 @@ public class JrpcServiceProxy {
         if (module != null) {
             objectMapper.registerModule(module);
         }
+
+        loggerClazz = this.getClass();
     }
 
     public int getConnectTimeout() {
@@ -122,7 +132,7 @@ public class JrpcServiceProxy {
                 inputStream.close();
                 responseValue = byteArrayOutputStream.toString(MESSAGE_ENCODING);
 
-                Loggers.trace(JrpcServiceProxy.class,
+                Loggers.trace(loggerClazz,
                               "{}:{} >>> {} <<< {}",
                               url.getHost(),
                               url.getPort(),
@@ -205,14 +215,16 @@ public class JrpcServiceProxy {
                 return retObj;
             }
         } catch (IOException e) {
-
-            Loggers.trace(JrpcServiceProxy.class, "{} << Response: {}", url.getHost(), responseValue);
+            Loggers.trace(loggerClazz, "{} << Response: {}", url.getHost(), responseValue);
             throw new JsonException("Unable to parse response.");
         } finally {
-
             long timeRun = System.nanoTime() - startTime;
-            Loggers.info(this.getClass(), "Timing:  {}ms - {} >> {}", timeRun / 1000000.0, method, url);
+            Loggers.debug(loggerClazz, "Timing:  {}ms - {} >> {}", timeRun / 1000000.0, method, url);
         }
+    }
+
+    public void setLoggerClazz(Class loggerClazz) {
+        this.loggerClazz = loggerClazz;
     }
 
     static class JsonRpcRequest {

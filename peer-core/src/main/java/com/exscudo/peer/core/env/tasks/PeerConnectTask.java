@@ -2,16 +2,16 @@ package com.exscudo.peer.core.env.tasks;
 
 import java.io.IOException;
 
+import com.exscudo.peer.core.IFork;
 import com.exscudo.peer.core.api.IMetadataService;
 import com.exscudo.peer.core.api.SalientAttributes;
-import com.exscudo.peer.core.blockchain.IBlockchainService;
+import com.exscudo.peer.core.blockchain.IBlockchainProvider;
 import com.exscudo.peer.core.common.Loggers;
 import com.exscudo.peer.core.common.TimeProvider;
 import com.exscudo.peer.core.common.exceptions.RemotePeerException;
 import com.exscudo.peer.core.env.ExecutionContext;
 import com.exscudo.peer.core.env.Peer;
 import com.exscudo.peer.core.env.PeerInfo.Metadata;
-import com.exscudo.peer.core.importer.IFork;
 
 /**
  * Supports a number of connected nodes near to the necessary value.
@@ -26,17 +26,17 @@ public final class PeerConnectTask implements Runnable {
 
     private final IFork fork;
     private final ExecutionContext context;
-    private final IBlockchainService blockchainService;
+    private final IBlockchainProvider blockchain;
     private final TimeProvider timeProvider;
 
     public PeerConnectTask(IFork fork,
                            ExecutionContext context,
                            TimeProvider timeProvider,
-                           IBlockchainService blockchainService) {
+                           IBlockchainProvider blockchain) {
 
         this.fork = fork;
         this.context = context;
-        this.blockchainService = blockchainService;
+        this.blockchain = blockchain;
         this.timeProvider = timeProvider;
     }
 
@@ -79,7 +79,7 @@ public final class PeerConnectTask implements Runnable {
                 }
 
                 // Connects only a nodes with known hard-forks.
-                int forkNumber = fork.getNumber(blockchainService.getLastBlock().getTimestamp());
+                int forkNumber = fork.getNumber(blockchain.getLastBlock().getTimestamp());
                 int forkNumberReal = fork.getNumber(timeProvider.get());
                 if (forkNumber != remoteAttributes.getFork() && forkNumberReal != remoteAttributes.getFork()) {
                     Loggers.info(PeerConnectTask.class, "Incorrect fork. \"{}\".", peer);
@@ -89,7 +89,8 @@ public final class PeerConnectTask implements Runnable {
                 // Saves attributes.
                 Metadata metadata = new Metadata(remoteAttributes.getPeerId(),
                                                  remoteAttributes.getApplication(),
-                                                 remoteAttributes.getVersion());
+                                                 remoteAttributes.getVersion(),
+                                                 remoteAttributes.getHistoryFromHeight());
                 peer.getPeerInfo().setMetadata(metadata);
 
                 if (metadata.getPeerID() == host.getPeerID()) {

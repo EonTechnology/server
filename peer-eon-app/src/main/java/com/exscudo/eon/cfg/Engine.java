@@ -20,6 +20,11 @@ public class Engine {
     public static Engine init(PeerStarter starter) {
 
         try {
+
+            starter.getExecutionContext().addListener(starter.getBlockGenerator());
+            starter.getBlockEventManager().addListener(starter.getBlockGenerator());
+            starter.getBlockEventManager().addListener(starter.getCleaner());
+
             TaskFactory taskFactory = new TaskFactory(starter);
 
             CryptoProvider.init(starter.getCryptoProvider());
@@ -62,18 +67,23 @@ public class Engine {
                                                               0,
                                                               1,
                                                               TimeUnit.SECONDS);
+            engine.scheduledThreadPool.scheduleWithFixedDelay(timed(taskFactory.getSyncSnapshotTask()),
+                                                              0,
+                                                              1,
+                                                              TimeUnit.SECONDS);
 
             engine.scheduledThreadPool.scheduleWithFixedDelay(timed(taskFactory.getAnalyzeTask()),
-                                                              0,
+                                                              15,
                                                               60,
                                                               TimeUnit.MINUTES);
-            engine.scheduledThreadPool.scheduleWithFixedDelay(timed(taskFactory.getDBCleaner()),
+            engine.scheduledThreadPool.scheduleWithFixedDelay(timed(taskFactory.getBlockCleanerTask()),
                                                               30,
                                                               60,
                                                               TimeUnit.MINUTES);
-
-            // Disabled NodesCleanupTask
-            // engine.scheduledThreadPool.scheduleWithFixedDelay(timed(taskFactory.getNodesCleanupTask()), 30, 60, TimeUnit.MINUTES);
+            engine.scheduledThreadPool.scheduleWithFixedDelay(timed(taskFactory.getNodesCleanupTask()),
+                                                              45,
+                                                              60,
+                                                              TimeUnit.MINUTES);
 
             return engine;
         } catch (Exception e) {

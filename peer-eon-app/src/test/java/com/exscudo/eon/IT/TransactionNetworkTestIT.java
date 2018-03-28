@@ -54,7 +54,7 @@ public class TransactionNetworkTestIT {
     @Test
     public void step_1_input() throws Exception {
 
-        Block lastBlock = ctx1.blockchain.getLastBlock();
+        Block lastBlock = ctx1.blockExplorerService.getLastBlock();
 
         Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 + 1);
         CryptoProvider.init(cryptoProvider2);
@@ -71,13 +71,13 @@ public class TransactionNetworkTestIT {
         } catch (Exception ignored) {
         }
 
-        Assert.assertFalse("Transaction not accepted", ctx1.backlog.contains(tx.getID()));
+        Assert.assertNull("Transaction not accepted", ctx1.backlogExplorerService.getById(tx.getID().toString()));
     }
 
     @Test
     public void step_2_syncTran() throws Exception {
 
-        Block lastBlock = ctx1.blockchain.getLastBlock();
+        Block lastBlock = ctx1.blockExplorerService.getLastBlock();
 
         Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 + 1);
         CryptoProvider.init(cryptoProvider2);
@@ -93,8 +93,9 @@ public class TransactionNetworkTestIT {
         ctx2.setPeerToConnect(ctx1);
         ctx2.syncTransactionListTask.run();
 
-        Assert.assertTrue("Transaction accepted in (1)", ctx1.backlog.contains(tx.getID()));
-        Assert.assertFalse("Transaction not accepted in (2)", ctx2.backlog.contains(tx.getID()));
+        Assert.assertNotNull("Transaction accepted in (1)", ctx1.backlogExplorerService.getById(tx.getID().toString()));
+        Assert.assertNull("Transaction not accepted in (2)",
+                          ctx2.backlogExplorerService.getById(tx.getID().toString()));
     }
 
     @Test
@@ -102,7 +103,7 @@ public class TransactionNetworkTestIT {
 
         ctx2.setPeerToConnect(ctx1);
 
-        Block lastBlock = ctx1.blockchain.getLastBlock();
+        Block lastBlock = ctx1.blockExplorerService.getLastBlock();
 
         Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 + 1);
         CryptoProvider.init(cryptoProvider2);
@@ -112,7 +113,7 @@ public class TransactionNetworkTestIT {
         ctx2.fullBlockSync();
         Assert.assertNotEquals("Normal block accepted in (2)",
                                lastBlock.getID(),
-                               ctx2.blockchain.getLastBlock().getID());
+                               ctx2.blockExplorerService.getLastBlock().getID());
 
         CryptoProvider.init(cryptoProvider2);
 
@@ -129,10 +130,11 @@ public class TransactionNetworkTestIT {
 
         ctx2.fullBlockSync();
 
-        Assert.assertNotEquals("New block generated in (1)", lastBlock.getID(), ctx1.blockchain.getLastBlock().getID());
-        Assert.assertTrue("Transaction accepted in (1)", ctx1.transactionProvider.containsTransaction(tx.getID()));
-        Assert.assertNotEquals("Blockchain not synchronized (2)",
-                               ctx1.blockchain.getLastBlock().getID(),
-                               ctx2.blockchain.getLastBlock().getID());
+        Block lastBlock1 = ctx1.blockExplorerService.getLastBlock();
+        Block lastBlock2 = ctx2.blockExplorerService.getLastBlock();
+        Assert.assertNotEquals("New block generated in (1)", lastBlock.getID(), lastBlock1.getID());
+        Assert.assertNotNull("Transaction accepted in (1)",
+                             ctx1.transactionExplorerService.getById(tx.getID().toString()));
+        Assert.assertNotEquals("Blockchain not synchronized (2)", lastBlock1.getID(), lastBlock2.getID());
     }
 }

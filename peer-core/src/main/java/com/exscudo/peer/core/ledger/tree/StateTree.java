@@ -161,6 +161,11 @@ public class StateTree<TValue> implements ITreeNodeCollection {
             return new TreeNodeIterator<>(nodes, rootNode, valueConverter);
         }
 
+        public Iterator<T> iterator(long id) {
+            TreeNodeIterator<T> iterator = new TreeNodeIterator<>(nodes, rootNode, valueConverter, id);
+            return iterator;
+        }
+
         public static class TreeNodeIterator<V> implements Iterator<V> {
             private final IValueConverter<V> valueConverter;
             private final ITreeNodeCollection nodes;
@@ -172,6 +177,32 @@ public class StateTree<TValue> implements ITreeNodeCollection {
                 this.nodes = nodes;
 
                 this.next = walkDown(rootNode);
+            }
+
+            TreeNodeIterator(ITreeNodeCollection nodes,
+                             TreeNode rootNode,
+                             IValueConverter<V> valueConverter,
+                             long startPoint) {
+                this.valueConverter = valueConverter;
+                this.nodes = nodes;
+
+                this.next = walkDown(rootNode, startPoint);
+            }
+
+            private TreeNode walkDown(TreeNode node, long startPoint) {
+                TreeNode c = node;
+
+                while (c != null && c.getType() == TreeNode.ROOT) {
+
+                    stack.push(c);
+                    c = nodes.get(c.getLeftNodeID());
+                    if (!TreeNode.hasIntersection(c, startPoint)) {
+                        c = stack.pop();
+                        c = nodes.get(c.getRightNodeID());
+                    }
+                }
+                // the left and right leaf always exist so method returns null only if it is passed
+                return c;
             }
 
             private TreeNode walkDown(TreeNode node) {
@@ -191,6 +222,9 @@ public class StateTree<TValue> implements ITreeNodeCollection {
 
             @Override
             public V next() {
+                if (next == null) {
+                    return null;
+                }
                 V value = valueConverter.convert(next.getValues());
                 if (stack.size() == 0) {
                     next = null;
@@ -198,11 +232,8 @@ public class StateTree<TValue> implements ITreeNodeCollection {
 
                     TreeNode p = stack.pop();
                     TreeNode r = nodes.get(p.getRightNodeID());
-                    if (r.getType() == TreeNode.ROOT) {
-                        next = walkDown(r);
-                    } else {
-                        next = r;
-                    }
+
+                    next = walkDown(r);
                 }
                 return value;
             }

@@ -24,7 +24,6 @@ public class CachedNodeCollection implements ITreeNodeCollection {
         this.dbNodeHelper = new DbNodeHelper(connectionSource);
     }
 
-
     private static DbNode convert(TreeNode node) {
 
         String value = null;
@@ -93,20 +92,25 @@ public class CachedNodeCollection implements ITreeNodeCollection {
 
     @Override
     public void add(TreeNode node) {
-        if (find(node.getID()) != null) {
-            return;
-        }
-        DbNode dbn = convert(node);
         try {
+            DbNode dbn = find(node.getID());
+            if (dbn != null) {
+                if (dbn.getTimestamp() < node.getTimestamp()) {
+                    dbNodeHelper.updateTimestamp(node.getID().getKey(), node.getID().getIndex(), node.getTimestamp());
+                    dbn.setTimestamp(node.getTimestamp());
+                }
+                return;
+            }
 
+            dbn = convert(node);
             dbNodeHelper.put(dbn);
+
+            DbNodeCache dbCache = getCache();
+            if (dbCache != null) {
+                dbCache.put(dbn.getIndex(), dbn);
+            }
         } catch (SQLException e) {
             throw new DataAccessException(e);
-        }
-
-        DbNodeCache dbCache = getCache();
-        if (dbCache != null) {
-            dbCache.put(dbn.getIndex(), dbn);
         }
     }
 

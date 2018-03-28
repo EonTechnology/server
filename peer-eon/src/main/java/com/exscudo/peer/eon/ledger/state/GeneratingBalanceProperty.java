@@ -1,7 +1,5 @@
 package com.exscudo.peer.eon.ledger.state;
 
-import com.exscudo.peer.eon.EonConstant;
-
 public class GeneratingBalanceProperty {
     private long deposit = 0L;
     private int timestamp = -1;
@@ -25,7 +23,7 @@ public class GeneratingBalanceProperty {
     }
 
     private void ensureRange(long value) {
-        if (value < 0 || value > EonConstant.MAX_MONEY) {
+        if (value < 0) {
             throw new IllegalArgumentException();
         }
     }

@@ -8,8 +8,8 @@ import com.exscudo.peer.core.crypto.ed25519.Ed25519Signer;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.identifier.AccountID;
 import com.exscudo.peer.eon.ledger.ILedgerAction;
-import com.exscudo.peer.eon.tx.ITransactionParser;
 import com.exscudo.peer.eon.tx.CompositeTransactionParser;
+import com.exscudo.peer.eon.tx.ITransactionParser;
 import org.junit.Before;
 import org.junit.Test;
 

@@ -41,6 +41,11 @@ docker build -t eon/peer .
 docker run -d -v $(pwd)/db:/app/db -p 9443:9443 -e SECRET_SEED=... eon/peer
 ```
 
+Truncate history
+----------------
+To truncate history:
+* Jetty: `mvn jetty:run -Dblockchain.full=false ...`
+* Docker: `docker run ... -e FULL_BLOCKCHAIN=false ...`
 
 Directory Layout 
 ----------------

@@ -1,9 +1,15 @@
 package com.exscudo.peer.core.ledger.tree;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.math.BigInteger;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.exscudo.peer.core.common.TimeProvider;
@@ -15,6 +21,7 @@ public class StateTreeTest {
     private TreeNodeCollection storage;
     private StateTree<Long> stateTree;
     private int timestamp;
+
     @Before
     public void setUp() throws Exception {
         storage = new TreeNodeCollection();

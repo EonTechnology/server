@@ -54,7 +54,7 @@ public class PeerInfo implements Comparable<PeerInfo> {
 
         state = STATE_AMBIGUOUS;
 
-        metadata = new Metadata(random.nextLong(), null, null);
+        metadata = new Metadata(random.nextLong(), null, null, Integer.MAX_VALUE);
     }
 
     /**
@@ -171,11 +171,17 @@ public class PeerInfo implements Comparable<PeerInfo> {
          */
         private final String version;
 
-        public Metadata(long peerID, String application, String version) {
+        /**
+         * History starts from this block height on peer.
+         */
+        private final int historyFromHeight;
+
+        public Metadata(long peerID, String application, String version, int historyFromHeight) {
 
             this.peerID = peerID;
             this.application = application;
             this.version = version;
+            this.historyFromHeight = historyFromHeight;
         }
 
         public long getPeerID() {
@@ -188,6 +194,10 @@ public class PeerInfo implements Comparable<PeerInfo> {
 
         public String getVersion() {
             return version;
+        }
+
+        public int getHistoryFromHeight() {
+            return historyFromHeight;
         }
     }
 }

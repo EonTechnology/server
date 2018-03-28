@@ -22,6 +22,10 @@
                 <entry key="blocks">
                     <bean factory-bean="peerServiceFactory" factory-method="getSyncBlockService"/>
                 </entry>
+                <!-- Snapshot Synchronization Service -->
+                <entry key="snapshot">
+                    <bean factory-bean="peerServiceFactory" factory-method="getSyncSnapshotService"/>
+                </entry>
             </map>
         </constructor-arg>
     </bean>

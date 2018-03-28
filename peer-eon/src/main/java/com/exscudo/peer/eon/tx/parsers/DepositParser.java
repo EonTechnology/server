@@ -4,7 +4,6 @@ import java.util.Map;
 
 import com.exscudo.peer.core.common.exceptions.ValidateException;
 import com.exscudo.peer.core.data.Transaction;
-import com.exscudo.peer.eon.EonConstant;
 import com.exscudo.peer.eon.ledger.ILedgerAction;
 import com.exscudo.peer.eon.ledger.actions.DepositAction;
 import com.exscudo.peer.eon.ledger.actions.FeePaymentAction;
@@ -26,13 +25,13 @@ public class DepositParser implements ITransactionParser {
         } catch (NumberFormatException e) {
             throw new ValidateException("Attachment of unknown type.");
         }
-        if (amount < 0 || amount > EonConstant.MAX_MONEY) {
+        if (amount < 0) {
             throw new ValidateException("Invalid amount.");
         }
 
         return new ILedgerAction[] {
-                new FeePaymentAction(transaction.getSenderID(), transaction.getFee()),
-                new DepositAction(transaction.getSenderID(), amount)
+                new DepositAction(transaction.getSenderID(), amount),
+                new FeePaymentAction(transaction.getSenderID(), transaction.getFee())
         };
     }
 }

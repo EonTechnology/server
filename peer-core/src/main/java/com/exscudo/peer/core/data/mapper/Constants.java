@@ -22,4 +22,5 @@ public class Constants {
     public static final String TRANSACTIONS = "transactions";
     public static final String CUMMULATIVE_DIFFICULTY = "cumulativeDifficulty";
     public static final String HEIGHT = "height";
+    public static final String NOTE = "note";
 }

@@ -109,14 +109,6 @@ public class BaseValidationRuleTest extends AbstractValidationRuleTest {
     }
 
     @Test
-    public void validate_fee_max() throws Exception {
-        expectedException.expect(ValidateException.class);
-        expectedException.expectMessage("Invalid fee.");
-        transaction.setFee(EonConstant.MAX_MONEY + 1L);
-        validate(transaction);
-    }
-
-    @Test
     public void validate_max_length() throws Exception {
         expectedException.expect(ValidateException.class);
         expectedException.expectMessage("Invalid transaction length.");

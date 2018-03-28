@@ -11,6 +11,7 @@ public class SalientAttributes {
     private String version;
     private String networkID;
     private int fork;
+    private int historyFromHeight;
 
     public String getAnnouncedAddress() {
         return announcedAddress;
@@ -58,5 +59,13 @@ public class SalientAttributes {
 
     public void setFork(int fork) {
         this.fork = fork;
+    }
+
+    public int getHistoryFromHeight() {
+        return historyFromHeight;
+    }
+
+    public void setHistoryFromHeight(int historyFromHeight) {
+        this.historyFromHeight = historyFromHeight;
     }
 }

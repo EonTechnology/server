@@ -1,11 +1,20 @@
 package com.exscudo.eon.jsonrpc;
 
-import com.exscudo.eon.jsonrpc.serialization.*;
+import com.exscudo.eon.jsonrpc.serialization.BlockDeserializer;
+import com.exscudo.eon.jsonrpc.serialization.BlockSerializer;
+import com.exscudo.eon.jsonrpc.serialization.DifficultyDeserializer;
+import com.exscudo.eon.jsonrpc.serialization.DifficultySerializer;
+import com.exscudo.eon.jsonrpc.serialization.TransactionDeserializer;
+import com.exscudo.eon.jsonrpc.serialization.TransactionSerializer;
 import com.exscudo.peer.core.api.Difficulty;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Transaction;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.Module;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 
 /**

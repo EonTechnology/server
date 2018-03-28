@@ -49,4 +49,11 @@ public class ColoredCoinPaymentParser implements ITransactionParser {
                 new ColoredCoinPaymentAction(transaction.getSenderID(), amount, coloredCoinID, recipientID)
         };
     }
+
+    @Override
+    public AccountID getRecipient(Transaction transaction) {
+
+        String value = String.valueOf(transaction.getData().get("recipient"));
+        return new AccountID(value);
+    }
 }

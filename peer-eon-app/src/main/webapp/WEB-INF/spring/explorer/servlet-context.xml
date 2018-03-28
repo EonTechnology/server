@@ -12,7 +12,7 @@
             <map key-type="java.lang.String">
                 <!-- Account Service -->
                 <entry key="accounts">
-                    <bean factory-bean="botServiceFactory" factory-method="getAccountService"/>
+                    <bean factory-bean="botServiceFactory" factory-method="getAccountBotService"/>
                 </entry>
                 <!-- Blockchain explorer Service -->
                 <entry key="explorer">

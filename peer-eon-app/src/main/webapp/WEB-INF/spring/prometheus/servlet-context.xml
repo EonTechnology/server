@@ -6,6 +6,7 @@
     <bean id="executionContext" factory-bean="peerStarter" factory-method="getExecutionContext"/>
     <bean id="timeProvider" factory-bean="peerStarter" factory-method="getTimeProvider"/>
     <bean id="backlog" factory-bean="peerStarter" factory-method="getBacklog"/>
-    <bean id="blockchain" factory-bean="peerStarter" factory-method="getBlockchain"/>
+    <bean id="blockchainProvider" factory-bean="peerStarter" factory-method="getBlockchainProvider"/>
+    <bean id="storage" factory-bean="peerStarter" factory-method="getStorage"/>
 
 </beans>

@@ -3,6 +3,7 @@ package com.exscudo.peer.eon.tx;
 import com.exscudo.peer.core.common.exceptions.LifecycleException;
 import com.exscudo.peer.core.common.exceptions.ValidateException;
 import com.exscudo.peer.core.data.Transaction;
+import com.exscudo.peer.core.data.identifier.AccountID;
 import com.exscudo.peer.core.data.transaction.ITransactionHandler;
 import com.exscudo.peer.core.data.transaction.IValidationRule;
 import com.exscudo.peer.core.data.transaction.TransactionContext;
@@ -41,5 +42,10 @@ public class TransactionHandler implements ITransactionHandler {
         }
 
         return newLedger;
+    }
+
+    @Override
+    public AccountID getRecipient(Transaction transaction) {
+        return transactionParser.getRecipient(transaction);
     }
 }

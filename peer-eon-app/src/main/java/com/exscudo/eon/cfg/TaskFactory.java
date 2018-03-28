@@ -5,6 +5,7 @@ import java.sql.SQLException;
 
 import com.exscudo.peer.core.backlog.tasks.SyncForkedTransactionListTask;
 import com.exscudo.peer.core.backlog.tasks.SyncTransactionListTask;
+import com.exscudo.peer.core.blockchain.tasks.BlockCleanerTask;
 import com.exscudo.peer.core.common.tasks.SyncTimeTask;
 import com.exscudo.peer.core.env.tasks.PeerConnectTask;
 import com.exscudo.peer.core.env.tasks.PeerDistributeTask;
@@ -12,9 +13,9 @@ import com.exscudo.peer.core.env.tasks.PeerRemoveTask;
 import com.exscudo.peer.core.env.tasks.SyncPeerListTask;
 import com.exscudo.peer.core.importer.tasks.GenerateBlockTask;
 import com.exscudo.peer.core.importer.tasks.SyncBlockListTask;
+import com.exscudo.peer.core.importer.tasks.SyncSnapshotTask;
 import com.exscudo.peer.core.ledger.tasks.NodesCleanupTask;
 import com.exscudo.peer.core.storage.tasks.AnalyzeTask;
-import com.exscudo.peer.core.storage.tasks.Cleaner;
 
 public class TaskFactory {
 
@@ -28,7 +29,7 @@ public class TaskFactory {
         return new PeerConnectTask(starter.getFork(),
                                    starter.getExecutionContext(),
                                    starter.getTimeProvider(),
-                                   starter.getBlockchain());
+                                   starter.getBlockchainProvider());
     }
 
     public PeerDistributeTask getPeerDistributeTask() throws SQLException, IOException, ClassNotFoundException {
@@ -44,7 +45,7 @@ public class TaskFactory {
                                                  starter.getExecutionContext(),
                                                  starter.getTimeProvider(),
                                                  starter.getBacklog(),
-                                                 starter.getBlockchain());
+                                                 starter.getBlockchainProvider());
     }
 
     public SyncPeerListTask getSyncPeerListTask() throws SQLException, IOException, ClassNotFoundException {
@@ -60,7 +61,7 @@ public class TaskFactory {
                                            starter.getExecutionContext(),
                                            starter.getTimeProvider(),
                                            starter.getBacklog(),
-                                           starter.getBlockchain());
+                                           starter.getBlockchainProvider());
     }
 
     public GenerateBlockTask getGenerateBlockTask() throws SQLException, IOException, ClassNotFoundException {
@@ -68,28 +69,36 @@ public class TaskFactory {
                                      starter.getBlockGenerator(),
                                      starter.getTimeProvider(),
                                      starter.getLedgerProvider(),
-                                     starter.getBlockEventManager(),
-                                     starter.getBlockchain());
+                                     starter.getBlockchainProvider());
     }
 
     public SyncBlockListTask getSyncBlockListTask() throws SQLException, IOException, ClassNotFoundException {
         return new SyncBlockListTask(starter.getFork(),
+                                     starter.getBacklog(),
+                                     starter.getStorage(),
                                      starter.getExecutionContext(),
-                                     starter.getBlockchain(),
+                                     starter.getBlockchainProvider(),
                                      starter.getTimeProvider(),
                                      starter.getLedgerProvider(),
-                                     starter.getBlockEventManager());
+                                     starter.getTransactionProvider());
     }
 
     public AnalyzeTask getAnalyzeTask() throws SQLException, IOException, ClassNotFoundException {
-        return new AnalyzeTask(starter.getBlockchain(), starter.getStorage());
+        return new AnalyzeTask(starter.getBlockchainProvider(), starter.getStorage());
     }
 
-    public Cleaner getDBCleaner() throws SQLException, IOException, ClassNotFoundException {
-        return new Cleaner(starter.getBlockchain(), starter.getStorage());
+    public BlockCleanerTask getBlockCleanerTask() throws SQLException, IOException, ClassNotFoundException {
+        return new BlockCleanerTask(starter.getBlockchainProvider(), starter.getStorage());
     }
 
     public NodesCleanupTask getNodesCleanupTask() throws SQLException, IOException, ClassNotFoundException {
         return new NodesCleanupTask(starter.getStorage());
+    }
+
+    public SyncSnapshotTask getSyncSnapshotTask() throws SQLException, IOException, ClassNotFoundException {
+        return new SyncSnapshotTask(starter.getStorage(),
+                                    starter.getExecutionContext(),
+                                    starter.getFork(),
+                                    starter.getBlockchainProvider());
     }
 }

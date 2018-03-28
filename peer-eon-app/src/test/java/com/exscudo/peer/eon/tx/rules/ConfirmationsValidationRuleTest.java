@@ -5,7 +5,6 @@ import static org.mockito.Mockito.when;
 
 import java.util.Random;
 
-import com.exscudo.peer.core.TransactionType;
 import com.exscudo.peer.core.common.Format;
 import com.exscudo.peer.core.common.exceptions.IllegalSignatureException;
 import com.exscudo.peer.core.common.exceptions.ValidateException;
@@ -15,6 +14,7 @@ import com.exscudo.peer.core.data.Account;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.identifier.AccountID;
 import com.exscudo.peer.core.data.transaction.IValidationRule;
+import com.exscudo.peer.eon.TransactionType;
 import com.exscudo.peer.eon.ledger.AccountProperties;
 import com.exscudo.peer.eon.ledger.state.BalanceProperty;
 import com.exscudo.peer.eon.ledger.state.RegistrationDataProperty;

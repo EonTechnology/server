@@ -5,12 +5,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.exscudo.peer.core.backlog.IBacklogService;
+import com.exscudo.peer.core.backlog.IBacklog;
 import com.exscudo.peer.core.common.exceptions.ValidateException;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.identifier.TransactionID;
 
-public class DefaultBacklog implements IBacklogService {
+public class DefaultBacklog implements IBacklog {
     ConcurrentHashMap<TransactionID, Transaction> map = new ConcurrentHashMap<>();
 
     @Override
@@ -25,11 +25,6 @@ public class DefaultBacklog implements IBacklogService {
     }
 
     @Override
-    public Iterator<TransactionID> iterator() {
-        return map.keySet().iterator();
-    }
-
-    @Override
     public synchronized List<Transaction> copyAndClear() {
         ArrayList<Transaction> copy = new ArrayList<>(map.values());
         map.clear();
@@ -39,5 +34,10 @@ public class DefaultBacklog implements IBacklogService {
     @Override
     public int size() {
         return map.size();
+    }
+
+    @Override
+    public Iterator<TransactionID> iterator() {
+        return map.keySet().iterator();
     }
 }

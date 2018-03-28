@@ -6,18 +6,21 @@ import java.util.Arrays;
 import java.util.HashMap;
 
 import com.dampcake.bencode.Bencode;
+import com.exscudo.peer.core.IFork;
+import com.exscudo.peer.core.IInitializer;
+import com.exscudo.peer.core.InitializerJson;
+import com.exscudo.peer.core.blockchain.BlockchainProvider;
 import com.exscudo.peer.core.common.Format;
 import com.exscudo.peer.core.common.TransactionComparator;
+import com.exscudo.peer.core.crypto.CryptoProvider;
+import com.exscudo.peer.core.crypto.ISignatureVerifier;
 import com.exscudo.peer.core.data.Account;
 import com.exscudo.peer.core.data.AccountProperty;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.identifier.BlockID;
-import com.exscudo.peer.core.importer.IFork;
-import com.exscudo.peer.core.ledger.Ledger;
+import com.exscudo.peer.core.ledger.ILedger;
 import com.exscudo.peer.core.ledger.LedgerProvider;
-import com.exscudo.peer.core.storage.IInitializer;
-import com.exscudo.peer.core.storage.InitializerJson;
 import com.exscudo.peer.core.storage.Storage;
 import com.exscudo.peer.eon.Fork;
 import com.exscudo.peer.eon.ForkInitializer;
@@ -37,12 +40,15 @@ class Utils {
     }
 
     public static Storage createStorage() throws ClassNotFoundException, IOException, SQLException {
-        return createStorage(new InitializerJson("/com/exscudo/eon/IT/genesis_block.json"));
+        return createStorage(true);
+    }
+
+    public static Storage createStorage(boolean fullSync) throws ClassNotFoundException, IOException, SQLException {
+        return createStorage(new InitializerJson("/com/exscudo/eon/IT/genesis_block.json", fullSync));
     }
 
     public static Block getLastBlock(Storage storage) throws SQLException {
-        BlockID lastBlockID = storage.metadata().getLastBlockID();
-        return storage.getBlockHelper().get(lastBlockID);
+        return (new BlockchainProvider(storage, null, null)).getLastBlock();
     }
 
     public static BlockID getGenesisBlockID(Storage storage) {
@@ -60,18 +66,18 @@ class Utils {
         return Mockito.spy(fork);
     }
 
-    public static void comparePeer(PeerContext ctx1, PeerContext ctx2) {
+    public static void comparePeer(PeerContext ctx1, PeerContext ctx2) throws Exception {
 
         Assert.assertEquals("Blockchain synchronized",
-                            ctx1.blockchain.getLastBlock().getID(),
-                            ctx2.blockchain.getLastBlock().getID());
+                            ctx1.blockExplorerService.getLastBlock().getID(),
+                            ctx2.blockExplorerService.getLastBlock().getID());
 
-        BlockID lastBlockID = ctx1.blockchain.getLastBlock().getID();
+        BlockID lastBlockID = ctx1.blockExplorerService.getLastBlock().getID();
         Bencode bencode = new Bencode();
 
         while (lastBlockID.getValue() != 0) {
-            Block block = ctx1.blockchain.getBlock(lastBlockID);
-            Block blockNew = ctx2.blockchain.getBlock(lastBlockID);
+            Block block = ctx1.blockExplorerService.getById(lastBlockID.toString());
+            Block blockNew = ctx2.blockExplorerService.getById(lastBlockID.toString());
 
             Assert.assertEquals(block.getVersion(), blockNew.getVersion());
             Assert.assertEquals(block.getTimestamp(), blockNew.getTimestamp());
@@ -116,6 +122,21 @@ class Utils {
         }
     }
 
+    public static void setMockCryptoProvider() {
+        CryptoProvider.getInstance().setDefaultProvider("mock");
+        CryptoProvider.getInstance().addProvider(new ISignatureVerifier() {
+            @Override
+            public String getName() {
+                return "mock";
+            }
+
+            @Override
+            public boolean verify(byte[] message, byte[] signature, byte[] publicKey) {
+                return true;
+            }
+        });
+    }
+
     public String getGenesisBlockAsJSON(Storage storage) throws Exception {
 
         HashMap<String, Object> map = new HashMap<>();
@@ -126,7 +147,7 @@ class Utils {
         map.put("signature", Format.convert(lastBlock.getSignature()));
 
         LedgerProvider ledgerProvider = new LedgerProvider(storage);
-        Ledger ledger = ledgerProvider.getLedger(lastBlock);
+        ILedger ledger = ledgerProvider.getLedger(lastBlock);
 
         HashMap<String, Object> accSet = new HashMap<>();
         for (Account account : ledger) {

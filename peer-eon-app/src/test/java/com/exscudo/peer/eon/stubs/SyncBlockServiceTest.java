@@ -8,7 +8,7 @@ import java.math.BigInteger;
 
 import com.exscudo.peer.core.api.Difficulty;
 import com.exscudo.peer.core.api.impl.SyncBlockService;
-import com.exscudo.peer.core.blockchain.IBlockchainService;
+import com.exscudo.peer.core.blockchain.IBlockchainProvider;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.identifier.BlockID;
 import com.exscudo.peer.core.env.ExecutionContext;
@@ -18,15 +18,15 @@ import org.junit.Test;
 public class SyncBlockServiceTest {
     private SyncBlockService service;
 
-    private IBlockchainService blockchain;
+    private IBlockchainProvider blockchain;
 
     @Before
     public void setup() {
 
-        blockchain = mock(IBlockchainService.class);
+        blockchain = mock(IBlockchainProvider.class);
         ExecutionContext context = mock(ExecutionContext.class);
 
-        service = new SyncBlockService(context, blockchain);
+        service = new SyncBlockService(blockchain);
     }
 
     @Test

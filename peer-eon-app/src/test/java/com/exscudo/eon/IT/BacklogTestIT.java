@@ -40,7 +40,7 @@ public class BacklogTestIT {
     @Test
     public void step_1_backlog_load_forked_transactions() throws Exception {
 
-        Block lastBlock = ctx1.blockchain.getLastBlock();
+        Block lastBlock = ctx1.blockExplorerService.getLastBlock();
         Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 + 1);
 
         Transaction tx1 = PaymentBuilder.createNew(10000L, new AccountID(ctx2.getSigner().getPublicKey()))
@@ -53,34 +53,36 @@ public class BacklogTestIT {
         ctx1.transactionBotService.putTransaction(tx1);
         ctx2.transactionBotService.putTransaction(tx2);
 
-        Assert.assertTrue("Tx1 in backlog of ctx1", ctx1.backlog.contains(tx1.getID()));
-        Assert.assertTrue("Tx2 in backlog of ctx2", ctx2.backlog.contains(tx2.getID()));
+        Assert.assertNotNull("Tx1 in backlog of ctx1", ctx1.backlogExplorerService.getById(tx1.getID().toString()));
+        Assert.assertNotNull("Tx2 in backlog of ctx2", ctx2.backlogExplorerService.getById(tx2.getID().toString()));
 
         ctx1.generateBlockForNow();
         ctx2.generateBlockForNow();
 
-        Assert.assertEquals("Ctx1 backlog is empty", 0, ctx1.backlog.size());
-        Assert.assertEquals("Ctx2 backlog is empty", 0, ctx2.backlog.size());
+        Assert.assertNull("Ctx1 backlog is empty", ctx1.backlogExplorerService.getById(tx1.getID().toString()));
+        Assert.assertNull("Ctx2 backlog is empty", ctx2.backlogExplorerService.getById(tx2.getID().toString()));
 
-        Assert.assertTrue("Tx1 in blockchain of ctx1", ctx1.transactionProvider.containsTransaction(tx1.getID()));
-        Assert.assertTrue("Tx2 in blockchain of ctx2", ctx2.transactionProvider.containsTransaction(tx2.getID()));
+        Assert.assertNotNull("Tx1 in blockchain of ctx1",
+                             ctx1.transactionExplorerService.getById(tx1.getID().toString()));
+        Assert.assertNotNull("Tx2 in blockchain of ctx2",
+                             ctx2.transactionExplorerService.getById(tx2.getID().toString()));
 
         ctx1.fullBlockSync();
         ctx2.fullBlockSync();
 
         Assert.assertEquals("Blockchain synchronized",
-                            ctx1.blockchain.getLastBlock().getID(),
-                            ctx2.blockchain.getLastBlock().getID());
+                            ctx1.blockExplorerService.getLastBlock().getID(),
+                            ctx2.blockExplorerService.getLastBlock().getID());
 
-        lastBlock = ctx1.blockchain.getLastBlock();
+        lastBlock = ctx1.blockExplorerService.getLastBlock();
 
         Transaction[] transactionSet = lastBlock.getTransactions().toArray(new Transaction[0]);
         Assert.assertEquals("In last block single transaction", 1, transactionSet.length);
 
         if (transactionSet[0].getID().equals(tx1.getID())) {
-            Assert.assertTrue("Tx2 in backlog of ctx2", ctx2.backlog.contains(tx2.getID()));
+            Assert.assertNotNull("Tx2 in backlog of ctx2", ctx2.backlogExplorerService.getById(tx2.getID().toString()));
         } else {
-            Assert.assertTrue("Tx1 in backlog of ctx1", ctx1.backlog.contains(tx1.getID()));
+            Assert.assertNotNull("Tx1 in backlog of ctx1", ctx1.backlogExplorerService.getById(tx1.getID().toString()));
         }
     }
 }

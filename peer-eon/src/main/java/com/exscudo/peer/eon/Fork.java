@@ -9,12 +9,12 @@ import java.util.Comparator;
 import java.util.LinkedList;
 
 import com.exscudo.peer.core.Constant;
+import com.exscudo.peer.core.IFork;
 import com.exscudo.peer.core.common.Format;
 import com.exscudo.peer.core.data.Account;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.identifier.BlockID;
 import com.exscudo.peer.core.data.transaction.ITransactionHandler;
-import com.exscudo.peer.core.importer.IFork;
 import com.exscudo.peer.core.ledger.ILedger;
 import com.exscudo.peer.eon.ledger.AccountProperties;
 import com.exscudo.peer.eon.ledger.state.BalanceProperty;

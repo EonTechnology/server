@@ -1,7 +1,6 @@
 package com.exscudo.peer.eon.tx.builders;
 
-import com.exscudo.peer.core.TransactionType;
-import com.exscudo.peer.eon.ledger.state.ColoredCoinProperty;
+import com.exscudo.peer.eon.TransactionType;
 
 /**
  * Creates a colored coins.
@@ -15,13 +14,6 @@ public class ColoredCoinRegistrationBuilder extends TransactionBuilder<ColoredCo
     }
 
     public static ColoredCoinRegistrationBuilder createNew(long emission, int decimalPoint) {
-        if (emission < ColoredCoinProperty.MIN_EMISSION_SIZE) {
-            throw new IllegalArgumentException("emission");
-        }
-        if (decimalPoint < ColoredCoinProperty.MIN_DECIMAL_POINT ||
-                decimalPoint > ColoredCoinProperty.MAX_DECIMAL_POINT) {
-            throw new IllegalArgumentException("decimalPoint");
-        }
         return new ColoredCoinRegistrationBuilder().withParam("emission", emission)
                                                    .withParam("decimalPoint", decimalPoint);
     }

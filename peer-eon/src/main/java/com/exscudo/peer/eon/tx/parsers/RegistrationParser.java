@@ -50,4 +50,11 @@ public class RegistrationParser implements ITransactionParser {
                 new FeePaymentAction(transaction.getSenderID(), transaction.getFee()), registration
         };
     }
+
+    @Override
+    public AccountID getRecipient(Transaction transaction) {
+
+        String id = transaction.getData().keySet().iterator().next();
+        return new AccountID(id);
+    }
 }

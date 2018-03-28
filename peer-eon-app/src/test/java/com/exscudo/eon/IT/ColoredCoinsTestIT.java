@@ -2,20 +2,24 @@ package com.exscudo.eon.IT;
 
 import java.time.Instant;
 
-import com.exscudo.eon.bot.AccountService;
-import com.exscudo.eon.bot.ColoredCoinService;
+import com.exscudo.eon.api.bot.AccountBotService;
+import com.exscudo.eon.api.bot.ColoredCoinBotService;
+import com.exscudo.peer.core.IFork;
 import com.exscudo.peer.core.common.TimeProvider;
 import com.exscudo.peer.core.crypto.ISigner;
 import com.exscudo.peer.core.crypto.ed25519.Ed25519Signer;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.identifier.AccountID;
-import com.exscudo.peer.core.importer.IFork;
 import com.exscudo.peer.core.storage.Storage;
 import com.exscudo.peer.eon.ColoredCoinID;
 import com.exscudo.peer.eon.Fork;
 import com.exscudo.peer.eon.ForkInitializer;
-import com.exscudo.peer.eon.tx.builders.*;
+import com.exscudo.peer.eon.tx.builders.ColoredCoinRegistrationBuilder;
+import com.exscudo.peer.eon.tx.builders.ColoredCoinSupplyBuilder;
+import com.exscudo.peer.eon.tx.builders.ColoredPaymentBuilder;
+import com.exscudo.peer.eon.tx.builders.PaymentBuilder;
+import com.exscudo.peer.eon.tx.builders.RegistrationBuilder;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
@@ -55,7 +59,7 @@ public class ColoredCoinsTestIT {
     private void create_colored_coin() throws Exception {
 
         AccountID accountID = new AccountID(coloredCoinSigner.getPublicKey());
-        Block lastBlock = ctx.blockchain.getLastBlock();
+        Block lastBlock = ctx.blockExplorerService.getLastBlock();
 
         // registration
         int timestamp = lastBlock.getTimestamp();
@@ -95,10 +99,10 @@ public class ColoredCoinsTestIT {
 
         AccountID accountID = new AccountID(coloredCoinSigner.getPublicKey());
 
-        ColoredCoinService.Info info = ctx.coloredCoinService.getInfo(new ColoredCoinID(accountID).toString());
+        ColoredCoinBotService.Info info = ctx.coloredCoinService.getInfo(new ColoredCoinID(accountID).toString());
         Assert.assertTrue(10000L == info.moneySupply);
 
-        AccountService.EONBalance balance = ctx.accountBotService.getBalance(accountID.toString());
+        AccountBotService.EONBalance balance = ctx.accountBotService.getBalance(accountID.toString());
         Assert.assertEquals(balance.coloredCoins.get(new ColoredCoinID(accountID).toString()), Long.valueOf(10000L));
     }
 
@@ -109,13 +113,13 @@ public class ColoredCoinsTestIT {
         ColoredCoinID coloredCoinID = new ColoredCoinID(senderID);
         AccountID recipientID = new AccountID(ctx.getSigner().getPublicKey());
 
-        AccountService.EONBalance senderBalance = ctx.accountBotService.getBalance(senderID.toString());
-        AccountService.EONBalance recepientBalance = ctx.accountBotService.getBalance(recipientID.toString());
+        AccountBotService.EONBalance senderBalance = ctx.accountBotService.getBalance(senderID.toString());
+        AccountBotService.EONBalance recepientBalance = ctx.accountBotService.getBalance(recipientID.toString());
 
         Assert.assertEquals(senderBalance.coloredCoins.get(coloredCoinID.toString()), Long.valueOf(10000L));
         Assert.assertNull(recepientBalance.coloredCoins);
 
-        Block lastBlock = ctx.blockchain.getLastBlock();
+        Block lastBlock = ctx.blockExplorerService.getLastBlock();
         Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 1);
 
         int timestamp = mockTimeProvider.get();
@@ -142,7 +146,7 @@ public class ColoredCoinsTestIT {
         AccountID recipientID = new AccountID(ctx.getSigner().getPublicKey());
         ColoredCoinID coloredCoinID = new ColoredCoinID(senderID);
 
-        Block lastBlock = ctx.blockchain.getLastBlock();
+        Block lastBlock = ctx.blockExplorerService.getLastBlock();
         Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 1);
 
         // payment
@@ -156,9 +160,9 @@ public class ColoredCoinsTestIT {
         Mockito.when(mockTimeProvider.get()).thenReturn(timestamp + 180);
         ctx.generateBlockForNow();
 
-        AccountService.EONBalance senderBalance = ctx.accountBotService.getBalance(senderID.toString());
-        AccountService.EONBalance recepientBalance = ctx.accountBotService.getBalance(recipientID.toString());
-        ColoredCoinService.Info coloredCoinInfo = ctx.coloredCoinService.getInfo(coloredCoinID.toString());
+        AccountBotService.EONBalance senderBalance = ctx.accountBotService.getBalance(senderID.toString());
+        AccountBotService.EONBalance recepientBalance = ctx.accountBotService.getBalance(recipientID.toString());
+        ColoredCoinBotService.Info coloredCoinInfo = ctx.coloredCoinService.getInfo(coloredCoinID.toString());
         Assert.assertNull(senderBalance.coloredCoins);
         Assert.assertEquals(recepientBalance.coloredCoins.get(coloredCoinID.toString()), Long.valueOf(10000L));
         Assert.assertEquals(coloredCoinInfo.moneySupply, Long.valueOf(10000L));
@@ -243,7 +247,7 @@ public class ColoredCoinsTestIT {
         AccountID recipientID = new AccountID(ctx.getSigner().getPublicKey());
         ColoredCoinID coloredCoinID = new ColoredCoinID(senderID);
 
-        Block lastBlock = ctx.blockchain.getLastBlock();
+        Block lastBlock = ctx.blockExplorerService.getLastBlock();
         Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 1);
 
         // payment
@@ -257,9 +261,9 @@ public class ColoredCoinsTestIT {
         Mockito.when(mockTimeProvider.get()).thenReturn(timestamp + 180);
         ctx.generateBlockForNow();
 
-        AccountService.EONBalance senderBalance = ctx.accountBotService.getBalance(senderID.toString());
-        AccountService.EONBalance recepientBalance = ctx.accountBotService.getBalance(recipientID.toString());
-        ColoredCoinService.Info coloredCoinInfo = ctx.coloredCoinService.getInfo(coloredCoinID.toString());
+        AccountBotService.EONBalance senderBalance = ctx.accountBotService.getBalance(senderID.toString());
+        AccountBotService.EONBalance recepientBalance = ctx.accountBotService.getBalance(recipientID.toString());
+        ColoredCoinBotService.Info coloredCoinInfo = ctx.coloredCoinService.getInfo(coloredCoinID.toString());
         Assert.assertNull(senderBalance.coloredCoins);
         Assert.assertEquals(recepientBalance.coloredCoins.get(coloredCoinID.toString()), Long.valueOf(10000L));
         Assert.assertEquals(coloredCoinInfo.moneySupply, Long.valueOf(10000L));

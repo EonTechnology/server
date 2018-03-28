@@ -5,7 +5,6 @@ import java.util.Map;
 import com.exscudo.peer.core.common.exceptions.ValidateException;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.identifier.AccountID;
-import com.exscudo.peer.eon.EonConstant;
 import com.exscudo.peer.eon.ledger.ILedgerAction;
 import com.exscudo.peer.eon.ledger.actions.FeePaymentAction;
 import com.exscudo.peer.eon.ledger.actions.PaymentAction;
@@ -28,7 +27,7 @@ public class PaymentParser implements ITransactionParser {
             throw new ValidateException("Attachment of unknown type. The amount format is not supports.");
         }
 
-        if (amount <= 0 || amount > EonConstant.MAX_MONEY) {
+        if (amount <= 0) {
             throw new ValidateException("Invalid amount size.");
         }
 
@@ -43,5 +42,12 @@ public class PaymentParser implements ITransactionParser {
                 new FeePaymentAction(transaction.getSenderID(), transaction.getFee()),
                 new PaymentAction(transaction.getSenderID(), amount, recipientID)
         };
+    }
+
+    @Override
+    public AccountID getRecipient(Transaction transaction) {
+
+        String value = String.valueOf(transaction.getData().get("recipient"));
+        return new AccountID(value);
     }
 }

@@ -1,13 +1,18 @@
 package com.exscudo.eon.IT;
 
-import com.exscudo.eon.bot.AccountService;
+import java.time.Instant;
+
+import com.exscudo.eon.api.bot.AccountBotService;
+import com.exscudo.peer.core.IFork;
 import com.exscudo.peer.core.common.TimeProvider;
-import com.exscudo.peer.core.common.exceptions.ValidateException;
 import com.exscudo.peer.core.crypto.ISigner;
 import com.exscudo.peer.core.crypto.ed25519.Ed25519Signer;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.identifier.AccountID;
+import com.exscudo.peer.core.storage.Storage;
+import com.exscudo.peer.eon.Fork;
+import com.exscudo.peer.eon.ForkInitializer;
 import com.exscudo.peer.eon.tx.builders.DepositBuilder;
 import com.exscudo.peer.eon.tx.builders.PaymentBuilder;
 import com.exscudo.peer.eon.tx.builders.RegistrationBuilder;
@@ -38,7 +43,7 @@ public class TransactionTestIT {
         PeerContext ctx2 = new PeerContext(GENERATOR2, mockTimeProvider);
         ISigner signer = new Ed25519Signer(GENERATOR_NEW);
 
-        Block lastBlock = ctx.blockchain.getLastBlock();
+        Block lastBlock = ctx.blockExplorerService.getLastBlock();
 
         Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 + 1);
 
@@ -48,7 +53,9 @@ public class TransactionTestIT {
         ctx.transactionBotService.putTransaction(tx);
         ctx.generateBlockForNow();
 
-        Assert.assertEquals("Registration in block", 1, ctx.blockchain.getLastBlock().getTransactions().size());
+        Assert.assertEquals("Registration in block",
+                            1,
+                            ctx.blockExplorerService.getLastBlock().getTransactions().size());
 
         Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 * 2 + 1);
 
@@ -59,7 +66,7 @@ public class TransactionTestIT {
         ctx.transactionBotService.putTransaction(tx2);
         ctx.generateBlockForNow();
 
-        Assert.assertEquals("Payment in block", 1, ctx.blockchain.getLastBlock().getTransactions().size());
+        Assert.assertEquals("Payment in block", 1, ctx.blockExplorerService.getLastBlock().getTransactions().size());
 
         ctx2.setPeerToConnect(ctx);
         ctx.setPeerToConnect(ctx2);
@@ -67,8 +74,8 @@ public class TransactionTestIT {
         ctx2.fullBlockSync();
 
         Assert.assertEquals("Block synchronized",
-                            ctx.blockchain.getLastBlock().getID(),
-                            ctx2.blockchain.getLastBlock().getID());
+                            ctx.blockExplorerService.getLastBlock().getID(),
+                            ctx2.blockExplorerService.getLastBlock().getID());
 
         Transaction tx3 = PaymentBuilder.createNew(8000L, new AccountID(ctx.getSigner().getPublicKey()))
                                         .forFee(1000L)
@@ -87,32 +94,30 @@ public class TransactionTestIT {
         ctx.syncTransactionListTask.run();
         ctx2.syncTransactionListTask.run();
 
-        Assert.assertTrue(ctx.backlog.contains(tx3.getID()));
-        Assert.assertFalse(ctx.backlog.contains(tx4.getID()));
-        Assert.assertFalse(ctx2.backlog.contains(tx3.getID()));
-        Assert.assertTrue(ctx2.backlog.contains(tx4.getID()));
+        Assert.assertNotNull(ctx.backlogExplorerService.getById(tx3.getID().toString()));
+        Assert.assertNull(ctx.backlogExplorerService.getById(tx4.getID().toString()));
+        Assert.assertNull(ctx2.backlogExplorerService.getById(tx3.getID().toString()));
+        Assert.assertNotNull(ctx2.backlogExplorerService.getById(tx4.getID().toString()));
 
         ctx.generateBlockForNow();
         ctx2.generateBlockForNow();
 
-        Assert.assertNotEquals("Block different",
-                               ctx.blockchain.getLastBlock().getID(),
-                               ctx2.blockchain.getLastBlock().getID());
-        Assert.assertEquals("Block TIMESTAMP equals",
-                            ctx.blockchain.getLastBlock().getTimestamp(),
-                            ctx2.blockchain.getLastBlock().getTimestamp());
+        Block lastBlock1 = ctx.blockExplorerService.getLastBlock();
+        Block lastBlock2 = ctx2.blockExplorerService.getLastBlock();
+        Assert.assertNotEquals("Block different", lastBlock1.getID(), lastBlock2.getID());
+        Assert.assertEquals("Block TIMESTAMP equals", lastBlock1.getTimestamp(), lastBlock2.getTimestamp());
 
         ctx.fullBlockSync();
         ctx2.fullBlockSync();
 
         Assert.assertEquals("Block synchronized",
-                            ctx.blockchain.getLastBlock().getID(),
-                            ctx2.blockchain.getLastBlock().getID());
+                            ctx.blockExplorerService.getLastBlock().getID(),
+                            ctx2.blockExplorerService.getLastBlock().getID());
 
-        Assert.assertFalse(ctx.backlog.contains(tx3.getID()));
-        Assert.assertFalse(ctx.backlog.contains(tx4.getID()));
-        Assert.assertFalse(ctx2.backlog.contains(tx3.getID()));
-        Assert.assertFalse(ctx2.backlog.contains(tx4.getID()));
+        Assert.assertNull(ctx.backlogExplorerService.getById(tx3.getID().toString()));
+        Assert.assertNull(ctx.backlogExplorerService.getById(tx4.getID().toString()));
+        Assert.assertNull(ctx2.backlogExplorerService.getById(tx3.getID().toString()));
+        Assert.assertNull(ctx2.backlogExplorerService.getById(tx4.getID().toString()));
     }
 
     @Test
@@ -122,19 +127,19 @@ public class TransactionTestIT {
         ISigner signer = new Ed25519Signer(GENERATOR2);
         ISigner signerNew = new Ed25519Signer(GENERATOR_NEW);
 
-        Block lastBlock = ctx.blockchain.getLastBlock();
+        Block lastBlock = ctx.blockExplorerService.getLastBlock();
 
         String signerID = new AccountID(signer.getPublicKey()).toString();
         String signerCtxID = new AccountID(ctx.getSigner().getPublicKey()).toString();
         String signerNewID = new AccountID(signerNew.getPublicKey()).toString();
 
         // Create new acc
-        AccountService.EONBalance balance = ctx.accountBotService.getBalance(signerID);
-        AccountService.EONBalance balanceCtx = ctx.accountBotService.getBalance(signerCtxID);
-        AccountService.EONBalance balanceNew = ctx.accountBotService.getBalance(signerNewID);
+        AccountBotService.EONBalance balance = ctx.accountBotService.getBalance(signerID);
+        AccountBotService.EONBalance balanceCtx = ctx.accountBotService.getBalance(signerCtxID);
+        AccountBotService.EONBalance balanceNew = ctx.accountBotService.getBalance(signerNewID);
 
-        Assert.assertEquals(AccountService.State.NotFound, ctx.accountBotService.getState(signerNewID));
-        Assert.assertEquals(AccountService.State.Unauthorized, balanceNew.state);
+        Assert.assertEquals(AccountBotService.State.NotFound, ctx.accountBotService.getState(signerNewID));
+        Assert.assertEquals(AccountBotService.State.Unauthorized, balanceNew.state);
 
         Transaction tx = RegistrationBuilder.createNew(signerNew.getPublicKey())
                                             .validity(lastBlock.getTimestamp() + 100, 3600)
@@ -143,12 +148,14 @@ public class TransactionTestIT {
         ctx.transactionBotService.putTransaction(tx);
 
         balanceNew = ctx.accountBotService.getBalance(signerNewID);
-        Assert.assertEquals(AccountService.State.Processing, ctx.accountBotService.getState(signerNewID));
-        Assert.assertEquals(AccountService.State.Unauthorized, balanceNew.state);
+        Assert.assertEquals(AccountBotService.State.Processing, ctx.accountBotService.getState(signerNewID));
+        Assert.assertEquals(AccountBotService.State.Unauthorized, balanceNew.state);
 
         ctx.generateBlockForNow();
 
-        Assert.assertEquals("Registration in block", 1, ctx.blockchain.getLastBlock().getTransactions().size());
+        Assert.assertEquals("Registration in block",
+                            1,
+                            ctx.blockExplorerService.getLastBlock().getTransactions().size());
         Assert.assertEquals("Fee in generator balance",
                             balanceCtx.amount + tx.getFee(),
                             ctx.accountBotService.getBalance(signerCtxID).amount);
@@ -156,7 +163,7 @@ public class TransactionTestIT {
                             balance.amount - tx.getFee(),
                             ctx.accountBotService.getBalance(signerID).amount);
         Assert.assertEquals("New acc created",
-                            AccountService.State.OK,
+                            AccountBotService.State.OK,
                             ctx.accountBotService.getInformation(signerNewID).state);
 
         // Payment to new acc
@@ -171,7 +178,7 @@ public class TransactionTestIT {
         ctx.transactionBotService.putTransaction(tx2);
         ctx.generateBlockForNow();
 
-        Assert.assertEquals("Payment in block", 1, ctx.blockchain.getLastBlock().getTransactions().size());
+        Assert.assertEquals("Payment in block", 1, ctx.blockExplorerService.getLastBlock().getTransactions().size());
         Assert.assertEquals("Fee in generator balance",
                             balanceCtx.amount + tx2.getFee(),
                             ctx.accountBotService.getBalance(signerCtxID).amount);
@@ -185,7 +192,7 @@ public class TransactionTestIT {
         // Deposit in new acc
         balanceCtx = ctx.accountBotService.getBalance(signerCtxID);
         balanceNew = ctx.accountBotService.getBalance(signerNewID);
-        AccountService.Info informationNew = ctx.accountBotService.getInformation(signerNewID);
+        AccountBotService.Info informationNew = ctx.accountBotService.getInformation(signerNewID);
 
         Transaction tx3 =
                 DepositBuilder.createNew(100L).validity(lastBlock.getTimestamp() + 200, 3600).build(signerNew);
@@ -193,7 +200,9 @@ public class TransactionTestIT {
         ctx.transactionBotService.putTransaction(tx3);
         ctx.generateBlockForNow();
 
-        Assert.assertEquals("Deposit.refill in block", 1, ctx.blockchain.getLastBlock().getTransactions().size());
+        Assert.assertEquals("Deposit.refill in block",
+                            1,
+                            ctx.blockExplorerService.getLastBlock().getTransactions().size());
         Assert.assertEquals("Fee in generator balance",
                             balanceCtx.amount + tx3.getFee(),
                             ctx.accountBotService.getBalance(signerCtxID).amount);
@@ -213,7 +222,9 @@ public class TransactionTestIT {
         ctx.transactionBotService.putTransaction(tx4);
         ctx.generateBlockForNow();
 
-        Assert.assertEquals("Deposit.withdraw in block", 1, ctx.blockchain.getLastBlock().getTransactions().size());
+        Assert.assertEquals("Deposit.withdraw in block",
+                            1,
+                            ctx.blockExplorerService.getLastBlock().getTransactions().size());
         Assert.assertEquals("Fee in generator balance",
                             balanceCtx.amount + tx4.getFee(),
                             ctx.accountBotService.getBalance(signerCtxID).amount);
@@ -229,33 +240,40 @@ public class TransactionTestIT {
         PeerContext ctx = new PeerContext(GENERATOR, mockTimeProvider);
         ISigner signerNew = new Ed25519Signer(GENERATOR_NEW);
 
-        Block lastBlock = ctx.blockchain.getLastBlock();
+        Block lastBlock = ctx.blockExplorerService.getLastBlock();
 
         Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 1);
         Transaction tx = RegistrationBuilder.createNew(signerNew.getPublicKey())
                                             .validity(mockTimeProvider.get(), 3600)
                                             .build(ctx.signer);
-        Assert.assertTrue(ctx.backlog.put(tx));
+        ctx.transactionBotService.putTransaction(tx);
         Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 + 1);
 
         ctx.generateBlockForNow();
-        Assert.assertEquals("Registration in block", 1, ctx.blockchain.getLastBlock().getTransactions().size());
+        Assert.assertEquals("Registration in block",
+                            1,
+                            ctx.blockExplorerService.getLastBlock().getTransactions().size());
 
         Transaction tx1 = PaymentBuilder.createNew(100L, new AccountID(signerNew.getPublicKey()))
                                         .validity(mockTimeProvider.get(), 3600)
                                         .build(ctx.signer);
-        Assert.assertTrue(ctx.backlog.put(tx1));
-        Assert.assertFalse(ctx.backlog.put(tx1));
+        ctx.transactionBotService.putTransaction(tx1);
+
+        try {
+            ctx.transactionBotService.putTransaction(tx1);
+        } catch (Exception ignore) {
+
+        }
         Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 2 * 180 + 1);
 
         ctx.generateBlockForNow();
-        Assert.assertEquals("Payment in block", 1, ctx.blockchain.getLastBlock().getTransactions().size());
+        Assert.assertEquals("Payment in block", 1, ctx.blockExplorerService.getLastBlock().getTransactions().size());
 
-        Assert.assertTrue(ctx.backlog.put(tx1));
+        ctx.transactionBotService.putTransaction(tx1);
         Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 3 * 180 + 1);
 
         ctx.generateBlockForNow();
-        Assert.assertEquals("Emprty block", 0, ctx.blockchain.getLastBlock().getTransactions().size());
+        Assert.assertEquals("Emprty block", 0, ctx.blockExplorerService.getLastBlock().getTransactions().size());
     }
 
     @Test
@@ -264,48 +282,87 @@ public class TransactionTestIT {
         PeerContext ctx = new PeerContext(GENERATOR, mockTimeProvider);
         ISigner signerNew = new Ed25519Signer(GENERATOR_NEW);
 
-        Block lastBlock = ctx.blockchain.getLastBlock();
+        Block lastBlock = ctx.blockExplorerService.getLastBlock();
         Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 1);
 
         // registration
         Transaction tx = RegistrationBuilder.createNew(signerNew.getPublicKey())
                                             .validity(mockTimeProvider.get(), 3600)
                                             .build(ctx.signer);
-        Assert.assertTrue(ctx.backlog.put(tx));
+        ctx.transactionBotService.putTransaction(tx);
 
         Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 + 1);
         ctx.generateBlockForNow();
 
-        Assert.assertEquals("Registration in block", 1, ctx.blockchain.getLastBlock().getTransactions().size());
+        Assert.assertEquals("Registration in block",
+                            1,
+                            ctx.blockExplorerService.getLastBlock().getTransactions().size());
 
         // payment
         Transaction tx1 = PaymentBuilder.createNew(100L, new AccountID(signerNew.getPublicKey()))
                                         .validity(mockTimeProvider.get(), 3600)
                                         .build(ctx.signer);
-        Assert.assertTrue(ctx.backlog.put(tx1));
+        ctx.transactionBotService.putTransaction(tx1);
 
         Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 2 * 180 + 1);
         ctx.generateBlockForNow();
 
-        Assert.assertEquals("Payment in block", 1, ctx.blockchain.getLastBlock().getTransactions().size());
+        Assert.assertEquals("Payment in block", 1, ctx.blockExplorerService.getLastBlock().getTransactions().size());
 
         // back payment
         Transaction tx2 = PaymentBuilder.createNew(50L, new AccountID(ctx.signer.getPublicKey()))
                                         .validity(mockTimeProvider.get(), 3600)
                                         .build(signerNew);
-        Assert.assertTrue(ctx.backlog.put(tx2));
+        ctx.transactionBotService.putTransaction(tx2);
         Transaction tx3 = PaymentBuilder.createNew(70L, new AccountID(ctx.signer.getPublicKey()))
                                         .validity(mockTimeProvider.get(), 3600)
                                         .build(signerNew);
         try {
-            ctx.backlog.put(tx3);
-        } catch (ValidateException ignore) {
+            ctx.transactionBotService.putTransaction(tx3);
+        } catch (Exception ignore) {
 
         }
 
         Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 3 * 180 + 1);
         ctx.generateBlockForNow();
 
-        Assert.assertEquals("Payment in block", 1, ctx.blockchain.getLastBlock().getTransactions().size());
+        Assert.assertEquals("Payment in block", 1, ctx.blockExplorerService.getLastBlock().getTransactions().size());
+    }
+
+    @Test
+    public void step_5_check_note() throws Exception {
+
+        Storage storage = Utils.createStorage();
+        long time = Utils.getLastBlock(storage).getTimestamp();
+        String begin = Instant.ofEpochMilli((time - 1) * 1000).toString();
+        String end = Instant.ofEpochMilli((time + 10 * 180 * 1000) * 1000).toString();
+
+        IFork fork = new Fork(Utils.getGenesisBlockID(storage),
+                              new Fork.Item[] {new Fork.Item(1, begin, end, ForkInitializer.items[1].handler, 1)});
+        PeerContext ctx = new PeerContext(GENERATOR, mockTimeProvider, storage, fork);
+
+        String alphabet = "0123456789 abcdefghijklmnoprstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ #@*-_";
+        ISigner signerNew = new Ed25519Signer(GENERATOR_NEW);
+
+        Block lastBlock = ctx.blockExplorerService.getLastBlock();
+        Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 1);
+
+        // registration
+        Transaction newTx = RegistrationBuilder.createNew(signerNew.getPublicKey())
+                                               .validity(mockTimeProvider.get(), 3600)
+                                               .addNote(alphabet)
+                                               .build(ctx.signer);
+        ctx.transactionBotService.putTransaction(newTx);
+
+        Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 + 1);
+        ctx.generateBlockForNow();
+
+        Assert.assertEquals("Registration in block",
+                            1,
+                            ctx.blockExplorerService.getLastBlock().getTransactions().size());
+
+        Transaction tx = ctx.transactionExplorerService.getById(newTx.getID().toString());
+        Assert.assertEquals(tx.getID(), newTx.getID());
+        Assert.assertEquals(tx.getNote(), newTx.getNote());
     }
 }

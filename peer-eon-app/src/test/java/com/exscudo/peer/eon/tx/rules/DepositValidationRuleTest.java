@@ -64,7 +64,7 @@ public class DepositValidationRuleTest extends AbstractParserTest {
     @Test
     public void deposit_refill_with_unknown_sender_is_error() throws Exception {
         expectedException.expect(ValidateException.class);
-        expectedException.expectMessage("Unknown account.");
+        expectedException.expectMessage("Unknown sender.");
 
         Transaction tx = DepositBuilder.createNew(1L).build(senderSigner);
         when(ledger.getAccount(eq(tx.getSenderID()))).thenReturn(null);
@@ -81,6 +81,29 @@ public class DepositValidationRuleTest extends AbstractParserTest {
 
         AccountProperties.setProperty(sender, new BalanceProperty(depositAmount + tx.getFee() - 1L));
         AccountProperties.setProperty(sender, new GeneratingBalanceProperty(0L, 0));
+
+        validate(tx);
+    }
+
+    @Test
+    public void deposit_fee_from_deposit() throws Exception {
+        Transaction tx = DepositBuilder.createNew(100L).build(senderSigner);
+
+        AccountProperties.setProperty(sender, new BalanceProperty(0L));
+        AccountProperties.setProperty(sender, new GeneratingBalanceProperty(100L + tx.getFee(), 0));
+
+        validate(tx);
+    }
+
+    @Test
+    public void deposit_fee_from_low_deposit() throws Exception {
+        expectedException.expect(ValidateException.class);
+        expectedException.expectMessage("Not enough funds.");
+
+        Transaction tx = DepositBuilder.createNew(0L).forFee(10L).build(senderSigner);
+
+        AccountProperties.setProperty(sender, new BalanceProperty(0L));
+        AccountProperties.setProperty(sender, new GeneratingBalanceProperty(5L, 0));
 
         validate(tx);
     }

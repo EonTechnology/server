@@ -1,28 +1,41 @@
 package com.exscudo.peer.eon.ledger.state;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
+import java.util.TreeMap;
 
 import com.exscudo.peer.eon.ColoredCoinID;
 
-public class ColoredBalanceProperty {
+public class ColoredBalanceProperty implements Iterable<ColoredCoinID> {
 
     /**
      * Contains a list of balances by colors.
      */
-    private Map<ColoredCoinID, Long> coloredBalances = new HashMap<>();
+    private Map<String, Object> coloredBalances;
+
+    public ColoredBalanceProperty() {
+        coloredBalances = new HashMap<>();
+    }
+
+    public ColoredBalanceProperty(Map<String, Object> ext) {
+        coloredBalances = new TreeMap<>(ext);
+    }
 
     public void setBalance(long amount, ColoredCoinID color) {
         if (amount < 0) {
             throw new IllegalArgumentException("amount");
         }
-        coloredBalances.put(color, amount);
+        if (amount != 0) {
+            coloredBalances.put(color.toString(), amount);
+        } else {
+            coloredBalances.remove(color.toString());
+        }
     }
 
     public long getBalance(ColoredCoinID color) {
-        Long amount = coloredBalances.get(color);
-        return (amount == null) ? 0 : amount;
+        Object amount = coloredBalances.get(color.toString());
+        return (amount == null) ? 0 : Long.parseLong(amount.toString());
     }
 
     public ColoredBalanceProperty refill(long amount, ColoredCoinID color) {
@@ -37,7 +50,26 @@ public class ColoredBalanceProperty {
         return this;
     }
 
-    public Set<Map.Entry<ColoredCoinID, Long>> balancesEntrySet() {
-        return coloredBalances.entrySet();
+    public Map<String, Object> getProperty() {
+        return coloredBalances;
+    }
+
+    @Override
+    public Iterator<ColoredCoinID> iterator() {
+
+        final Iterator<String> iterator = coloredBalances.keySet().iterator();
+
+        return new Iterator<ColoredCoinID>() {
+
+            @Override
+            public boolean hasNext() {
+                return iterator.hasNext();
+            }
+
+            @Override
+            public ColoredCoinID next() {
+                return new ColoredCoinID(iterator.next());
+            }
+        };
     }
 }

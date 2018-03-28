@@ -9,7 +9,13 @@ import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.Module;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
@@ -24,6 +30,7 @@ public class JrpcService {
     private final ThreadLocal<String> remoteHost = new ThreadLocal<>();
     private final Map<String, Method> methods = new HashMap<String, Method>();
     private final Map<String, Object> innerServices;
+    private Class loggerClazz = JrpcService.class;
 
     public JrpcService(Map<String, Object> innerServices) {
         this(innerServices, null);
@@ -45,6 +52,8 @@ public class JrpcService {
         if (module != null) {
             objectMapper.registerModule(module);
         }
+
+        loggerClazz = this.getClass();
     }
 
     public String getRemoteHost() {
@@ -56,6 +65,8 @@ public class JrpcService {
     }
 
     public String doRequest(String requestBody) throws IOException {
+
+        Class logFromClazz = this.loggerClazz;
 
         JsonRpcResponse response = new JsonRpcResponse();
 
@@ -122,7 +133,17 @@ public class JrpcService {
                 Object innerService = innerServices.get(split[0]);
                 if (innerService != null) {
 
-                    Method method = getMethod(innerService, split[1]);
+                    logFromClazz = innerService.getClass();
+
+                    Method method = null;
+                    if (methods.containsKey(methodName)) {
+                        method = methods.get(methodName);
+                    }
+                    if (method == null) {
+                        method = getMethod(innerService, split[1]);
+                        methods.put(methodName, method);
+                    }
+
                     if (method != null) {
                         try {
 
@@ -200,9 +221,9 @@ public class JrpcService {
 
             String remotePeer = getRemoteHost();
 
-            Loggers.info(this.getClass(), "Timing:  {}ms - {} >> {}", timeRun / 1000000.0, methodName, remotePeer);
+            Loggers.debug(logFromClazz, "Timing:  {}ms - {} >> {}", timeRun / 1000000.0, methodName, remotePeer);
 
-            Loggers.trace(this.getClass(),
+            Loggers.trace(logFromClazz,
                           "{} >> Request: {}; Response: {}",
                           remotePeer == null ? "" : remotePeer,
                           requestBody != null ? requestBody : "NULL",
@@ -213,18 +234,18 @@ public class JrpcService {
 
     private Method getMethod(Object innerService, String methodName) {
 
-        if (methods.containsKey(methodName)) {
-            return methods.get(methodName);
-        }
-
         Method[] ms = innerService.getClass().getMethods();
+
         for (Method m : ms) {
             if (m.getName().equals(methodName)) {
-                methods.put(methodName, m);
                 return m;
             }
         }
         return null;
+    }
+
+    public void setLoggerClazz(Class loggerClazz) {
+        this.loggerClazz = loggerClazz;
     }
 
     static class JsonRpcResponse {

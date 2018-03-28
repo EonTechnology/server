@@ -5,6 +5,7 @@
 
     <bean id="propertyConfigurer"
           class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="systemPropertiesModeName" value="SYSTEM_PROPERTIES_MODE_OVERRIDE"/>
         <property name="locations">
             <list>
                 <value>WEB-INF/spring/host.properties</value>
@@ -21,6 +22,7 @@
         <property name="connectTimeout" value="${connection.connectTimeout}"/>
         <property name="seed" value="#{systemProperties['SECRET_SEED']}"/>
         <property name="genesisFile" value="${host.genesis}"/>
+        <property name="fullSync" value="${blockchain.full}"/>
 
         <property name="publicPeers">
             <bean class="com.exscudo.eon.utils.ConfigHelper" factory-method="getStringsFromLastExists">

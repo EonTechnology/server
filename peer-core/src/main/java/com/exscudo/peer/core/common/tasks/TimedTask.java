@@ -18,7 +18,7 @@ public class TimedTask implements Runnable {
             mainTask.run();
         } finally {
             long diff = System.nanoTime() - begin;
-            Loggers.info(mainTask.getClass(), "Timing: {}ms", diff / 1000000.0);
+            Loggers.debug(mainTask.getClass(), "Timing: {}ms", diff / 1000000.0);
         }
     }
 }

@@ -8,17 +8,7 @@
     </Appenders>
 
     <Loggers>
-        <Logger name="com.exscudo.jsonrpc.JrpcService" level="DEBUG" additivity="true">
-            <AppenderRef ref="console"/>
-        </Logger>
-        <Logger name="com.exscudo.peer.core.backlog.tasks.SyncForkedTransactionListTask" level="DEBUG"
-                additivity="true">
-            <AppenderRef ref="console"/>
-        </Logger>
-        <Logger name="com.exscudo.jsonrpc.JrpcServiceProxy" level="DEBUG" additivity="true">
-            <AppenderRef ref="console"/>
-        </Logger>
-        <Root level="trace">
+        <Root level="INFO">
             <AppenderRef ref="console"/>
         </Root>
     </Loggers>

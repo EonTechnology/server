@@ -2,7 +2,7 @@ package com.exscudo.peer.store.sqlite;
 
 import java.io.IOException;
 
-import com.exscudo.peer.core.storage.IInitializer;
+import com.exscudo.peer.core.IInitializer;
 import com.exscudo.peer.core.storage.Storage;
 
 class ConnectionUtils {
@@ -26,7 +26,7 @@ class ConnectionUtils {
         @Override
         public void initialize(Storage storage) throws IOException {
             storage.run(new String[] {
-                    "/com/exscudo/peer/store/sqlite/MigrateV1.sql", url
+                    "/com/exscudo/peer/store/sqlite/MigrateV1.sql", "/com/exscudo/peer/store/sqlite/MigrateV2.sql", url
             });
         }
     }

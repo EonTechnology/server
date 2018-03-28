@@ -5,7 +5,7 @@ import java.util.Map;
 
 import com.dampcake.bencode.Bencode;
 
-class TreeNode {
+public class TreeNode {
     public static final int ROOT = 1;
     public static final int LEAF = 2;
 
@@ -62,6 +62,11 @@ class TreeNode {
     }
 
     public static boolean hasIntersection(TreeNode parent, long mask) {
+
+        if (parent.getType() == TreeNode.LEAF) {
+            return parent.getMask() == mask;
+        }
+
         long base = (1L << parent.getMaskLength()) - 1L;
 
         long parentMask = parent.getMask() & base;

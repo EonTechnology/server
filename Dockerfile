@@ -1,8 +1,11 @@
-#FROM maven:alpine
+#FROM maven:3-jdk-8-slim
+#FROM maven:3-jdk-9-slim
+#FROM maven:3-jdk-10-slim
 FROM frekele/maven
 
 RUN mkdir /repository
 ENV SECRET_SEED ""
+ENV FULL_BLOCKCHAIN true
 
 WORKDIR /app
 
@@ -29,7 +32,7 @@ COPY peer-core/src /app/peer-core/src
 COPY peer-eon/src /app/peer-eon/src
 
 # Compile files
-RUN mvn -o -Dmaven.repo.local=/repository package install -DskipTests
+RUN mvn -Dmaven.repo.local=/repository package install -DskipTests
 
 # Run tests
 RUN mvn -Dmaven.repo.local=/repository test
@@ -38,7 +41,7 @@ VOLUME /app/peer-eon-app/src/main/webapp/WEB-INF
 EXPOSE 9443
 
 ENV MAVEN_OPTS "-XX:+HeapDumpOnOutOfMemoryError -verbose:gc -XX:+PrintGCDetails -XX:+PrintFlagsFinal -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -Xmx350m"
-ENTRYPOINT mvn -o -Dmaven.repo.local=/repository jetty:run -DSECRET_SEED=$SECRET_SEED
+ENTRYPOINT mvn -o -Dmaven.repo.local=/repository jetty:run -DSECRET_SEED=$SECRET_SEED -Dblockchain.full=$FULL_BLOCKCHAIN
 
 # For debug
 # ENTRYPOINT /bin/bash

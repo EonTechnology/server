@@ -22,6 +22,7 @@ public class Transaction extends SignedMessage {
     private long fee;
     private Map<String, Object> data;
     private Map<String, Object> confirmations;
+    private String note;
 
     private int length = 0;
 
@@ -52,7 +53,7 @@ public class Transaction extends SignedMessage {
 
     /**
      * Sets the lifetime of the transaction. The unit (assumed) is equal to
-     * <code>DEADLINE_UNIT</code> seconds.
+     * seconds.
      *
      * @param deadline
      */
@@ -185,6 +186,24 @@ public class Transaction extends SignedMessage {
      */
     public void setConfirmations(Map<String, Object> map) {
         this.confirmations = map;
+    }
+
+    /**
+     * Returns the information about the transaction.
+     *
+     * @return
+     */
+    public String getNote() {
+        return note;
+    }
+
+    /**
+     * Sets the information about the transaction.
+     *
+     * @param note to the transaction. Field size is limited.
+     */
+    public void setNote(String note) {
+        this.note = note;
     }
 
     /**

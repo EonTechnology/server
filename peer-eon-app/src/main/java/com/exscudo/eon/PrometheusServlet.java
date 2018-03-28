@@ -8,11 +8,12 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.exscudo.peer.core.Constant;
 import com.exscudo.peer.core.backlog.Backlog;
-import com.exscudo.peer.core.blockchain.IBlockchainService;
+import com.exscudo.peer.core.blockchain.IBlockchainProvider;
 import com.exscudo.peer.core.common.TimeProvider;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.env.ExecutionContext;
 import com.exscudo.peer.core.env.PeerRegistry;
+import com.exscudo.peer.core.storage.Storage;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.servlet.FrameworkServlet;
 
@@ -25,8 +26,9 @@ public class PrometheusServlet extends FrameworkServlet {
 
     private ExecutionContext context;
     private Backlog backlog;
-    private IBlockchainService blockchain;
+    private IBlockchainProvider blockchain;
     private TimeProvider timeProvider;
+    private Storage storage;
 
     @Override
     public void init(ServletConfig servletConfig) throws ServletException {
@@ -35,8 +37,9 @@ public class PrometheusServlet extends FrameworkServlet {
         WebApplicationContext appContext = getWebApplicationContext();
         this.context = (ExecutionContext) appContext.getBean("executionContext");
         this.backlog = (Backlog) appContext.getBean("backlog");
-        this.blockchain = (IBlockchainService) appContext.getBean("blockchain");
+        this.blockchain = (IBlockchainProvider) appContext.getBean("blockchainProvider");
         this.timeProvider = (TimeProvider) appContext.getBean("timeProvider");
+        this.storage = (Storage) appContext.getBean("storage");
     }
 
     @Override
@@ -65,6 +68,7 @@ public class PrometheusServlet extends FrameworkServlet {
             out.println(String.format("eon_transactions_count %d", count));
             out.println(String.format("eon_peer_count %d", list.length));
             out.println(String.format("eon_uptime %d", (System.currentTimeMillis() - startedAt) / 1000L));
+            out.println(String.format("eon_history_from_height %d", storage.metadata().getHistoryFromHeight()));
 
             int timeDiff = timeProvider.get() - lastBlock.getTimestamp();
             int targetHeight = lastBlock.getHeight() + timeDiff / Constant.BLOCK_PERIOD;

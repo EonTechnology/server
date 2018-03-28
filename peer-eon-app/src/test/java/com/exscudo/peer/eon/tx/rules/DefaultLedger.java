@@ -6,10 +6,11 @@ import java.util.Map;
 
 import com.exscudo.peer.core.data.Account;
 import com.exscudo.peer.core.data.identifier.AccountID;
+import com.exscudo.peer.core.ledger.AbstractLedger;
 import com.exscudo.peer.core.ledger.ILedger;
 
 // TODO: remove side effects
-class DefaultLedger implements ILedger {
+class DefaultLedger extends AbstractLedger {
     private Map<AccountID, Account> accounts = new HashMap<>();
 
     @Override
@@ -26,6 +27,10 @@ class DefaultLedger implements ILedger {
     @Override
     public String getHash() {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void save() {
     }
 
     @Override

@@ -6,28 +6,31 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Objects;
 
+import com.exscudo.peer.core.IFork;
 import com.exscudo.peer.core.api.IMetadataService;
 import com.exscudo.peer.core.api.SalientAttributes;
-import com.exscudo.peer.core.blockchain.IBlockchainService;
+import com.exscudo.peer.core.blockchain.IBlockchainProvider;
 import com.exscudo.peer.core.common.exceptions.RemotePeerException;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.env.ExecutionContext;
 import com.exscudo.peer.core.env.Peer;
 import com.exscudo.peer.core.env.PeerInfo;
-import com.exscudo.peer.core.importer.IFork;
+import com.exscudo.peer.core.storage.Storage;
 
 /**
  * Basic implementation of the {@code IMetadataService} interface
  */
 public class SyncMetadataService extends BaseService implements IMetadataService {
     private final ExecutionContext context;
-    private final IBlockchainService blockchainService;
+    private final IBlockchainProvider blockchain;
     private final IFork fork;
+    private final Storage storage;
 
-    public SyncMetadataService(IFork fork, ExecutionContext context, IBlockchainService blockchainService) {
+    public SyncMetadataService(IFork fork, ExecutionContext context, IBlockchainProvider blockchain, Storage storage) {
         this.context = context;
-        this.blockchainService = blockchainService;
+        this.blockchain = blockchain;
         this.fork = fork;
+        this.storage = storage;
     }
 
     @Override
@@ -38,9 +41,11 @@ public class SyncMetadataService extends BaseService implements IMetadataService
         originAttributes.setVersion(context.getVersion());
         originAttributes.setPeerId(context.getHost().getPeerID());
 
-        Block lastBlock = blockchainService.getLastBlock();
+        Block lastBlock = blockchain.getLastBlock();
         originAttributes.setNetworkID(fork.getGenesisBlockID().toString());
         originAttributes.setFork(fork.getNumber(lastBlock.getTimestamp()));
+
+        originAttributes.setHistoryFromHeight(storage.metadata().getHistoryFromHeight());
 
         if (context.getHost().getAddress() != null && context.getHost().getAddress().length() > 0) {
             originAttributes.setAnnouncedAddress(context.getHost().getAddress());
@@ -111,7 +116,7 @@ public class SyncMetadataService extends BaseService implements IMetadataService
             throw new RemotePeerException("Different NetworkID");
         }
 
-        int forkNumber = fork.getNumber(blockchainService.getLastBlock().getTimestamp());
+        int forkNumber = fork.getNumber(blockchain.getLastBlock().getTimestamp());
         if (attributes.getFork() != forkNumber) {
             throw new RemotePeerException("Different Fork");
         }

@@ -5,15 +5,16 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.exscudo.peer.core.IFork;
 import com.exscudo.peer.core.api.SalientAttributes;
 import com.exscudo.peer.core.api.impl.SyncMetadataService;
-import com.exscudo.peer.core.blockchain.IBlockchainService;
+import com.exscudo.peer.core.blockchain.IBlockchainProvider;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.identifier.BlockID;
 import com.exscudo.peer.core.env.ExecutionContext;
 import com.exscudo.peer.core.env.PeerInfo;
 import com.exscudo.peer.core.env.PeerRegistry;
-import com.exscudo.peer.core.importer.IFork;
+import com.exscudo.peer.core.storage.Storage;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -27,7 +28,8 @@ public class SyncMetadataServiceTest {
     private PeerInfo peer1;
     private PeerInfo peer2;
     private IFork fork;
-    private IBlockchainService blockchain;
+    private IBlockchainProvider blockchain;
+    private Storage storage;
 
     @Test
     public void getAttributes() throws Exception {
@@ -50,10 +52,13 @@ public class SyncMetadataServiceTest {
 
         Block block = mock(Block.class);
 
-        blockchain = mock(IBlockchainService.class);
+        blockchain = mock(IBlockchainProvider.class);
         when(blockchain.getLastBlock()).thenReturn(block);
 
-        SyncMetadataService sms = new SyncMetadataService(fork, ctx, blockchain);
+        storage = mock(Storage.class);
+        when(storage.metadata()).thenReturn(mock(Storage.Metadata.class));
+
+        SyncMetadataService sms = new SyncMetadataService(fork, ctx, blockchain, storage);
         SalientAttributes attrs = sms.getAttributes();
 
         assertEquals(peerId, attrs.getPeerId());
@@ -98,7 +103,7 @@ public class SyncMetadataServiceTest {
 
     @Test
     public void getWellKnownNodes_should_return_array() throws Exception {
-        SyncMetadataService sms = new SyncMetadataService(fork, ctx, blockchain);
+        SyncMetadataService sms = new SyncMetadataService(fork, ctx, blockchain, storage);
         String[] wkn = sms.getWellKnownNodes();
         assertEquals(2, wkn.length);
         assertEquals(peer1Addr, wkn[0]);
@@ -110,7 +115,7 @@ public class SyncMetadataServiceTest {
         when(peer1.getState()).thenReturn(PeerInfo.STATE_AMBIGUOUS);
         when(peer2.getState()).thenReturn(PeerInfo.STATE_DISCONNECTED);
 
-        SyncMetadataService sms = new SyncMetadataService(fork, ctx, blockchain);
+        SyncMetadataService sms = new SyncMetadataService(fork, ctx, blockchain, storage);
         String[] wkn = sms.getWellKnownNodes();
         assertEquals(0, wkn.length);
     }
@@ -120,7 +125,7 @@ public class SyncMetadataServiceTest {
         when(peer1.getBlacklistingTime()).thenReturn(60L);
         when(peer2.getBlacklistingTime()).thenReturn(-60L);
 
-        SyncMetadataService sms = new SyncMetadataService(fork, ctx, blockchain);
+        SyncMetadataService sms = new SyncMetadataService(fork, ctx, blockchain, storage);
         String[] wkn = sms.getWellKnownNodes();
         assertEquals(0, wkn.length);
     }
@@ -130,7 +135,7 @@ public class SyncMetadataServiceTest {
         when(peer1.getAddress()).thenReturn(null);
         when(peer2.getAddress()).thenReturn("");
 
-        SyncMetadataService sms = new SyncMetadataService(fork, ctx, blockchain);
+        SyncMetadataService sms = new SyncMetadataService(fork, ctx, blockchain, storage);
         String[] wkn = sms.getWellKnownNodes();
         assertEquals(0, wkn.length);
     }
@@ -140,7 +145,7 @@ public class SyncMetadataServiceTest {
         when(peer1.isInner()).thenReturn(true);
         when(peer2.isInner()).thenReturn(true);
 
-        SyncMetadataService sms = new SyncMetadataService(fork, ctx, blockchain);
+        SyncMetadataService sms = new SyncMetadataService(fork, ctx, blockchain, storage);
         String[] wkn = sms.getWellKnownNodes();
         assertEquals(0, wkn.length);
     }

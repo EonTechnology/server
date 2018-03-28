@@ -43,6 +43,9 @@ public class TransactionMapper {
         if (transaction.getConfirmations() != null && !transaction.getConfirmations().isEmpty()) {
             map.put(Constants.CONFIRMATIONS, transaction.getConfirmations());
         }
+        if (transaction.getNote() != null && !transaction.getNote().isEmpty()) {
+            map.put(Constants.NOTE, transaction.getNote());
+        }
 
         return map;
     }
@@ -90,6 +93,12 @@ public class TransactionMapper {
             }
         }
 
+        String note = null;
+        Object noteObj = map.get(Constants.NOTE);
+        if (noteObj != null) {
+            note = String.valueOf(noteObj);
+        }
+
         tx.setType(type);
         tx.setVersion(version);
         tx.setTimestamp(timestamp);
@@ -100,6 +109,7 @@ public class TransactionMapper {
         tx.setData(attachment);
         tx.setConfirmations(confirmations);
         tx.setSignature(signature);
+        tx.setNote(note);
 
         return tx;
     }

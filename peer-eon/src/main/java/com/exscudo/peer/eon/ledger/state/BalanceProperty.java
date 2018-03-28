@@ -1,7 +1,5 @@
 package com.exscudo.peer.eon.ledger.state;
 
-import com.exscudo.peer.eon.EonConstant;
-
 public class BalanceProperty {
     private long value = 0L;
 
@@ -36,7 +34,7 @@ public class BalanceProperty {
     }
 
     private void ensureRange(long value) {
-        if (value < 0 || value > EonConstant.MAX_MONEY) {
+        if (value < 0) {
             throw new IllegalArgumentException("Illegal balance.");
         }
     }

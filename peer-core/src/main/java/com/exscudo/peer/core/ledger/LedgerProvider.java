@@ -22,13 +22,13 @@ public class LedgerProvider {
      * @param block target block
      * @return {@code ILedger} object or null
      */
-    public Ledger getLedger(Block block) {
-        return new Ledger(storage.getConnectionSource(),
-                          block.getSnapshot(),
-                          block.getTimestamp() + Constant.BLOCK_PERIOD);
+    public ILedger getLedger(Block block) {
+        return new CachedLedger(new Ledger(storage.getConnectionSource(),
+                                           block.getSnapshot(),
+                                           block.getTimestamp() + Constant.BLOCK_PERIOD));
     }
 
-    public void addLedger(Ledger ledger) {
+    public void addLedger(ILedger ledger) {
         storage.callInTransaction(new Callable<Void>() {
 
             @Override

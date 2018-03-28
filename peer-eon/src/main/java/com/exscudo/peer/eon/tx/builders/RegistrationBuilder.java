@@ -1,8 +1,8 @@
 package com.exscudo.peer.eon.tx.builders;
 
-import com.exscudo.peer.core.TransactionType;
 import com.exscudo.peer.core.common.Format;
 import com.exscudo.peer.core.data.identifier.AccountID;
+import com.exscudo.peer.eon.TransactionType;
 
 /**
  * "Registration" transaction.

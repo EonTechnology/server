@@ -5,12 +5,12 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 import com.exscudo.peer.core.Constant;
+import com.exscudo.peer.core.IFork;
 import com.exscudo.peer.core.api.ITransactionSynchronizationService;
-import com.exscudo.peer.core.backlog.IBacklogService;
-import com.exscudo.peer.core.blockchain.IBlockchainService;
+import com.exscudo.peer.core.backlog.IBacklog;
+import com.exscudo.peer.core.blockchain.IBlockchainProvider;
 import com.exscudo.peer.core.common.Loggers;
 import com.exscudo.peer.core.common.TimeProvider;
-import com.exscudo.peer.core.common.exceptions.LifecycleException;
 import com.exscudo.peer.core.common.exceptions.RemotePeerException;
 import com.exscudo.peer.core.common.exceptions.ValidateException;
 import com.exscudo.peer.core.data.Block;
@@ -18,7 +18,6 @@ import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.identifier.TransactionID;
 import com.exscudo.peer.core.env.ExecutionContext;
 import com.exscudo.peer.core.env.Peer;
-import com.exscudo.peer.core.importer.IFork;
 
 /**
  * Performs the task of synchronizing the list of unconfirmed transactions of
@@ -34,21 +33,21 @@ import com.exscudo.peer.core.importer.IFork;
  * sent to the services node (which selected on first step). The services node
  * compares the resulting transaction list to its own and returns the missing
  * transactions. At the end, the received transactions are added to the Backlog
- * (see {@link IBacklogService }) list.
+ * (see {@link IBacklog }) list.
  */
 public final class SyncTransactionListTask implements Runnable {
 
     private final ExecutionContext context;
     private final TimeProvider timeProvider;
     private final IFork fork;
-    private final IBlockchainService blockchainService;
-    private final IBacklogService backlogService;
+    private final IBlockchainProvider blockchainService;
+    private final IBacklog backlogService;
 
     public SyncTransactionListTask(IFork fork,
                                    ExecutionContext context,
                                    TimeProvider timeProvider,
-                                   IBacklogService backlogService,
-                                   IBlockchainService blockchainService) {
+                                   IBacklog backlogService,
+                                   IBlockchainProvider blockchainService) {
         this.context = context;
         this.timeProvider = timeProvider;
         this.fork = fork;
@@ -108,9 +107,6 @@ public final class SyncTransactionListTask implements Runnable {
                         }
                         try {
 
-                            if (tx.isFuture(timeProvider.get() + Constant.MAX_LATENCY)) {
-                                throw new LifecycleException();
-                            }
                             backlogService.put(tx);
                         } catch (ValidateException e) {
 

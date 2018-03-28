@@ -37,7 +37,7 @@ public class FullBlockTestIT {
         mockTimeProvider = Mockito.mock(TimeProvider.class);
         ctx = new PeerContext(GENERATOR, mockTimeProvider);
 
-        Block lastBlock = ctx.blockchain.getLastBlock();
+        Block lastBlock = ctx.blockExplorerService.getLastBlock();
         Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 1);
     }
 
@@ -72,13 +72,15 @@ public class FullBlockTestIT {
             threads[i].join();
         }
 
-        Assert.assertEquals(REPEAT_COUNT * seedSet.length, ctx.backlog.size());
-
-        Block lastBlock = ctx.blockchain.getLastBlock();
+        Block lastBlock = ctx.blockExplorerService.getLastBlock();
         Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + Constant.BLOCK_PERIOD + 1);
         ctx.generateBlockForNow();
 
-        Assert.assertNotEquals(lastBlock.getID(), ctx.blockchain.getLastBlock().getID());
-        Assert.assertNotEquals(0, ctx.blockchain.getLastBlock().getTransactions().size());
+        Block newLastBlock = ctx.blockExplorerService.getLastBlock();
+        Assert.assertNotEquals(lastBlock.getID(), newLastBlock.getID());
+        Assert.assertNotEquals(0, newLastBlock.getTransactions().size());
+
+        // TODO: check that backlog not empty
+        // Assert.assertNotEquals(0, ctx.backlogExplorerService.getLastPage().size());
     }
 }

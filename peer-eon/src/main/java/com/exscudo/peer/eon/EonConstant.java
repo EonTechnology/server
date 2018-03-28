@@ -11,11 +11,6 @@ public class EonConstant {
     public static final long DECIMAL_POINT = 1000000L;
 
     /**
-     * Total number of coins.
-     */
-    public static final long MAX_MONEY = 240000000L * DECIMAL_POINT;
-
-    /**
      * Determines the minimal amount of deposit witch required to participate in the
      * generation of blocks.
      */
@@ -27,11 +22,6 @@ public class EonConstant {
     public static final double TRANSACTION_MIN_FEE_PER_BYTE = 10.0 / 1024;
 
     /**
-     * Maximum fee by the transaction processing.
-     */
-    public static final long TRANSACTION_MAX_FEE = MAX_MONEY;
-
-    /**
      * Maximum transaction size in bytes
      */
     public static final int TRANSACTION_MAX_PAYLOAD_LENGTH = 1024;
@@ -41,4 +31,8 @@ public class EonConstant {
      */
     public static final int TRANSACTION_MAX_LIFETIME = 600 * 60;
 
+    /**
+     * The maximum "Note" field size in a transaction
+     */
+    public static final int TRANSACTION_NOTE_MAX_LENGTH = 128;
 }

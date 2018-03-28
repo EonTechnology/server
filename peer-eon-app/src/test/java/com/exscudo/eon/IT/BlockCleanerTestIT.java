@@ -1,13 +1,12 @@
 package com.exscudo.eon.IT;
 
 import com.exscudo.peer.core.Constant;
+import com.exscudo.peer.core.blockchain.storage.DbBlock;
+import com.exscudo.peer.core.blockchain.storage.DbTransaction;
 import com.exscudo.peer.core.common.TimeProvider;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.identifier.AccountID;
-import com.exscudo.peer.core.storage.tasks.Cleaner;
-import com.exscudo.peer.core.storage.utils.DbBlock;
-import com.exscudo.peer.core.storage.utils.DbTransaction;
 import com.exscudo.peer.eon.tx.builders.PaymentBuilder;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
@@ -23,26 +22,22 @@ import org.mockito.Mockito;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class BlockCleanerTestIT {
 
-    private static long BLOCK_COUNT = 10;
+    private static int BLOCK_COUNT = 10;
+    private static int LIMIT_BLOCK_COUNT = Constant.STORAGE_FRAME_BLOCK + 10;
 
     private static String GENERATOR = "eba54bbb2dd6e55c466fac09707425145ca8560fe40de3fa3565883f4d48779e";
     private static String GENERATOR2 = "d2005ef0df1f6926082aefa09917874cfb212d1ff4eb55c78f670ef9dd23ef6c";
-    private TimeProvider mockTimeProvider1;
-    private TimeProvider mockTimeProvider2;
+    private TimeProvider mockTimeProvider;
 
     private PeerContext ctx1;
     private PeerContext ctx2;
 
-    private Cleaner cleaner1;
-    private Cleaner cleaner2;
-
     @Before
     public void setUp() throws Exception {
-        mockTimeProvider1 = Mockito.mock(TimeProvider.class);
-        mockTimeProvider2 = Mockito.mock(TimeProvider.class);
+        mockTimeProvider = Mockito.mock(TimeProvider.class);
 
-        ctx1 = new PeerContext(GENERATOR, mockTimeProvider1);
-        ctx2 = new PeerContext(GENERATOR2, mockTimeProvider2);
+        ctx1 = new PeerContext(GENERATOR, mockTimeProvider, true);
+        ctx2 = new PeerContext(GENERATOR2, mockTimeProvider, false);
 
         ctx1.syncBlockPeerService = Mockito.spy(ctx1.syncBlockPeerService);
         ctx2.syncBlockPeerService = Mockito.spy(ctx2.syncBlockPeerService);
@@ -50,8 +45,8 @@ public class BlockCleanerTestIT {
         ctx1.setPeerToConnect(ctx2);
         ctx2.setPeerToConnect(ctx1);
 
-        cleaner1 = new Cleaner(ctx1.blockchain, ctx1.storage);
-        cleaner2 = new Cleaner(ctx2.blockchain, ctx2.storage);
+        // Init peer with snapshot sync
+        ctx2.syncSnapshotTask.run();
     }
 
     @Test
@@ -62,15 +57,14 @@ public class BlockCleanerTestIT {
 
         for (int i = 0; i < BLOCK_COUNT; i++) {
 
-            Block lastBlock = ctx1.blockchain.getLastBlock();
-            Mockito.when(mockTimeProvider1.get()).thenReturn(lastBlock.getTimestamp() + 180 + 1);
-            Mockito.when(mockTimeProvider2.get()).thenReturn(lastBlock.getTimestamp() + 180 + 1);
+            Block lastBlock = ctx1.blockExplorerService.getLastBlock();
+            Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 + 1);
 
             Transaction tx1 = PaymentBuilder.createNew(10000L, recipient2)
-                                            .validity(mockTimeProvider1.get(), 3600)
+                                            .validity(mockTimeProvider.get(), 3600)
                                             .build(ctx1.getSigner());
             Transaction tx2 = PaymentBuilder.createNew(10000L, recipient1)
-                                            .validity(mockTimeProvider2.get(), 3600)
+                                            .validity(mockTimeProvider.get(), 3600)
                                             .build(ctx1.getSigner());
 
             ctx1.transactionBotService.putTransaction(tx1);
@@ -83,15 +77,15 @@ public class BlockCleanerTestIT {
             ctx2.generateBlockForNow();
 
             Assert.assertNotEquals("Blockchain different",
-                                   ctx1.blockchain.getLastBlock().getID(),
-                                   ctx2.blockchain.getLastBlock().getID());
+                                   ctx1.blockExplorerService.getLastBlock().getID(),
+                                   ctx2.blockExplorerService.getLastBlock().getID());
 
             ctx1.fullBlockSync();
             ctx2.fullBlockSync();
 
             Assert.assertEquals("Blockchain synchronized",
-                                ctx1.blockchain.getLastBlock().getID(),
-                                ctx2.blockchain.getLastBlock().getID());
+                                ctx1.blockExplorerService.getLastBlock().getID(),
+                                ctx2.blockExplorerService.getLastBlock().getID());
         }
 
         ctx1.syncTransactionListTask.run();
@@ -107,29 +101,39 @@ public class BlockCleanerTestIT {
         long txB1 = blockDao1.countOf();
         long txB2 = blockDao2.countOf();
 
-        Block lastBlock = ctx1.blockchain.getLastBlock();
-        Mockito.when(mockTimeProvider1.get())
-               .thenReturn(lastBlock.getTimestamp() + 180 * (Constant.BLOCK_IN_DAY + 1) + 1);
-        Mockito.when(mockTimeProvider2.get())
-               .thenReturn(lastBlock.getTimestamp() + 180 * (Constant.BLOCK_IN_DAY + 1) + 1);
+        Block lastBlock = ctx1.blockExplorerService.getLastBlock();
+        int timestamp = lastBlock.getTimestamp() + 180 * LIMIT_BLOCK_COUNT + 1;
+        Mockito.when(mockTimeProvider.get()).thenReturn(timestamp);
 
         ctx1.generateBlockForNow();
         ctx2.fullBlockSync();
 
-        cleaner1.run();
-        cleaner2.run();
+        ctx1.branchesCleanupTask.run();
+        ctx2.branchesCleanupTask.run();
 
         Assert.assertNotEquals(txC1, txDao1.countOf());
         Assert.assertNotEquals(txC2, txDao2.countOf());
         Assert.assertNotEquals(txB1, blockDao1.countOf());
         Assert.assertNotEquals(txB2, blockDao2.countOf());
 
+        Assert.assertEquals("Blockchain synchronized",
+                            ctx1.blockExplorerService.getLastBlock().getID(),
+                            ctx2.blockExplorerService.getLastBlock().getID());
+        Assert.assertEquals("Blockchain synchronized and not empty",
+                            ctx1.blockExplorerService.getByHeight(LIMIT_BLOCK_COUNT).getID(),
+                            ctx2.blockExplorerService.getByHeight(LIMIT_BLOCK_COUNT).getID());
+
+        Assert.assertNotNull("Block not deleted", ctx1.blockchain.getBlockByHeight(5));
+        Assert.assertNull("Block deleted", ctx2.blockchain.getBlockByHeight(5));
+
+        // Full history
         // BLOCK_COUNT transactions sent to each feast
         Assert.assertEquals(BLOCK_COUNT * 2, txDao1.countOf());
-        Assert.assertEquals(BLOCK_COUNT * 2, txDao2.countOf());
-
         // (BLOCK_IN_DAY + BLOCK_COUNT + 1) blocks after, but in DB zero block and genesis block
-        Assert.assertEquals(Constant.BLOCK_IN_DAY + BLOCK_COUNT + 1, blockDao1.countOf() - 2);
-        Assert.assertEquals(Constant.BLOCK_IN_DAY + BLOCK_COUNT + 1, blockDao2.countOf() - 2);
+        Assert.assertEquals(BLOCK_COUNT + LIMIT_BLOCK_COUNT, blockDao1.countOf() - 2);
+
+        // Cleaned history
+        Assert.assertEquals(0, txDao2.countOf());
+        Assert.assertEquals(Constant.STORAGE_FRAME_BLOCK, blockDao2.countOf() - 3);
     }
 }

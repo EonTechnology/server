@@ -13,7 +13,11 @@ import com.exscudo.peer.core.storage.Storage;
 import com.exscudo.peer.eon.Fork;
 import com.exscudo.peer.eon.ForkInitializer;
 import com.exscudo.peer.eon.tx.builders.PaymentBuilder;
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.FixMethodOrder;
+import org.junit.Ignore;
+import org.junit.Test;
 import org.junit.runners.MethodSorters;
 import org.mockito.Mockito;
 
@@ -71,8 +75,8 @@ public class Fork1TestIT {
     }
 
     @Test
-    public void step_1_1_isCome() {
-        Block lastBlock = ctx1.blockchain.getLastBlock();
+    public void step_1_1_isCome() throws Exception {
+        Block lastBlock = ctx1.blockExplorerService.getLastBlock();
 
         Assert.assertFalse("Before fork", forkState1.isCome(lastBlock.getTimestamp() + BEGIN - 50));
         Assert.assertTrue("On fork", forkState1.isCome(lastBlock.getTimestamp() + BEGIN + 50));
@@ -81,8 +85,8 @@ public class Fork1TestIT {
     }
 
     @Test
-    public void step_1_2_isPassed() {
-        Block lastBlock = ctx1.blockchain.getLastBlock();
+    public void step_1_2_isPassed() throws Exception {
+        Block lastBlock = ctx1.blockExplorerService.getLastBlock();
 
         Assert.assertFalse("Before fork", forkState1.isPassed(lastBlock.getTimestamp() + BEGIN - 50));
         Assert.assertFalse("On fork", forkState1.isPassed(lastBlock.getTimestamp() + BEGIN + 50));
@@ -91,8 +95,8 @@ public class Fork1TestIT {
     }
 
     @Test
-    public void step_1_3_getNumber() {
-        Block lastBlock = ctx1.blockchain.getLastBlock();
+    public void step_1_3_getNumber() throws Exception {
+        Block lastBlock = ctx1.blockExplorerService.getLastBlock();
 
         Assert.assertEquals("Before fork", 1, forkState1.getNumber(lastBlock.getTimestamp() + BEGIN - 50));
         Assert.assertEquals("On fork", 2, forkState1.getNumber(lastBlock.getTimestamp() + BEGIN + 50));
@@ -101,9 +105,9 @@ public class Fork1TestIT {
     }
 
     @Test
-    public void step_2_1_CheckGeneratorIsDisabled() {
+    public void step_2_1_CheckGeneratorIsDisabled() throws Exception {
 
-        Block lastBlock = ctx1.blockchain.getLastBlock();
+        Block lastBlock = ctx1.blockExplorerService.getLastBlock();
         BlockID lastBlockID;
 
         do {
@@ -112,7 +116,7 @@ public class Fork1TestIT {
             Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + Constant.BLOCK_PERIOD + 1);
             ctx1.generateBlockForNow();
 
-            lastBlock = ctx1.blockchain.getLastBlock();
+            lastBlock = ctx1.blockExplorerService.getLastBlock();
 
             if (!lastBlock.getID().equals(lastBlockID)) {
                 Assert.assertFalse(forkState1.isPassed(lastBlock.getTimestamp()));
@@ -123,13 +127,13 @@ public class Fork1TestIT {
 
         Assert.assertEquals("Blockchain max possible height",
                             END / Constant.BLOCK_PERIOD,
-                            ctx1.blockchain.getLastBlock().getHeight());
+                            ctx1.blockExplorerService.getLastBlock().getHeight());
     }
 
     @Test
-    public void step_2_2_CheckGeneratorIsDisabled() {
+    public void step_2_2_CheckGeneratorIsDisabled() throws Exception {
 
-        Block lastBlock = ctx2.blockchain.getLastBlock();
+        Block lastBlock = ctx2.blockExplorerService.getLastBlock();
         BlockID lastBlockID;
 
         do {
@@ -138,7 +142,7 @@ public class Fork1TestIT {
             Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + Constant.BLOCK_PERIOD + 1);
             ctx2.generateBlockForNow();
 
-            lastBlock = ctx2.blockchain.getLastBlock();
+            lastBlock = ctx2.blockExplorerService.getLastBlock();
 
             if (!lastBlock.getID().equals(lastBlockID)) {
                 Assert.assertFalse(forkState2.isPassed(lastBlock.getTimestamp()));
@@ -149,15 +153,15 @@ public class Fork1TestIT {
 
         Assert.assertEquals("Blockchain max possible height",
                             END2 / Constant.BLOCK_PERIOD,
-                            ctx2.blockchain.getLastBlock().getHeight());
+                            ctx2.blockExplorerService.getLastBlock().getHeight());
     }
 
     @Test
-    public void step_3_1_CheckBlockSyncIsDisabled() {
+    public void step_3_1_CheckBlockSyncIsDisabled() throws Exception {
 
         ctx1.setPeerToConnect(ctx2);
 
-        Block lastBlock = ctx2.blockchain.getLastBlock();
+        Block lastBlock = ctx2.blockExplorerService.getLastBlock();
         BlockID lastBlockID;
 
         do {
@@ -167,9 +171,11 @@ public class Fork1TestIT {
             ctx2.generateBlockForNow();
             ctx1.fullBlockSync();
 
-            lastBlock = ctx2.blockchain.getLastBlock();
+            lastBlock = ctx2.blockExplorerService.getLastBlock();
 
-            if (ctx1.blockchain.getLastBlock().getID().equals(ctx2.blockchain.getLastBlock().getID())) {
+            if (ctx1.blockExplorerService.getLastBlock()
+                                         .getID()
+                                         .equals(ctx2.blockExplorerService.getLastBlock().getID())) {
                 Assert.assertFalse(forkState1.isPassed(lastBlock.getTimestamp()));
                 Assert.assertFalse(forkState2.isCome(lastBlock.getTimestamp()));
             } else {
@@ -180,33 +186,31 @@ public class Fork1TestIT {
 
         Assert.assertEquals("Blockchain max possible height",
                             END / Constant.BLOCK_PERIOD,
-                            ctx1.blockchain.getLastBlock().getHeight());
+                            ctx1.blockExplorerService.getLastBlock().getHeight());
         Assert.assertEquals("Blockchain max possible height",
                             END2 / Constant.BLOCK_PERIOD,
-                            ctx2.blockchain.getLastBlock().getHeight());
+                            ctx2.blockExplorerService.getLastBlock().getHeight());
     }
 
     @Test
-    public void step_3_2_CheckBlockSyncIsDisabled() {
+    public void step_3_2_CheckBlockSyncIsDisabled() throws Exception {
 
         ctx1.setPeerToConnect(ctx2);
 
-        Block lastBlock = ctx1.blockchain.getLastBlock();
+        Block lastBlock = ctx1.blockExplorerService.getLastBlock();
         int time = lastBlock.getTimestamp() + END2 * 2 + 1;
         Mockito.when(mockTimeProvider.get()).thenReturn(time);
 
         ctx2.generateBlockForNow();
         ctx1.fullBlockSync();
 
-        Assert.assertNotEquals("Blockchain not synchronized",
-                               ctx1.blockchain.getLastBlock().getID(),
-                               ctx2.blockchain.getLastBlock().getID());
+        Block lastBlock1 = ctx1.blockExplorerService.getLastBlock();
+        Block lastBlock2 = ctx2.blockExplorerService.getLastBlock();
+        Assert.assertNotEquals("Blockchain not synchronized", lastBlock1.getID(), lastBlock2.getID());
         Assert.assertEquals("Blockchain synchronized to possible height",
                             END / Constant.BLOCK_PERIOD,
-                            ctx1.blockchain.getLastBlock().getHeight());
-        Assert.assertEquals("Blockchain max possible height",
-                            END2 / Constant.BLOCK_PERIOD,
-                            ctx2.blockchain.getLastBlock().getHeight());
+                            lastBlock1.getHeight());
+        Assert.assertEquals("Blockchain max possible height", END2 / Constant.BLOCK_PERIOD, lastBlock2.getHeight());
     }
 
     @Test
@@ -215,7 +219,7 @@ public class Fork1TestIT {
         ctx1.setPeerToConnect(ctx2);
         ctx2.setPeerToConnect(ctx1);
 
-        Block lastBlock = ctx2.blockchain.getLastBlock();
+        Block lastBlock = ctx2.blockExplorerService.getLastBlock();
         BlockID lastBlockID;
 
         do {
@@ -237,19 +241,19 @@ public class Fork1TestIT {
             ctx2.syncTransactionListTask.run();
 
             if (forkState1.isPassed(mockTimeProvider.get())) {
-                Assert.assertTrue(ctx1.backlog.contains(tx1.getID()));
-                Assert.assertFalse(ctx1.backlog.contains(tx2.getID()));
+                Assert.assertNotNull(ctx1.backlogExplorerService.getById(tx1.getID().toString()));
+                Assert.assertNull(ctx1.backlogExplorerService.getById(tx2.getID().toString()));
             } else {
-                Assert.assertTrue(ctx1.backlog.contains(tx1.getID()));
-                Assert.assertTrue(ctx1.backlog.contains(tx2.getID()));
+                Assert.assertNotNull(ctx1.backlogExplorerService.getById(tx1.getID().toString()));
+                Assert.assertNotNull(ctx1.backlogExplorerService.getById(tx2.getID().toString()));
             }
 
             if (forkState2.isPassed(mockTimeProvider.get())) {
-                Assert.assertFalse(ctx2.backlog.contains(tx1.getID()));
-                Assert.assertTrue(ctx2.backlog.contains(tx2.getID()));
+                Assert.assertNull(ctx2.backlogExplorerService.getById(tx1.getID().toString()));
+                Assert.assertNotNull(ctx2.backlogExplorerService.getById(tx2.getID().toString()));
             } else {
-                Assert.assertTrue(ctx2.backlog.contains(tx1.getID()));
-                Assert.assertTrue(ctx2.backlog.contains(tx2.getID()));
+                Assert.assertNotNull(ctx2.backlogExplorerService.getById(tx1.getID().toString()));
+                Assert.assertNotNull(ctx2.backlogExplorerService.getById(tx2.getID().toString()));
             }
 
             Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + Constant.BLOCK_PERIOD + 1);
@@ -257,22 +261,22 @@ public class Fork1TestIT {
             ctx2.generateBlockForNow();
             ctx1.fullBlockSync();
 
-            lastBlock = ctx2.blockchain.getLastBlock();
+            lastBlock = ctx2.blockExplorerService.getLastBlock();
         } while (!lastBlockID.equals(lastBlock.getID()));
 
         Assert.assertEquals("Blockchain max possible height",
                             END / Constant.BLOCK_PERIOD,
-                            ctx1.blockchain.getLastBlock().getHeight());
+                            ctx1.blockExplorerService.getLastBlock().getHeight());
         Assert.assertEquals("Blockchain max possible height",
                             END2 / Constant.BLOCK_PERIOD,
-                            ctx2.blockchain.getLastBlock().getHeight());
+                            ctx2.blockExplorerService.getLastBlock().getHeight());
     }
 
     @Ignore
     @Test
     public void step_5_CheckPeerConnected() throws Exception {
 
-        Block lastBlock = ctx2.blockchain.getLastBlock();
+        Block lastBlock = ctx2.blockExplorerService.getLastBlock();
 
         ctx1.setPeerToConnect(ctx2);
         ctx2.setPeerToConnect(ctx1);
@@ -283,7 +287,7 @@ public class Fork1TestIT {
 
             ctx2.generateBlockForNow();
             ctx1.syncBlockListTask.run();
-            Block newBlock = ctx2.blockchain.getLastBlock();
+            Block newBlock = ctx2.blockExplorerService.getLastBlock();
 
             Peer peer1 = ctx1.context.getAnyConnectedPeer();
             Peer peer2 = ctx2.context.getAnyConnectedPeer();
@@ -322,17 +326,17 @@ public class Fork1TestIT {
 
         Assert.assertEquals("Blockchain max possible height",
                             END / Constant.BLOCK_PERIOD,
-                            ctx1.blockchain.getLastBlock().getHeight());
+                            ctx1.blockExplorerService.getLastBlock().getHeight());
         Assert.assertEquals("Blockchain max possible height",
                             END2 / Constant.BLOCK_PERIOD,
-                            ctx2.blockchain.getLastBlock().getHeight());
+                            ctx2.blockExplorerService.getLastBlock().getHeight());
     }
 
     @Ignore
     @Test
     public void step_6_tran_version_checked() throws Exception {
 
-        Block lastBlock = ctx1.blockchain.getLastBlock();
+        Block lastBlock = ctx1.blockExplorerService.getLastBlock();
 
         int time = lastBlock.getTimestamp();
         Mockito.when(mockTimeProvider.get()).thenReturn(time);
@@ -353,8 +357,8 @@ public class Fork1TestIT {
         } catch (Exception ignored) {
         }
 
-        Assert.assertTrue(ctx1.backlog.contains(tx1.getID()));
-        Assert.assertFalse(ctx1.backlog.contains(tx2.getID()));
+        Assert.assertNotNull(ctx1.backlogExplorerService.getById(tx1.getID().toString()));
+        Assert.assertNull(ctx1.backlogExplorerService.getById(tx2.getID().toString()));
 
         time = lastBlock.getTimestamp() + BEGIN + Constant.BLOCK_PERIOD + 1;
         Mockito.when(mockTimeProvider.get()).thenReturn(time);
@@ -377,7 +381,7 @@ public class Fork1TestIT {
         } catch (Exception ignored) {
         }
 
-        Assert.assertTrue(ctx1.backlog.contains(tx1p.getID()));
-        Assert.assertTrue(ctx1.backlog.contains(tx2p.getID()));
+        Assert.assertNotNull(ctx1.backlogExplorerService.getById(tx1p.getID().toString()));
+        Assert.assertNotNull(ctx1.backlogExplorerService.getById(tx2p.getID().toString()));
     }
 }

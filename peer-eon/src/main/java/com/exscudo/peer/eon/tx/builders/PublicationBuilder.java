@@ -1,8 +1,6 @@
 package com.exscudo.peer.eon.tx.builders;
 
-import java.util.Objects;
-
-import com.exscudo.peer.core.TransactionType;
+import com.exscudo.peer.eon.TransactionType;
 
 /**
  * Creates an public account.
@@ -16,7 +14,6 @@ public class PublicationBuilder extends TransactionBuilder<PublicationBuilder> {
     }
 
     public static PublicationBuilder createNew(String seed) {
-        Objects.requireNonNull(seed);
         return new PublicationBuilder().withParam("seed", seed);
     }
 }

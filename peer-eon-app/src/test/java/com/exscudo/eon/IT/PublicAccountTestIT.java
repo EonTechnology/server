@@ -3,13 +3,13 @@ package com.exscudo.eon.IT;
 import java.time.Instant;
 
 import com.exscudo.peer.core.Constant;
+import com.exscudo.peer.core.IFork;
 import com.exscudo.peer.core.common.TimeProvider;
 import com.exscudo.peer.core.crypto.ISigner;
 import com.exscudo.peer.core.crypto.ed25519.Ed25519Signer;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.identifier.AccountID;
-import com.exscudo.peer.core.importer.IFork;
 import com.exscudo.peer.core.storage.Storage;
 import com.exscudo.peer.eon.Fork;
 import com.exscudo.peer.eon.ForkInitializer;
@@ -59,7 +59,7 @@ public class PublicAccountTestIT {
 
     private void prepare_peer() throws Exception {
 
-        Block lastBlock = ctx.blockchain.getLastBlock();
+        Block lastBlock = ctx.blockExplorerService.getLastBlock();
 
         // registration
         int timestamp = lastBlock.getTimestamp();
@@ -119,7 +119,7 @@ public class PublicAccountTestIT {
     @Test
     public void step_1_PublicAccNormal() throws Exception {
 
-        Block lastBlock = ctx.blockchain.getLastBlock();
+        Block lastBlock = ctx.blockExplorerService.getLastBlock();
         int timestamp = lastBlock.getTimestamp();
 
         // Generate 1 day
@@ -172,7 +172,7 @@ public class PublicAccountTestIT {
     @Test
     public void step_2_PublicAccEarly() throws Exception {
 
-        Block lastBlock = ctx.blockchain.getLastBlock();
+        Block lastBlock = ctx.blockExplorerService.getLastBlock();
         int timestamp = lastBlock.getTimestamp();
 
         // Generate 0.5 days
@@ -203,7 +203,7 @@ public class PublicAccountTestIT {
     @Test
     public void step_3_DelegatedAcc() throws Exception {
 
-        Block lastBlock = ctx.blockchain.getLastBlock();
+        Block lastBlock = ctx.blockExplorerService.getLastBlock();
         int timestamp = lastBlock.getTimestamp();
         Mockito.when(mockTimeProvider.get()).thenReturn(timestamp + 180 + 1);
 
@@ -244,7 +244,7 @@ public class PublicAccountTestIT {
     @Test
     public void step_4_SignWeightExist() throws Exception {
 
-        Block lastBlock = ctx.blockchain.getLastBlock();
+        Block lastBlock = ctx.blockExplorerService.getLastBlock();
         int timestamp = lastBlock.getTimestamp();
         Mockito.when(mockTimeProvider.get()).thenReturn(timestamp + 180 + 1);
 

@@ -2,15 +2,19 @@ package com.exscudo.peer.core.importer.tasks;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 import com.exscudo.peer.core.Constant;
+import com.exscudo.peer.core.IFork;
 import com.exscudo.peer.core.api.Difficulty;
 import com.exscudo.peer.core.api.IBlockSynchronizationService;
-import com.exscudo.peer.core.blockchain.BlockchainService;
-import com.exscudo.peer.core.blockchain.events.BlockEventManager;
+import com.exscudo.peer.core.backlog.Backlog;
+import com.exscudo.peer.core.blockchain.BlockchainProvider;
+import com.exscudo.peer.core.blockchain.TransactionProvider;
 import com.exscudo.peer.core.common.Loggers;
 import com.exscudo.peer.core.common.TimeProvider;
 import com.exscudo.peer.core.common.exceptions.LifecycleException;
@@ -18,13 +22,14 @@ import com.exscudo.peer.core.common.exceptions.ProtocolException;
 import com.exscudo.peer.core.common.exceptions.RemotePeerException;
 import com.exscudo.peer.core.common.exceptions.ValidateException;
 import com.exscudo.peer.core.data.Block;
+import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.identifier.BlockID;
 import com.exscudo.peer.core.env.ExecutionContext;
 import com.exscudo.peer.core.env.Peer;
-import com.exscudo.peer.core.importer.IFork;
 import com.exscudo.peer.core.importer.IUnitOfWork;
 import com.exscudo.peer.core.importer.UnitOfWork;
 import com.exscudo.peer.core.ledger.LedgerProvider;
+import com.exscudo.peer.core.storage.Storage;
 
 /**
  * Performs the task of synchronizing the chain of the current node and a random
@@ -39,31 +44,41 @@ import com.exscudo.peer.core.ledger.LedgerProvider;
  */
 public final class SyncBlockListTask implements Runnable {
 
+    private final Storage storage;
     private final ExecutionContext context;
-    private final BlockchainService blockchain;
+    private final BlockchainProvider blockchainProvider;
     private final IFork fork;
     private final TimeProvider timeProvider;
-    private final BlockEventManager blockEventManager;
+    private final TransactionProvider transactionProvider;
+    private final Backlog backlog;
     private LedgerProvider ledgerProvider;
 
     public SyncBlockListTask(IFork fork,
+                             Backlog backlog,
+                             Storage storage,
                              ExecutionContext context,
-                             BlockchainService blockchain,
+                             BlockchainProvider blockchainProvider,
                              TimeProvider timeProvider,
                              LedgerProvider ledgerProvider,
-                             BlockEventManager blockEventManager) {
+                             TransactionProvider transactionProvider) {
+        this.storage = storage;
         this.context = context;
-        this.blockchain = blockchain;
+        this.blockchainProvider = blockchainProvider;
         this.fork = fork;
+        this.backlog = backlog;
         this.timeProvider = timeProvider;
         this.ledgerProvider = ledgerProvider;
-        this.blockEventManager = blockEventManager;
+        this.transactionProvider = transactionProvider;
     }
 
     @Override
     public void run() {
 
         try {
+
+            if (storage.metadata().getHistoryFromHeight() < 0) {
+                return;
+            }
 
             Peer peer = context.getAnyConnectedPeer();
             if (peer == null) {
@@ -75,7 +90,7 @@ public final class SyncBlockListTask implements Runnable {
                 IBlockSynchronizationService service = peer.getBlockSynchronizationService();
                 Difficulty remoteState = service.getDifficulty();
 
-                Difficulty currentState = new Difficulty(blockchain.getLastBlock());
+                Difficulty currentState = new Difficulty(blockchainProvider.getLastBlock());
 
                 if (remoteState.compareTo(currentState) == 0) {
 
@@ -166,13 +181,13 @@ public final class SyncBlockListTask implements Runnable {
         Block newBlock = service.getLastBlock();
         Difficulty remoteState = new Difficulty(newBlock.getID(), newBlock.getCumulativeDifficulty());
 
-        Difficulty currentState = new Difficulty(blockchain.getLastBlock());
+        Difficulty currentState = new Difficulty(blockchainProvider.getLastBlock());
 
         if (remoteState.compareTo(currentState) <= 0) {
             throw new IllegalStateException("The state was changed.");
         }
 
-        Block prevBlock = blockchain.getBlock(newBlock.getPreviousBlock());
+        Block prevBlock = blockchainProvider.getBlock(newBlock.getPreviousBlock());
         if (prevBlock == null) {
             return null;
         }
@@ -183,7 +198,7 @@ public final class SyncBlockListTask implements Runnable {
 
         HashMap<BlockID, Block> futuresBlock = new HashMap<>();
         futuresBlock.put(newBlock.getPreviousBlock(), newBlock);
-        return pushBlocks(blockchain, prevBlock, futuresBlock);
+        return pushBlocks(blockchainProvider, prevBlock, futuresBlock);
     }
 
     /**
@@ -206,16 +221,16 @@ public final class SyncBlockListTask implements Runnable {
 
         Loggers.info(SyncBlockListTask.class, "LongSyncScheme");
 
-        Block lastBlock = blockchain.getLastBlock();
+        Block lastBlock = blockchainProvider.getLastBlock();
         Difficulty beginState = new Difficulty(lastBlock);
 
-        BlockID[] lastBlockIDs = blockchain.getLatestBlocks(Constant.SYNC_SHORT_FRAME);
+        BlockID[] lastBlockIDs = blockchainProvider.getLatestBlocks(Constant.SYNC_SHORT_FRAME);
         Block[] items = service.getBlockHistory(blockIdEncode(lastBlockIDs));
         if (items.length == 0) {
             // Common blocks was not found... Requests blocks that have been
             // added since the last milestone.
             Loggers.warning(SyncBlockListTask.class, "Sync over a latest milestone.");
-            lastBlockIDs = blockchain.getLatestBlocks(Constant.SYNC_LONG_FRAME);
+            lastBlockIDs = blockchainProvider.getLatestBlocks(Constant.SYNC_LONG_FRAME);
             items = service.getBlockHistory(blockIdEncode(lastBlockIDs));
         }
 
@@ -276,7 +291,7 @@ public final class SyncBlockListTask implements Runnable {
             return lastBlock;
         }
 
-        return pushBlocks(blockchain, commonBlock, futureBlocks);
+        return pushBlocks(blockchainProvider, commonBlock, futureBlocks);
     }
 
     private List<Block> getNextBlockchain(Block commonBlock, Block[] items) {
@@ -314,7 +329,7 @@ public final class SyncBlockListTask implements Runnable {
         int commonHeight = -1;
 
         for (Block block : items) {
-            int height = blockchain.getBlockHeight(block.getPreviousBlock());
+            int height = blockchainProvider.getBlockHeight(block.getPreviousBlock());
             if (height > commonHeight) {
                 commonHeight = height;
                 commonBlockID = block.getPreviousBlock();
@@ -325,10 +340,10 @@ public final class SyncBlockListTask implements Runnable {
             return null;
         }
 
-        return blockchain.getBlock(commonBlockID);
+        return blockchainProvider.getBlock(commonBlockID);
     }
 
-    private Block pushBlocks(BlockchainService blockchain,
+    private Block pushBlocks(BlockchainProvider blockchain,
                              Block commonBlock,
                              Map<BlockID, Block> futureBlocks) throws ProtocolException {
 
@@ -361,7 +376,6 @@ public final class SyncBlockListTask implements Runnable {
                       commonBlock.getID());
 
         Block currBlock = commonBlock;
-        blockEventManager.raiseBeforeChanging(this, commonBlock);
         IUnitOfWork uow = new UnitOfWork(blockchain, ledgerProvider, fork, commonBlock);
         try {
 
@@ -383,6 +397,9 @@ public final class SyncBlockListTask implements Runnable {
                                  newBlock.getHeight(),
                                  newBlock.getPreviousBlock(),
                                  newBlock.getID());
+
+                    // Load verified transactions
+                    setVerifiedTransactions(newBlock);
 
                     currBlock = uow.pushBlock(newBlock);
                     newBlockID = currBlock.getID();
@@ -409,10 +426,7 @@ public final class SyncBlockListTask implements Runnable {
 
             // If node have imported a part of the sequence
             if (diff.compareTo(currentState) > 0) {
-                Block newHead = uow.commit();
-                if (newHead != null) {
-                    blockEventManager.raiseLastBlockChanged(this, newHead);
-                }
+                uow.commit();
                 Loggers.info(SyncBlockListTask.class,
                              "Sync complete. [{}]{} -> [{}]{}",
                              commonBlock.getHeight(),
@@ -449,5 +463,27 @@ public final class SyncBlockListTask implements Runnable {
             encoded[i] = ids[i].toString();
         }
         return encoded;
+    }
+
+    private void setVerifiedTransactions(Block block) {
+        LinkedList<Transaction> verified = new LinkedList<>();
+
+        for (Transaction tx : block.getTransactions()) {
+            Transaction fromBacklog = backlog.get(tx.getID());
+            if (fromBacklog != null && Arrays.equals(fromBacklog.getSignature(), tx.getSignature())) {
+                verified.add(fromBacklog);
+                continue;
+            }
+
+            Transaction fromDB = transactionProvider.getTransaction(tx.getID());
+            if (fromDB != null && Arrays.equals(fromDB.getSignature(), tx.getSignature())) {
+                verified.add(fromDB);
+                continue;
+            }
+
+            verified.add(tx);
+        }
+
+        block.setTransactions(verified);
     }
 }

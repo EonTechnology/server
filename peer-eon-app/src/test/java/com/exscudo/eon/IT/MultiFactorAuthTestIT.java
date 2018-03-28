@@ -5,19 +5,23 @@ import static org.junit.Assert.assertTrue;
 
 import java.time.Instant;
 
-import com.exscudo.eon.bot.AccountService;
-import com.exscudo.peer.core.TransactionType;
+import com.exscudo.eon.api.bot.AccountBotService;
+import com.exscudo.peer.core.IFork;
 import com.exscudo.peer.core.common.TimeProvider;
 import com.exscudo.peer.core.crypto.ISigner;
 import com.exscudo.peer.core.crypto.ed25519.Ed25519Signer;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.identifier.AccountID;
-import com.exscudo.peer.core.importer.IFork;
 import com.exscudo.peer.core.storage.Storage;
 import com.exscudo.peer.eon.Fork;
 import com.exscudo.peer.eon.ForkInitializer;
-import com.exscudo.peer.eon.tx.builders.*;
+import com.exscudo.peer.eon.TransactionType;
+import com.exscudo.peer.eon.tx.builders.DelegateBuilder;
+import com.exscudo.peer.eon.tx.builders.PaymentBuilder;
+import com.exscudo.peer.eon.tx.builders.QuorumBuilder;
+import com.exscudo.peer.eon.tx.builders.RegistrationBuilder;
+import com.exscudo.peer.eon.tx.builders.RejectionBuilder;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
@@ -56,7 +60,7 @@ public class MultiFactorAuthTestIT {
         ISigner delegate_1 = new Ed25519Signer(DELEGATE_1);
         ISigner delegate_2 = new Ed25519Signer(DELEGATE_2);
 
-        Block lastBlock = ctx.blockchain.getLastBlock();
+        Block lastBlock = ctx.blockExplorerService.getLastBlock();
         int timestamp = lastBlock.getTimestamp();
 
         // registration
@@ -73,7 +77,9 @@ public class MultiFactorAuthTestIT {
         ctx.transactionBotService.putTransaction(tx2);
 
         ctx.generateBlockForNow();
-        Assert.assertEquals("Registration in block", 2, ctx.blockchain.getLastBlock().getTransactions().size());
+        Assert.assertEquals("Registration in block",
+                            2,
+                            ctx.blockExplorerService.getLastBlock().getTransactions().size());
 
         // payments
         Mockito.when(mockTimeProvider.get()).thenReturn(timestamp + 2 * 180 + 1);
@@ -90,7 +96,7 @@ public class MultiFactorAuthTestIT {
         ctx.transactionBotService.putTransaction(tx4);
 
         ctx.generateBlockForNow();
-        Assert.assertEquals("Payments in block", 2, ctx.blockchain.getLastBlock().getTransactions().size());
+        Assert.assertEquals("Payments in block", 2, ctx.blockExplorerService.getLastBlock().getTransactions().size());
 
         // set quorum and delegates
         Mockito.when(mockTimeProvider.get()).thenReturn(timestamp + 3 * 180 + 1);
@@ -110,15 +116,17 @@ public class MultiFactorAuthTestIT {
         ctx.transactionBotService.putTransaction(tx8);
 
         ctx.generateBlockForNow();
-        Assert.assertEquals("Transactions in block", 3, ctx.blockchain.getLastBlock().getTransactions().size());
+        Assert.assertEquals("Transactions in block",
+                            3,
+                            ctx.blockExplorerService.getLastBlock().getTransactions().size());
 
         String id1 = delegate_1_id.toString();
-        AccountService.Info info1 = ctx.accountBotService.getInformation(id1);
+        AccountBotService.Info info1 = ctx.accountBotService.getInformation(id1);
         AccountID signer_id = new AccountID(ctx.getSigner().getPublicKey());
         assertTrue(info1.voter.get(signer_id.toString()) == 30);
 
         String id2 = delegate_2_id.toString();
-        AccountService.Info info2 = ctx.accountBotService.getInformation(id2);
+        AccountBotService.Info info2 = ctx.accountBotService.getInformation(id2);
         assertTrue(info2.voter.get(signer_id.toString()) == 20);
 
         // enable mfa
@@ -129,7 +137,9 @@ public class MultiFactorAuthTestIT {
         ctx.transactionBotService.putTransaction(tx5);
 
         ctx.generateBlockForNow();
-        Assert.assertEquals("Transactions in block", 1, ctx.blockchain.getLastBlock().getTransactions().size());
+        Assert.assertEquals("Transactions in block",
+                            1,
+                            ctx.blockExplorerService.getLastBlock().getTransactions().size());
 
         // try put transaction
         ISigner delegate_new = new Ed25519Signer(DELEGATE_NEW);
@@ -149,7 +159,9 @@ public class MultiFactorAuthTestIT {
         }
 
         ctx.generateBlockForNow();
-        Assert.assertEquals("Transactions in block", 1, ctx.blockchain.getLastBlock().getTransactions().size());
+        Assert.assertEquals("Transactions in block",
+                            1,
+                            ctx.blockExplorerService.getLastBlock().getTransactions().size());
 
         // try put transaction
         Mockito.when(mockTimeProvider.get()).thenReturn(timestamp + 180 * 6 + 1);
@@ -164,7 +176,9 @@ public class MultiFactorAuthTestIT {
         }
 
         ctx.generateBlockForNow();
-        Assert.assertEquals("Transactions in block", 0, ctx.blockchain.getLastBlock().getTransactions().size());
+        Assert.assertEquals("Transactions in block",
+                            0,
+                            ctx.blockExplorerService.getLastBlock().getTransactions().size());
 
         // put transaction
         Mockito.when(mockTimeProvider.get()).thenReturn(timestamp + 180 * 7 + 1);
@@ -175,7 +189,9 @@ public class MultiFactorAuthTestIT {
         ctx.transactionBotService.putTransaction(tx12);
 
         ctx.generateBlockForNow();
-        Assert.assertEquals("Transactions in block", 1, ctx.blockchain.getLastBlock().getTransactions().size());
+        Assert.assertEquals("Transactions in block",
+                            1,
+                            ctx.blockExplorerService.getLastBlock().getTransactions().size());
 
         // reject
         Mockito.when(mockTimeProvider.get()).thenReturn(timestamp + 180 * 8 + 1);
@@ -185,7 +201,9 @@ public class MultiFactorAuthTestIT {
         ctx.transactionBotService.putTransaction(tx13);
 
         ctx.generateBlockForNow();
-        Assert.assertEquals("Transactions in block", 1, ctx.blockchain.getLastBlock().getTransactions().size());
+        Assert.assertEquals("Transactions in block",
+                            1,
+                            ctx.blockExplorerService.getLastBlock().getTransactions().size());
         info2 = ctx.accountBotService.getInformation(id2);
         assertNull(info2.voter);
 
@@ -193,6 +211,8 @@ public class MultiFactorAuthTestIT {
         Mockito.when(mockTimeProvider.get()).thenReturn(timestamp + 180 * 9 + 1);
         ctx.transactionBotService.putTransaction(tx11);
         ctx.generateBlockForNow();
-        Assert.assertEquals("Transactions in block", 1, ctx.blockchain.getLastBlock().getTransactions().size());
+        Assert.assertEquals("Transactions in block",
+                            1,
+                            ctx.blockExplorerService.getLastBlock().getTransactions().size());
     }
 }

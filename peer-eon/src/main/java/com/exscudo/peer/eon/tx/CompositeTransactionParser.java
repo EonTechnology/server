@@ -4,9 +4,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.naming.NamingException;
 
 import com.exscudo.peer.core.common.exceptions.ValidateException;
 import com.exscudo.peer.core.data.Transaction;
+import com.exscudo.peer.core.data.identifier.AccountID;
 import com.exscudo.peer.eon.ledger.ILedgerAction;
 
 public class CompositeTransactionParser implements ITransactionParser {
@@ -20,15 +22,37 @@ public class CompositeTransactionParser implements ITransactionParser {
         return new Builder();
     }
 
+    private ITransactionParser getParser(int type) throws NamingException {
+        ITransactionParser parser = dictionary.get(type);
+        if (parser == null) {
+            throw new NamingException();
+        }
+        return parser;
+    }
+
     @Override
     public ILedgerAction[] parse(Transaction transaction) throws ValidateException {
         Objects.requireNonNull(transaction);
 
-        ITransactionParser rule = dictionary.get(transaction.getType());
-        if (rule == null) {
+        ITransactionParser parser;
+        try {
+            parser = getParser(transaction.getType());
+        } catch (NamingException e) {
             throw new ValidateException("Invalid transaction type. Type :" + transaction.getType());
         }
-        return rule.parse(transaction);
+        return parser.parse(transaction);
+    }
+
+    @Override
+    public AccountID getRecipient(Transaction transaction) {
+
+        ITransactionParser parser = null;
+        try {
+            parser = getParser(transaction.getType());
+        } catch (NamingException e) {
+            new RuntimeException(e);
+        }
+        return parser.getRecipient(transaction);
     }
 
     public static class Builder {

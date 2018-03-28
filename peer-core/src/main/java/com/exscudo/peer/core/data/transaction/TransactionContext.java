@@ -14,5 +14,4 @@ public class TransactionContext {
     public int getTimestamp() {
         return timestamp;
     }
-
 }

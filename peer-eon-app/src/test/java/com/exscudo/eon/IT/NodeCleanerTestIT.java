@@ -1,19 +1,15 @@
 package com.exscudo.eon.IT;
 
-import java.util.HashSet;
 import java.util.Random;
 
+import com.exscudo.eon.api.bot.AccountBotService;
 import com.exscudo.peer.core.Constant;
 import com.exscudo.peer.core.common.TimeProvider;
 import com.exscudo.peer.core.crypto.ed25519.Ed25519Signer;
-import com.exscudo.peer.core.data.Account;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.identifier.AccountID;
-import com.exscudo.peer.core.data.identifier.BlockID;
-import com.exscudo.peer.core.ledger.ILedger;
 import com.exscudo.peer.core.ledger.storage.DbNode;
-import com.exscudo.peer.core.ledger.tasks.NodesCleanupTask;
 import com.exscudo.peer.eon.tx.builders.PaymentBuilder;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
@@ -36,9 +32,6 @@ public class NodeCleanerTestIT {
 
     private PeerContext ctx1;
     private PeerContext ctx2;
-
-    private NodesCleanupTask cleaner1;
-    private NodesCleanupTask cleaner2;
 
     private String[] seeds = new String[] {
             "eba54bbb2dd6e55c466fac09707425145ca8560fe40de3fa3565883f4d48779e",
@@ -63,9 +56,6 @@ public class NodeCleanerTestIT {
 
         ctx1.setPeerToConnect(ctx2);
         ctx2.setPeerToConnect(ctx1);
-
-        cleaner1 = new NodesCleanupTask(ctx1.storage);
-        cleaner2 = new NodesCleanupTask(ctx2.storage);
     }
 
     @Test
@@ -75,7 +65,7 @@ public class NodeCleanerTestIT {
         changeState(new Random());
 
         // generate the blocks for a day
-        Block lastBlock = ctx1.blockchain.getLastBlock();
+        Block lastBlock = ctx1.blockExplorerService.getLastBlock();
         int timestamp = lastBlock.getTimestamp() + 180 * (Constant.BLOCK_IN_DAY) + 1;
         Mockito.when(mockTimeProvider1.get()).thenReturn(timestamp);
         Mockito.when(mockTimeProvider2.get()).thenReturn(timestamp);
@@ -87,7 +77,7 @@ public class NodeCleanerTestIT {
         changeState(new Random());
 
         // generate the blocks for a day
-        lastBlock = ctx1.blockchain.getLastBlock();
+        lastBlock = ctx1.blockExplorerService.getLastBlock();
         timestamp = lastBlock.getTimestamp() + 180 * (2 * Constant.BLOCK_IN_DAY + 1) + 1;
         Mockito.when(mockTimeProvider1.get()).thenReturn(timestamp);
         Mockito.when(mockTimeProvider2.get()).thenReturn(timestamp);
@@ -96,8 +86,8 @@ public class NodeCleanerTestIT {
         ctx2.fullBlockSync();
 
         // clear
-        cleaner1.run();
-        cleaner2.run();
+        ctx1.nodesCleanupTask.run();
+        ctx2.nodesCleanupTask.run();
 
         // 19 nodes for 10 accounts
         Dao<DbNode, Long> nodeDao1 = DaoManager.createDao(ctx1.storage.getConnectionSource(), DbNode.class);
@@ -109,33 +99,16 @@ public class NodeCleanerTestIT {
         checkContext(ctx2);
     }
 
-    private void checkContext(PeerContext ctx) {
-
-        BlockID genesisBlockID = ctx.storage.metadata().getGenesisBlockID();
-        Block currBlock = ctx.blockchain.getLastBlock();
-        int timestamp = currBlock.getTimestamp();
-        HashSet<String> set = new HashSet<>();
-
-        while (!currBlock.getID().equals(genesisBlockID)) {
-
-            if (!set.contains(currBlock.getSnapshot())) {
-
-                ILedger ledger = ctx.ledgerProvider.getLedger(currBlock);
-                if (currBlock.getTimestamp() >= timestamp - (2 * Constant.SECONDS_IN_DAY)) {
-                    int count = 0;
-                    for (Account account : ledger) {
-                        count++;
-                    }
-                    Assert.assertEquals(seeds.length, count);
-                }
-                set.add(currBlock.getSnapshot());
-            }
-            currBlock = ctx.blockchain.getBlock(currBlock.getPreviousBlock());
+    private void checkContext(PeerContext ctx) throws Exception {
+        for (String seed : seeds) {
+            AccountBotService.State state = ctx.accountBotService.getState(new AccountID(Ed25519Signer.createNew(seed)
+                                                                                                      .getPublicKey()).toString());
+            Assert.assertEquals(state, AccountBotService.State.OK);
         }
     }
 
     private void changeState(Random random) throws Exception {
-        Block lastBlock = ctx1.blockchain.getLastBlock();
+        Block lastBlock = ctx1.blockExplorerService.getLastBlock();
         Mockito.when(mockTimeProvider1.get()).thenReturn(lastBlock.getTimestamp() + 180 + 1);
         Mockito.when(mockTimeProvider2.get()).thenReturn(lastBlock.getTimestamp() + 180 + 1);
 
@@ -154,15 +127,15 @@ public class NodeCleanerTestIT {
         ctx2.generateBlockForNow();
 
         Assert.assertNotEquals("Blockchain different",
-                               ctx1.blockchain.getLastBlock().getID(),
-                               ctx2.blockchain.getLastBlock().getID());
+                               ctx1.blockExplorerService.getLastBlock().getID(),
+                               ctx2.blockExplorerService.getLastBlock().getID());
 
         ctx1.fullBlockSync();
         ctx2.fullBlockSync();
 
         Assert.assertEquals("Blockchain synchronized",
-                            ctx1.blockchain.getLastBlock().getID(),
-                            ctx2.blockchain.getLastBlock().getID());
+                            ctx1.blockExplorerService.getLastBlock().getID(),
+                            ctx2.blockExplorerService.getLastBlock().getID());
 
         ctx1.syncTransactionListTask.run();
         ctx2.syncTransactionListTask.run();

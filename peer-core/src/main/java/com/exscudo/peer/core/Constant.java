@@ -42,6 +42,10 @@ public class Constant {
      */
     public static final int BLOCK_TRANSACTION_LIMIT = 4000;
     /**
+     * The number of blocks, which are stored on limited blockchain
+     */
+    public static final int STORAGE_FRAME_BLOCK = BLOCK_IN_DAY * 7;
+    /**
      * The number of blocks that are created per hour.
      */
     static final int BLOCK_IN_HOUR = (60 * 60) / BLOCK_PERIOD;

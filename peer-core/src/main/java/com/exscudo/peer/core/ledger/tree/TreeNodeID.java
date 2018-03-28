@@ -7,7 +7,7 @@ import java.util.Arrays;
 
 import com.exscudo.peer.core.common.Format;
 
-class TreeNodeID {
+public class TreeNodeID {
     private final String key;
     private final long index;
 
@@ -26,6 +26,13 @@ class TreeNodeID {
         }
         key = Format.convert(hash);
         index = getIndex(hash);
+    }
+
+    public static TreeNodeID valueOf(String key) {
+        if (key == null) {
+            return null;
+        }
+        return new TreeNodeID(key);
     }
 
     public String getKey() {
@@ -58,12 +65,5 @@ class TreeNodeID {
         }
 
         return bigInteger.longValue();
-    }
-
-    public static TreeNodeID valueOf(String key) {
-        if (key == null) {
-            return null;
-        }
-        return new TreeNodeID(key);
     }
 }

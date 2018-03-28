@@ -1,7 +1,7 @@
 package com.exscudo.peer.eon.tx.builders;
 
-import com.exscudo.peer.core.TransactionType;
 import com.exscudo.peer.core.data.identifier.AccountID;
+import com.exscudo.peer.eon.TransactionType;
 
 /**
  * Rejection of the right to confirm transactions of the specified account.

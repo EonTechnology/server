@@ -4,6 +4,7 @@ import java.util.Objects;
 
 import com.exscudo.peer.core.api.IBlockSynchronizationService;
 import com.exscudo.peer.core.api.IMetadataService;
+import com.exscudo.peer.core.api.ISnapshotSynchronizationService;
 import com.exscudo.peer.core.api.ITransactionSynchronizationService;
 
 /**
@@ -48,5 +49,9 @@ public class Peer {
 
     public IBlockSynchronizationService getBlockSynchronizationService() {
         return proxyFactory.createProxy(pi, IBlockSynchronizationService.class);
+    }
+
+    public ISnapshotSynchronizationService getSnapshotSynchronizationService() {
+        return proxyFactory.createProxy(pi, ISnapshotSynchronizationService.class);
     }
 }

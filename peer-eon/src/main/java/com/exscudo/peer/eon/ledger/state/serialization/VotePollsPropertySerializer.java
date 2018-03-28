@@ -4,10 +4,10 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.exscudo.peer.core.PropertyType;
 import com.exscudo.peer.core.data.Account;
 import com.exscudo.peer.core.data.AccountProperty;
 import com.exscudo.peer.core.data.identifier.AccountID;
+import com.exscudo.peer.eon.PropertyType;
 import com.exscudo.peer.eon.ledger.AccountPropertySerializer;
 import com.exscudo.peer.eon.ledger.state.VotePollsProperty;
 

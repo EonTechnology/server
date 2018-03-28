@@ -7,13 +7,11 @@ import java.sql.Statement;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
+import com.exscudo.peer.core.IInitializer;
+import com.exscudo.peer.core.InitializerJson;
 import com.exscudo.peer.core.common.exceptions.DataAccessException;
 import com.exscudo.peer.core.data.identifier.BlockID;
 import com.exscudo.peer.core.storage.migrate.StatementUtils;
-import com.exscudo.peer.core.storage.utils.AccountHelper;
-import com.exscudo.peer.core.storage.utils.BlockHelper;
-import com.exscudo.peer.core.storage.utils.BlockchainHelper;
-import com.exscudo.peer.core.storage.utils.TransactionHelper;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.db.SqliteDatabaseType;
@@ -47,8 +45,9 @@ public class Storage {
     // Static members
     //
     public static Storage create(String connectURI,
-                                 String genesisFile) throws IOException, ClassNotFoundException, SQLException {
-        return create(connectURI, new InitializerJson(genesisFile));
+                                 String genesisFile,
+                                 boolean fullSync) throws IOException, ClassNotFoundException, SQLException {
+        return create(connectURI, new InitializerJson(genesisFile, fullSync));
     }
 
     public static Storage create(String connectURI,
@@ -56,7 +55,7 @@ public class Storage {
 
         SQLiteConfig config = new SQLiteConfig();
         config.setJournalMode(SQLiteConfig.JournalMode.WAL);
-        config.setBusyTimeout("5000");
+        config.setBusyTimeout("60000");
         config.setTransactionMode(SQLiteConfig.TransactionMode.EXCLUSIVE);
         BasicDataSource dataSource = createDataSource(connectURI, config);
 
@@ -65,7 +64,20 @@ public class Storage {
         return storage;
     }
 
-    private AccountHelper accountHelper;
+    public static BasicDataSource createDataSource(String connectURI, SQLiteConfig config) {
+
+        BasicDataSource dataSource = new BasicDataSource();
+
+        dataSource.setUrl(connectURI);
+        dataSource.setPoolPreparedStatements(true);
+
+        dataSource.setDriverClassName("org.sqlite.JDBC");
+        for (Map.Entry<?, ?> e : config.toProperties().entrySet()) {
+            dataSource.addConnectionProperty((String) e.getKey(), (String) e.getValue());
+        }
+
+        return dataSource;
+    }
 
     public void destroy() {
 
@@ -89,61 +101,6 @@ public class Storage {
             }
         }
         return connectionSource;
-    }
-
-    private BlockchainHelper blockchainHelper;
-    private BlockHelper blockHelper;
-    private TransactionHelper transactionHelper;
-
-    public static BasicDataSource createDataSource(String connectURI, SQLiteConfig config) {
-
-        BasicDataSource dataSource = new BasicDataSource();
-
-        dataSource.setUrl(connectURI);
-        dataSource.setPoolPreparedStatements(true);
-
-        dataSource.setDriverClassName("org.sqlite.JDBC");
-        for (Map.Entry<?, ?> e : config.toProperties().entrySet()) {
-            dataSource.addConnectionProperty((String) e.getKey(), (String) e.getValue());
-        }
-
-        return dataSource;
-    }
-
-    public AccountHelper getAccountHelper() {
-
-        if (accountHelper == null) {
-            this.accountHelper = new AccountHelper(getConnectionSource());
-        }
-
-        return accountHelper;
-    }
-
-    public BlockchainHelper getBlockchainHelper() {
-
-        if (blockchainHelper == null) {
-            this.blockchainHelper = new BlockchainHelper(getConnectionSource());
-        }
-
-        return blockchainHelper;
-    }
-
-    public BlockHelper getBlockHelper() {
-
-        if (blockHelper == null) {
-            this.blockHelper = new BlockHelper(getConnectionSource());
-        }
-
-        return blockHelper;
-    }
-
-    public TransactionHelper getTransactionHelper() {
-
-        if (transactionHelper == null) {
-            this.transactionHelper = new TransactionHelper(getConnectionSource());
-        }
-
-        return transactionHelper;
     }
 
     public <TResult> TResult callInTransaction(Callable<TResult> callable) {
@@ -226,6 +183,7 @@ public class Storage {
     public static class Metadata {
 
         private final Dao<DatabaseProperty, Long> daoSettings;
+        private int historyFromHeight = -1;
 
         public Metadata(ConnectionSource connectionSource) throws SQLException {
             daoSettings = DaoManager.createDao(connectionSource, DatabaseProperty.class);
@@ -299,6 +257,29 @@ public class Storage {
         public void setLastBlockID(BlockID lastBlockID) {
             try {
                 setProperty("LastBlockId", Long.toString(lastBlockID.getValue()));
+            } catch (Exception e) {
+                throw new DataAccessException(e);
+            }
+        }
+
+        public int getHistoryFromHeight() {
+            if (historyFromHeight < 0) {
+                try {
+                    String id = getProperty("HistoryFromHeight");
+                    if (id != null) {
+                        historyFromHeight = Integer.parseInt(id);
+                    }
+                } catch (Exception e) {
+                    throw new DataAccessException(e);
+                }
+            }
+            return historyFromHeight;
+        }
+
+        public void setHistoryFromHeight(int height) {
+            try {
+                historyFromHeight = height;
+                setProperty("HistoryFromHeight", Integer.toString(height));
             } catch (Exception e) {
                 throw new DataAccessException(e);
             }

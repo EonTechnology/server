@@ -6,8 +6,9 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import com.exscudo.peer.core.Constant;
+import com.exscudo.peer.core.IFork;
 import com.exscudo.peer.core.blockchain.Blockchain;
-import com.exscudo.peer.core.blockchain.BlockchainService;
+import com.exscudo.peer.core.blockchain.BlockchainProvider;
 import com.exscudo.peer.core.common.Format;
 import com.exscudo.peer.core.common.TransactionComparator;
 import com.exscudo.peer.core.common.exceptions.IllegalSignatureException;
@@ -23,7 +24,6 @@ import com.exscudo.peer.core.data.transaction.ITransactionHandler;
 import com.exscudo.peer.core.data.transaction.TransactionContext;
 import com.exscudo.peer.core.data.transaction.ValidationResult;
 import com.exscudo.peer.core.ledger.ILedger;
-import com.exscudo.peer.core.ledger.Ledger;
 import com.exscudo.peer.core.ledger.LedgerProvider;
 
 /**
@@ -34,13 +34,13 @@ import com.exscudo.peer.core.ledger.LedgerProvider;
  */
 public class UnitOfWork implements IUnitOfWork {
 
-    private final BlockchainService blockchainProvider;
+    private final BlockchainProvider blockchainProvider;
     private final LedgerProvider ledgerProvider;
     private IFork fork;
 
     private Blockchain currentBlockchain;
 
-    public UnitOfWork(BlockchainService blockchainProvider, LedgerProvider ledgerProvider, IFork fork, Block block) {
+    public UnitOfWork(BlockchainProvider blockchainProvider, LedgerProvider ledgerProvider, IFork fork, Block block) {
         this.blockchainProvider = blockchainProvider;
         this.ledgerProvider = ledgerProvider;
         this.fork = fork;
@@ -51,7 +51,7 @@ public class UnitOfWork implements IUnitOfWork {
     public Block pushBlock(Block newBlock) throws ValidateException {
 
         Block headBlock = currentBlockchain.getLastBlock();
-        Ledger ledger = ledgerProvider.getLedger(headBlock);
+        ILedger ledger = ledgerProvider.getLedger(headBlock);
         if (ledger == null) {
             throw new ValidateException("Unable to get ledger for block. " + headBlock.getID());
         }
@@ -61,7 +61,7 @@ public class UnitOfWork implements IUnitOfWork {
         if (version != newBlock.getVersion()) {
             throw new ValidateException("Unsupported block version.");
         }
-        ledger = (Ledger) fork.covert(ledger, newBlock.getTimestamp());
+        ledger = fork.covert(ledger, newBlock.getTimestamp());
 
         ValidationResult r;
 
@@ -165,7 +165,7 @@ public class UnitOfWork implements IUnitOfWork {
         return ValidationResult.success;
     }
 
-    private ValidationResult validateState(Block newBlock, Ledger ledger) {
+    private ValidationResult validateState(Block newBlock, ILedger ledger) {
 
         String snapshot = ledger.getHash();
         if (snapshot == null || !snapshot.equals(newBlock.getSnapshot())) {
@@ -175,7 +175,7 @@ public class UnitOfWork implements IUnitOfWork {
         return ValidationResult.success;
     }
 
-    private Ledger applyBlock(Block newBlock, Block prevBlock, ILedger ledger, IFork fork) throws ValidateException {
+    private ILedger applyBlock(Block newBlock, Block prevBlock, ILedger ledger, IFork fork) throws ValidateException {
 
         ILedger newLedger = ledger;
 
@@ -206,6 +206,6 @@ public class UnitOfWork implements IUnitOfWork {
             newLedger = newLedger.putAccount(creator);
         }
 
-        return (Ledger) newLedger;
+        return newLedger;
     }
 }

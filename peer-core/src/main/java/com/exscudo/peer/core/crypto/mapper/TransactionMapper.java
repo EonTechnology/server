@@ -38,6 +38,10 @@ class TransactionMapper {
             map.put(Constants.ATTACHMENT, new HashMap<>());
         }
 
+        if (transaction.getNote() != null && !transaction.getNote().isEmpty()) {
+            map.put(Constants.NOTE, transaction.getNote());
+        }
+
         return map;
     }
 }

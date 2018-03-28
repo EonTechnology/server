@@ -34,6 +34,9 @@ public class DbNode {
     @DatabaseField(columnName = "value", canBeNull = false)
     private String value;
 
+    @DatabaseField(columnName = "color", canBeNull = false)
+    private int color;
+
     public DbNode() {
 
     }
@@ -110,4 +113,11 @@ public class DbNode {
         this.value = value;
     }
 
+    public int getColor() {
+        return color;
+    }
+
+    public void setColor(int color) {
+        this.color = color;
+    }
 }

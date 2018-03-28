@@ -7,7 +7,12 @@ import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import javax.net.ssl.*;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 import com.exscudo.eon.jsonrpc.proxy.PeerServiceProxy;
 import com.exscudo.jsonrpc.JrpcServiceProxy;
@@ -51,12 +56,15 @@ public class JrpcServiceProxyFactory implements IServiceProxyFactory {
         // Create a trust manager that does not validate certificate chains
         TrustManager[] trustAllCerts = new TrustManager[] {
                 new X509TrustManager() {
+                    @Override
                     public void checkClientTrusted(X509Certificate[] certs, String authType) {
                     }
 
+                    @Override
                     public void checkServerTrusted(X509Certificate[] certs, String authType) {
                     }
 
+                    @Override
                     public X509Certificate[] getAcceptedIssuers() {
                         return null;
                     }
@@ -70,6 +78,7 @@ public class JrpcServiceProxyFactory implements IServiceProxyFactory {
 
             // Install the all-trusting host verifier
             HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier() {
+                @Override
                 public boolean verify(String hostname, SSLSession session) {
                     return true;
                 }
@@ -110,7 +119,7 @@ public class JrpcServiceProxyFactory implements IServiceProxyFactory {
         return url;
     }
 
-    JrpcServiceProxy getProxy(URL url) {
+    JrpcServiceProxy createProxy(URL url) {
         JrpcServiceProxy proxy = new JrpcServiceProxy(url, ObjectMapperProvider.createModule());
 
         proxy.setReadTimeout(getReadTimeout());
@@ -132,11 +141,12 @@ public class JrpcServiceProxyFactory implements IServiceProxyFactory {
 
         try {
 
-            JrpcServiceProxy proxy = getProxy(url);
+            JrpcServiceProxy proxy = createProxy(url);
 
             String serviceName = clazzMap.get(clazz);
 
             Class<?> implClass = clazzMapImpl.get(clazz);
+            proxy.setLoggerClazz(implClass);
             Object instance = implClass.newInstance();
 
             if (instance instanceof PeerServiceProxy) {

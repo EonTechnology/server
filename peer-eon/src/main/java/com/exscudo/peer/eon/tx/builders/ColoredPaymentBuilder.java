@@ -1,8 +1,8 @@
 package com.exscudo.peer.eon.tx.builders;
 
-import com.exscudo.peer.core.TransactionType;
 import com.exscudo.peer.core.data.identifier.AccountID;
 import com.exscudo.peer.eon.ColoredCoinID;
+import com.exscudo.peer.eon.TransactionType;
 
 /**
  * "Colored Coin Payment" transaction.
@@ -16,9 +16,6 @@ public class ColoredPaymentBuilder extends TransactionBuilder<ColoredPaymentBuil
     }
 
     public static ColoredPaymentBuilder createNew(long amount, ColoredCoinID color, AccountID recipient) {
-        if (amount < 0) {
-            throw new IllegalArgumentException("amount");
-        }
         return new ColoredPaymentBuilder().withParam("amount", amount)
                                           .withParam("recipient", recipient.toString())
                                           .withParam("color", color.toString());

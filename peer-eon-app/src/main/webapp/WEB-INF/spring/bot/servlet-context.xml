@@ -12,23 +12,23 @@
             <map key-type="java.lang.String">
                 <!-- Transaction Service -->
                 <entry key="transactions">
-                    <bean factory-bean="botServiceFactory" factory-method="getTransactionService"/>
+                    <bean factory-bean="botServiceFactory" factory-method="getTransactionBotService"/>
                 </entry>
                 <!-- Account Service -->
                 <entry key="accounts">
-                    <bean factory-bean="botServiceFactory" factory-method="getAccountService"/>
+                    <bean factory-bean="botServiceFactory" factory-method="getAccountBotService"/>
                 </entry>
                 <!-- History Service -->
                 <entry key="history">
-                    <bean factory-bean="botServiceFactory" factory-method="getTransactionHistoryService"/>
+                    <bean factory-bean="botServiceFactory" factory-method="getTransactionHistoryBotService"/>
                 </entry>
                 <!-- Time Service -->
                 <entry key="time">
-                    <bean factory-bean="botServiceFactory" factory-method="getTimeService"/>
+                    <bean factory-bean="botServiceFactory" factory-method="getTimeBotService"/>
                 </entry>
                 <!-- Colored Coin Service -->
                 <entry key="coloredCoin">
-                    <bean factory-bean="botServiceFactory" factory-method="getColoredCoinService"/>
+                    <bean factory-bean="botServiceFactory" factory-method="getColoredCoinBotService"/>
                 </entry>
             </map>
         </constructor-arg>

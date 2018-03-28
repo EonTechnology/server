@@ -14,14 +14,14 @@ import com.exscudo.peer.core.ledger.tree.StateTree;
 import com.j256.ormlite.support.ConnectionSource;
 
 /**
- * Implementation of {@code ILedger} interface using by Merkle Tree.
+ * Abstract implementation of {@code ILedger} interface.
  * <p>
  * Instead of returning IAccount in {@link ILedger#getAccount}
  *
  * @see ILedger
  * @see Account
  */
-public class Ledger implements ILedger {
+public class Ledger extends AbstractLedger {
     private final StateTree<Account> stateTree;
     private final int timestamp;
     private StateTree.State<Account> state;
@@ -60,6 +60,7 @@ public class Ledger implements ILedger {
         return state.getName();
     }
 
+    @Override
     public void save() {
         if (state == null) {
             return;
@@ -70,6 +71,12 @@ public class Ledger implements ILedger {
     @Override
     public Iterator<Account> iterator() {
         return state.iterator();
+    }
+
+    @Override
+    public Iterator<Account> iterator(AccountID fromAcc) {
+
+        return state.iterator(fromAcc.getValue());
     }
 
     private static class ValueConverter implements IValueConverter<Account> {

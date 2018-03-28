@@ -1,6 +1,6 @@
 package com.exscudo.peer.eon.tx.builders;
 
-import com.exscudo.peer.core.TransactionType;
+import com.exscudo.peer.eon.TransactionType;
 
 /**
  * "Deposit-refill" transaction.

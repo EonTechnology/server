@@ -19,7 +19,7 @@ public class BaseValidationRule implements IValidationRule {
         }
 
         long fee = tx.getFee();
-        if (fee < length * EonConstant.TRANSACTION_MIN_FEE_PER_BYTE || fee > EonConstant.TRANSACTION_MAX_FEE) {
+        if (fee < length * EonConstant.TRANSACTION_MIN_FEE_PER_BYTE) {
             return ValidationResult.error("Invalid fee.");
         }
 

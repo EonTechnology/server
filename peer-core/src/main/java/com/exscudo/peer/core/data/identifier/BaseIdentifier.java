@@ -32,6 +32,13 @@ public class BaseIdentifier implements Serializable {
         this.scheme = scheme;
     }
 
+    public static <T extends BaseIdentifier> long getValueOrRef(T id) {
+        if (id == null) {
+            return 0L;
+        }
+        return id.getValue();
+    }
+
     public long getValue() {
         return id;
     }

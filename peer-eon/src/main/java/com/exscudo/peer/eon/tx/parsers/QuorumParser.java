@@ -2,9 +2,9 @@ package com.exscudo.peer.eon.tx.parsers;
 
 import java.util.Map;
 
-import com.exscudo.peer.core.TransactionType;
 import com.exscudo.peer.core.common.exceptions.ValidateException;
 import com.exscudo.peer.core.data.Transaction;
+import com.exscudo.peer.eon.TransactionType;
 import com.exscudo.peer.eon.ledger.ILedgerAction;
 import com.exscudo.peer.eon.ledger.actions.FeePaymentAction;
 import com.exscudo.peer.eon.ledger.actions.QuorumAction;

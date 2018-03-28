@@ -6,22 +6,21 @@ import java.util.Collections;
 import java.util.List;
 
 import com.exscudo.peer.core.Constant;
+import com.exscudo.peer.core.IFork;
 import com.exscudo.peer.core.api.Difficulty;
 import com.exscudo.peer.core.api.IBlockSynchronizationService;
 import com.exscudo.peer.core.api.IMetadataService;
 import com.exscudo.peer.core.api.SalientAttributes;
-import com.exscudo.peer.core.backlog.IBacklogService;
-import com.exscudo.peer.core.blockchain.IBlockchainService;
+import com.exscudo.peer.core.backlog.IBacklog;
+import com.exscudo.peer.core.blockchain.IBlockchainProvider;
 import com.exscudo.peer.core.common.Loggers;
 import com.exscudo.peer.core.common.TimeProvider;
-import com.exscudo.peer.core.common.exceptions.LifecycleException;
 import com.exscudo.peer.core.common.exceptions.RemotePeerException;
 import com.exscudo.peer.core.common.exceptions.ValidateException;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.env.ExecutionContext;
 import com.exscudo.peer.core.env.Peer;
-import com.exscudo.peer.core.importer.IFork;
 
 /**
  * Performs the task of synchronizing the list of transactions from forked node.
@@ -34,15 +33,15 @@ public final class SyncForkedTransactionListTask implements Runnable {
 
     private final IFork fork;
     private final ExecutionContext context;
-    private final IBlockchainService blockchainService;
+    private final IBlockchainProvider blockchainService;
     private final TimeProvider timeProvider;
-    private final IBacklogService backlogService;
+    private final IBacklog backlogService;
 
     public SyncForkedTransactionListTask(IFork fork,
                                          ExecutionContext context,
                                          TimeProvider timeProvider,
-                                         IBacklogService backlogService,
-                                         IBlockchainService blockchainService) {
+                                         IBacklog backlogService,
+                                         IBlockchainProvider blockchainService) {
         this.fork = fork;
         this.context = context;
         this.blockchainService = blockchainService;
@@ -113,9 +112,6 @@ public final class SyncForkedTransactionListTask implements Runnable {
 
                     try {
 
-                        if (tx.isFuture(timeProvider.get() + Constant.MAX_LATENCY)) {
-                            throw new LifecycleException();
-                        }
                         backlogService.put(tx);
                     } catch (ValidateException e) {
 

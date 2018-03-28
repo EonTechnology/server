@@ -70,6 +70,38 @@ public class MapperTest {
     }
 
     @Test
+    public void transaction_bencode_payment_note() throws Exception {
+        MockSigner signer = new MockSigner(123L);
+
+        Transaction tran = PaymentBuilder.createNew(100L, new AccountID(12345L))
+                                         .validity(12345, 3600)
+                                         .addNote("Test note")
+                                         .build(signer);
+
+        byte[] bytes = tran.getBytes();
+        String s = new String(bytes);
+
+        assertEquals(
+                "D10:ATTACHMENTD6:AMOUNTI100E9:RECIPIENT21:EON-T3E22-22222-22JUJE8:DEADLINEI3600E3:FEEI10E7:NETWORK23:EON-B-22222-22222-2222J4:NOTE9:TEST NOTE6:SENDER21:EON-RMNF4-KLGQ7-9Y65X9:TIMESTAMPI12345E4:TYPEI200E7:VERSIONI1EE",
+                s);
+    }
+
+    @Test
+    public void transaction_bencode_payment_empty_note() throws Exception {
+        MockSigner signer = new MockSigner(123L);
+
+        Transaction tran =
+                PaymentBuilder.createNew(100L, new AccountID(12345L)).validity(12345, 3600).addNote("").build(signer);
+
+        byte[] bytes = tran.getBytes();
+        String s = new String(bytes);
+
+        assertEquals(
+                "D10:ATTACHMENTD6:AMOUNTI100E9:RECIPIENT21:EON-T3E22-22222-22JUJE8:DEADLINEI3600E3:FEEI10E7:NETWORK23:EON-B-22222-22222-2222J6:SENDER21:EON-RMNF4-KLGQ7-9Y65X9:TIMESTAMPI12345E4:TYPEI200E7:VERSIONI1EE",
+                s);
+    }
+
+    @Test
     public void transaction_bencode_register() throws Exception {
         MockSigner signer = new MockSigner(123L);
 

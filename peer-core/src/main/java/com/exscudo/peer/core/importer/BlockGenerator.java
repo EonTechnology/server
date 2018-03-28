@@ -1,12 +1,19 @@
 package com.exscudo.peer.core.importer;
 
 import java.math.BigInteger;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.exscudo.peer.core.Constant;
-import com.exscudo.peer.core.backlog.IBacklogService;
-import com.exscudo.peer.core.blockchain.IBlockchainService;
+import com.exscudo.peer.core.IFork;
+import com.exscudo.peer.core.backlog.IBacklog;
+import com.exscudo.peer.core.blockchain.IBlockchainProvider;
 import com.exscudo.peer.core.blockchain.events.BlockEvent;
 import com.exscudo.peer.core.blockchain.events.IBlockEventListener;
 import com.exscudo.peer.core.common.Format;
@@ -34,8 +41,8 @@ import com.exscudo.peer.core.ledger.LedgerProvider;
 public class BlockGenerator implements IPeerEventListener, IBlockEventListener {
 
     private final AtomicBoolean isGenAllowed = new AtomicBoolean();
-    private final IBacklogService backlog;
-    private final IBlockchainService blockchain;
+    private final IBacklog backlog;
+    private final IBlockchainProvider blockchain;
     private final IFork fork;
     private final LedgerProvider ledgerProvider;
     private boolean useFastGeneration = false;
@@ -43,8 +50,8 @@ public class BlockGenerator implements IPeerEventListener, IBlockEventListener {
 
     public BlockGenerator(IFork fork,
                           ISigner signer,
-                          IBacklogService backlog,
-                          IBlockchainService blockchain,
+                          IBacklog backlog,
+                          IBlockchainProvider blockchain,
                           LedgerProvider ledgerProvider) {
         this.backlog = backlog;
         this.blockchain = blockchain;

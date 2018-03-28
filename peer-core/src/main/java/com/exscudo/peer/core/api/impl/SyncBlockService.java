@@ -5,11 +5,10 @@ import java.util.ArrayList;
 
 import com.exscudo.peer.core.api.Difficulty;
 import com.exscudo.peer.core.api.IBlockSynchronizationService;
-import com.exscudo.peer.core.blockchain.IBlockchainService;
+import com.exscudo.peer.core.blockchain.IBlockchainProvider;
 import com.exscudo.peer.core.common.exceptions.RemotePeerException;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.identifier.BlockID;
-import com.exscudo.peer.core.env.ExecutionContext;
 
 /**
  * Basic implementation of the {@code IBlockSynchronizationService} interface
@@ -20,24 +19,22 @@ public class SyncBlockService extends BaseService implements IBlockSynchronizati
      */
     public static final int BLOCK_LIMIT = 10;
 
-    private final ExecutionContext context;
-    private final IBlockchainService blockchainService;
+    private final IBlockchainProvider blockchain;
 
-    public SyncBlockService(ExecutionContext context, IBlockchainService blockchainService) {
-        this.context = context;
-        this.blockchainService = blockchainService;
+    public SyncBlockService(IBlockchainProvider blockchain) {
+        this.blockchain = blockchain;
     }
 
     @Override
     public Difficulty getDifficulty() throws RemotePeerException, IOException {
-        Block lastBlock = blockchainService.getLastBlock();
+        Block lastBlock = blockchain.getLastBlock();
         return new Difficulty(lastBlock.getID(), lastBlock.getCumulativeDifficulty());
     }
 
     @Override
     public Block[] getBlockHistory(String[] blockSequence) throws RemotePeerException, IOException {
 
-        BlockID lastBlockID = blockchainService.getLastBlock().getID();
+        BlockID lastBlockID = blockchain.getLastBlock().getID();
         BlockID commonBlockID = null;
 
         try {
@@ -45,7 +42,7 @@ public class SyncBlockService extends BaseService implements IBlockSynchronizati
             int commonBlockHeight = -1;
             for (String encodedID : blockSequence) {
                 BlockID id = new BlockID(encodedID);
-                int height = blockchainService.getBlockHeight(id);
+                int height = blockchain.getBlockHeight(id);
                 if (height > commonBlockHeight) {
                     commonBlockHeight = height;
                     commonBlockID = id;
@@ -55,7 +52,7 @@ public class SyncBlockService extends BaseService implements IBlockSynchronizati
             throw new RemotePeerException("Unsupported request. Invalid block ID format.", e);
         }
 
-        if (!lastBlockID.equals(blockchainService.getLastBlock().getID())) {
+        if (!lastBlockID.equals(blockchain.getLastBlock().getID())) {
             throw new RemotePeerException("Last block changed");
         }
 
@@ -63,10 +60,10 @@ public class SyncBlockService extends BaseService implements IBlockSynchronizati
 
             ArrayList<Block> nextBlocks = new ArrayList<>();
             BlockID id = commonBlockID;
-            Block block = blockchainService.getBlock(id);
+            Block block = blockchain.getBlock(id);
             while (nextBlocks.size() < BLOCK_LIMIT && block != null) {
 
-                block = blockchainService.getBlockByHeight(block.getHeight() + 1);
+                block = blockchain.getBlockByHeight(block.getHeight() + 1);
                 if (block == null || !block.getPreviousBlock().equals(id)) {
                     break;
                 }
@@ -74,7 +71,7 @@ public class SyncBlockService extends BaseService implements IBlockSynchronizati
                 id = block.getID();
                 nextBlocks.add(block);
 
-//                if (!lastBlockID.equals(blockchainService.getLastBlock().getID())) {
+//                if (!lastBlockID.equals(blockchain.getLastBlock().getID())) {
 //                    break;
 //                }
             }
@@ -86,6 +83,6 @@ public class SyncBlockService extends BaseService implements IBlockSynchronizati
 
     @Override
     public Block getLastBlock() throws RemotePeerException, IOException {
-        return blockchainService.getLastBlock();
+        return blockchain.getLastBlock();
     }
 }

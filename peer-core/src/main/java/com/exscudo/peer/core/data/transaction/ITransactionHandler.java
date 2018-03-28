@@ -2,6 +2,7 @@ package com.exscudo.peer.core.data.transaction;
 
 import com.exscudo.peer.core.common.exceptions.ValidateException;
 import com.exscudo.peer.core.data.Transaction;
+import com.exscudo.peer.core.data.identifier.AccountID;
 import com.exscudo.peer.core.ledger.ILedger;
 
 /**
@@ -20,4 +21,6 @@ public interface ITransactionHandler {
      * @throws ValidateException if transaction not correct
      */
     ILedger run(Transaction transaction, ILedger ledger, TransactionContext context) throws ValidateException;
+
+    AccountID getRecipient(Transaction transaction);
 }

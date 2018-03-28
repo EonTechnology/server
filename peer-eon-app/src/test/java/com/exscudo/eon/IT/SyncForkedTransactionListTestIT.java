@@ -42,7 +42,7 @@ public class SyncForkedTransactionListTestIT {
     @Test
     public void step_1_too_many_blocks() throws Exception {
 
-        Block lastBlock = ctx1.blockchain.getLastBlock();
+        Block lastBlock = ctx1.blockExplorerService.getLastBlock();
 
         int time = lastBlock.getTimestamp() + Constant.BLOCK_PERIOD * (Constant.BLOCK_IN_DAY + 2) + 1;
         Mockito.when(mockTimeProvider.get()).thenReturn(time);
@@ -60,10 +60,10 @@ public class SyncForkedTransactionListTestIT {
         ctx2.syncBlockListTask.run();
 
         Assert.assertNotEquals("Blockchain not synchronized",
-                               ctx1.blockchain.getLastBlock().getID(),
-                               ctx2.blockchain.getLastBlock().getID());
+                               ctx1.blockExplorerService.getLastBlock().getID(),
+                               ctx2.blockExplorerService.getLastBlock().getID());
 
-        lastBlock = ctx1.blockchain.getLastBlock();
+        lastBlock = ctx1.blockExplorerService.getLastBlock();
         Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + Constant.BLOCK_PERIOD + 1);
 
         Transaction tx1 = PaymentBuilder.createNew(10000L, new AccountID(ctx2.getSigner().getPublicKey()))
@@ -97,10 +97,10 @@ public class SyncForkedTransactionListTestIT {
         task1.run();
         task2.run();
 
-        Assert.assertTrue(ctx1.transactionProvider.containsTransaction(tx1.getID()));
-        Assert.assertTrue(ctx2.transactionProvider.containsTransaction(tx2.getID()));
+        Assert.assertNotNull(ctx1.transactionExplorerService.getById(tx1.getID().toString()));
+        Assert.assertNotNull(ctx2.transactionExplorerService.getById(tx2.getID().toString()));
 
-        Assert.assertTrue(ctx1.backlog.contains(tx2.getID()));
-        Assert.assertTrue(ctx2.backlog.contains(tx1.getID()));
+        Assert.assertNotNull(ctx1.backlogExplorerService.getById(tx2.getID().toString()));
+        Assert.assertNotNull(ctx2.backlogExplorerService.getById(tx1.getID().toString()));
     }
 }

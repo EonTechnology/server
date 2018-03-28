@@ -2,9 +2,8 @@ package com.exscudo.peer.eon.tx.builders;
 
 import java.util.HashMap;
 
-import com.exscudo.peer.core.TransactionType;
 import com.exscudo.peer.core.data.identifier.AccountID;
-import com.exscudo.peer.eon.EonConstant;
+import com.exscudo.peer.eon.TransactionType;
 
 /**
  * "Payment" transaction.
@@ -18,9 +17,6 @@ public class PaymentBuilder extends TransactionBuilder<PaymentBuilder> {
     }
 
     public static PaymentBuilder createNew(long amount, AccountID recipient) {
-        if (amount < 0 || amount > EonConstant.MAX_MONEY) {
-            throw new IllegalArgumentException("amount");
-        }
         return new PaymentBuilder().withParam("amount", amount).withParam("recipient", recipient.toString());
     }
 }

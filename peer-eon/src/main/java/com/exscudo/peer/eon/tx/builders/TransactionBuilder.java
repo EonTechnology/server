@@ -20,6 +20,7 @@ public class TransactionBuilder<TConcreteBuilder extends TransactionBuilder<?>> 
     private int version = 1;
     private int type;
     private Map<String, Object> data;
+    private String note = null;
 
     public TransactionBuilder(int type, Map<String, Object> data) {
         this.type = type;
@@ -51,6 +52,14 @@ public class TransactionBuilder<TConcreteBuilder extends TransactionBuilder<?>> 
         return cast;
     }
 
+    public TConcreteBuilder addNote(String note) {
+        this.note = note;
+
+        @SuppressWarnings("unchecked")
+        TConcreteBuilder cast = (TConcreteBuilder) this;
+        return cast;
+    }
+
     public TConcreteBuilder validity(int timestamp, int deadline, int version) {
         this.deadline = deadline;
         this.timestamp = timestamp;
@@ -72,6 +81,7 @@ public class TransactionBuilder<TConcreteBuilder extends TransactionBuilder<?>> 
         tx.setSenderID(new AccountID(signer.getPublicKey()));
         tx.setFee(fee);
         tx.setData(data);
+        tx.setNote(note);
 
         byte[] bytes = tx.getBytes();
         byte[] signature = signer.sign(bytes);
