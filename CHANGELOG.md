@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+## 0.10.1 - 2018-03-29
+### Changed
+- NodesCleanupTask is disabled (can damage the State Tree).
+
 ## 0.10.0 - 2018-03-29 - TestNet2 fork 2
 ### Added
 - Added the Note field to the transaction.

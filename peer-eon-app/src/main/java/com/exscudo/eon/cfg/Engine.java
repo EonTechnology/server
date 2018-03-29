@@ -80,10 +80,10 @@ public class Engine {
                                                               30,
                                                               60,
                                                               TimeUnit.MINUTES);
-            engine.scheduledThreadPool.scheduleWithFixedDelay(timed(taskFactory.getNodesCleanupTask()),
-                                                              45,
-                                                              60,
-                                                              TimeUnit.MINUTES);
+//            engine.scheduledThreadPool.scheduleWithFixedDelay(timed(taskFactory.getNodesCleanupTask()),
+//                                                              45,
+//                                                              60,
+//                                                              TimeUnit.MINUTES);
 
             return engine;
         } catch (Exception e) {
