@@ -1,0 +1,2230 @@
+{
+  "timestamp": 1525694400,
+  "signature": "2a2a2a416c6c2074686520776f726c64732061726520696e206d6520616e64204920616d20696e20616c6c2074686520776f726c64732a2a2a20566973686e75",
+  "accounts": {
+    "EON-AFVF2-4Q99C-76FPP": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "802ca3669d783ad88f808ddea4cb60bca62e3d970b58cefdfb53c41dd0dddfe1"
+      }
+    },
+    "EON-YYKUM-XSR62-TBJWM": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "cb908a67c7258b053e91d96964a15f1459d75ef5ef4cf7ff67eab1f28d59e90c"
+      }
+    },
+    "EON-SR49G-LUX8F-UF2TZ": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "f854aa0c8cd689633e2aa8029562bd0c90800014816b666823a86b2d9f1bf518"
+      }
+    },
+    "EON-W2TWM-9PTB2-QKRXT": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 250000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "a12e81087b296956fa1bae09e5ddda650c2230ee85302016c87d48cd0a5db51f"
+      }
+    },
+    "EON-AHCSK-UNDYS-Z6V8X": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "32c17fb8fce896e139e45865d408b0bd775cc5c530fc94fa81575eafe059f62d"
+      }
+    },
+    "EON-U83EY-CV5JL-YARVW": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "68b08857ac9a8b7ad8b786ff6ea2a103e95dbdfe32f224d30b9eda47480e7a5b"
+      }
+    },
+    "EON-PRS8N-EWWKS-BH7EV": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "f5c178d798bc6c51eb3eac56d8823d5e1068bc0cc07b69d820ff24fabff960be"
+      }
+    },
+    "EON-5VF3K-BYG3B-EEZ3W": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "67cbc5fdf809f656337021e215848b7073f1a0a8f64545fdf60b0ce4b4c0c447"
+      }
+    },
+    "EON-3DKU5-N2HZ7-4RZ2W": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "8c1087e1d96390ef693aa2ddbd6a36de2d92e7aec7e7941578b63cb3ccc7ad57"
+      }
+    },
+    "EON-KVSKC-QP85Z-7B6CQ": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "b47d226845e74beb0481ee046892c365d57e573e7880db047def6ac3bb104797"
+      }
+    },
+    "EON-R79MJ-48VJA-ZX57X": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "26b455f75dd2cfe6764a86e02fa74ac5600de1a11f8d83c4c8291e8842e3a9b7"
+      }
+    },
+    "EON-E3RSC-B6QTW-SQPAQ": {
+      "balance": {
+        "amount": 12120048111586
+      },
+      "public-key": {
+        "pk": "c9c3c08212a7f8b3c2bd38c22888a988deb2bff12b91761c7feb435f07bca684"
+      }
+    },
+    "EON-ML3GZ-9NHFW-UPPPY": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "f2ecad1d658d16bc54a31ff5fabc623778d87d994f28936a7c4d04124717c2b3"
+      }
+    },
+    "EON-V6XRZ-YXPVM-9ZXCU": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "13605b4b918d69fca4d3fc7789623d02c261bd6b4312620541fe71c018243b3a"
+      }
+    },
+    "EON-XW5KU-E52VV-H23BX": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "dd0e14dc602c1e873cf37da497b6a781c2eb93b8e043dff8757191cefe304074"
+      }
+    },
+    "EON-LVR9C-XACSV-5NZBL": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "balance": {
+        "amount": 500000000000
+      },
+      "public-key": {
+        "pk": "346b02e16d9086e4e142c4071394dc523ee767c435d14fbb4ea6a576e645a308"
+      }
+    },
+    "EON-8SQEV-2FZJN-BW9WK": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-TDL7V-Q3U88-6MWZV": 50,
+          "EON-79H6G-TMJHX-5JNZM": 50
+        },
+        "timestamp": 0
+      },
+      "balance": {
+        "amount": 69209590807938
+      },
+      "public-key": {
+        "pk": "b6f2b73cc9942aed77ee6ab4ee8cc148df80b5d14a0083ec7e12df1c6146a7de"
+      }
+    },
+    "EON-HVKFB-6C7WQ-H5R6K": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-TDL7V-Q3U88-6MWZV": 50,
+          "EON-79H6G-TMJHX-5JNZM": 50
+        },
+        "timestamp": 0
+      },
+      "balance": {
+        "amount": 30576000000000
+      },
+      "public-key": {
+        "pk": "8156f1356409e92502f3a4db981cc4dfa95446c0dffe91017c640bd975767a6c"
+      }
+    },
+    "EON-N6UUF-ZTT8H-4B6FZ": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "f3347b2cc4962b97a99948e5e42822be739e3a802ae95b159a52a2923fe47c4c"
+      }
+    },
+    "EON-42BWW-M9RYN-94D3R": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "9552ce44d8d9f7ab7e77664f9e612f37861632c56d05c1f6fd16a725e9cf42d0"
+      }
+    },
+    "EON-HMSKH-DALGC-676HU": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "d83c6b69c81333f2b5437440b61b2d2bc787239e06e05e26ad344c50be4bd391"
+      }
+    },
+    "EON-VAQ99-5LGDC-VW68U": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "0c2e4a01f95b4317fe1b8a5b82c67b17b06bdcd7f6fca99b9f61aae40b4567c3"
+      }
+    },
+    "EON-UL9YG-73C34-KFK3Q": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "fc59f2e25cddd47d4620041be74015c605f3573f535abbff9b841dd07473ce8b"
+      }
+    },
+    "EON-335B5-EWTVD-UQACJ": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 250000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "d917acd73bf31936071f963bc6e11bf07df9ab792a7f266ff3c70ab64289a96a"
+      }
+    },
+    "EON-3HNQ5-BPC2B-7YPKQ": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "8cc4e27ecb5b7a8ddc891de627920a236c8e31b4722a1caf390003d22150e96d"
+      }
+    },
+    "EON-KH7N5-9GK7A-SZZ7X": {
+      "balance": {
+        "amount": 34880000000
+      },
+      "public-key": {
+        "pk": "75206ea763e810ca56ec21f155b9766c112628631e75d15fd5d2cb2ac06ae419"
+      }
+    },
+    "EON-B93JT-D9YDM-TP24L": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "cf145e1fbdcf8cffa44bf4d7c892ae02f6497c2860b82b0f44c329ccf624a132"
+      }
+    },
+    "EON-XHV52-DTW6V-4SNGW": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "156319679c01910ae0bf633ff0ee87ce886cd5ec97aa849ff62e81fe22c9bb4b"
+      }
+    },
+    "EON-V3NVQ-QU386-C3W3N": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-TDL7V-Q3U88-6MWZV": 50,
+          "EON-79H6G-TMJHX-5JNZM": 50
+        },
+        "timestamp": 0
+      },
+      "balance": {
+        "amount": 28800000000000
+      },
+      "public-key": {
+        "pk": "a2a75220d5617e4fcda7a198fb32163bb2bfb40faead42a6e99562f73084d6e5"
+      }
+    },
+    "EON-TWSXH-92CC9-FVB2S": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "0258c1b39f8c751bd4e3a2008e01d0178494b5de375daff753ddfedcc06573c7"
+      }
+    },
+    "EON-J9BN9-Q4S7Z-4CLEN": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "98615cf3de7c36bf9157e4d20024b3e23e0b753797c43c968a881d6766739328"
+      }
+    },
+    "EON-F7VPJ-MR4M2-6VR2X": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "9053a8970fde3054b57854e972aa29002a4e7053fa068419b40962a15359cbbe"
+      }
+    },
+    "EON-KAZ7F-LVZFD-K3M5P": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "a601f3b2c8193a1c4757060b8708534fa14f7568e9d31d10e12918ee48a4d223"
+      }
+    },
+    "EON-4T2E3-S4XZ6-APXXJ": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "9817ee9ea85b259d4f69bb35486e01d82a90a4547fbe184efaf708e365a16e6a"
+      }
+    },
+    "EON-J7RZJ-XTHWV-LDZ9W": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "2556088319210c968040276c6a1ecde07a2bb709bf61dcf4b7d14d8d635d1896"
+      }
+    },
+    "EON-9GSMA-Y7P8Q-3K7SS": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "62e03f82f51b5622d83759b86fbaa47936e173e11c1a8fabef02052605d404e3"
+      }
+    },
+    "EON-AZ84L-95S9V-Q3K9W": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "ded71aac3de3d34bc1dc2856693acd0d8602d01fc27a77addb36600c6bd92cc8"
+      }
+    },
+    "EON-SWAKQ-UL4MH-5DAQS": {
+      "balance": {
+        "amount": 23998000000
+      },
+      "public-key": {
+        "pk": "afece70d5001dafb1ea3761fe62ea182d2d1d54ff105b35d3ebf41bd9d7bcac5"
+      }
+    },
+    "EON-79H6G-TMJHX-5JNZM": {
+      "public-key": {
+        "pk": "6fcc2d9ff5cfdaf7b7de2cc415968421f17fbae3ab044438df1c8ab616d3c404"
+      },
+      "voter": {
+        "polls": {
+          "EON-V3NVQ-QU386-C3W3N": 50,
+          "EON-QXBTE-AA4GN-CBBVT": 50,
+          "EON-SW4VW-6DJCL-8HU7R": 50,
+          "EON-8SQEV-2FZJN-BW9WK": 50,
+          "EON-HVKFB-6C7WQ-H5R6K": 50,
+          "EON-Z8Y2P-SJL8U-ZJNEM": 50,
+          "EON-L9SWM-QQVQ3-77GBT": 50,
+          "EON-QUMDW-U7DSU-R9YYY": 50,
+          "EON-TB2DY-26AJ8-CFWUJ": 50,
+          "EON-4KBXH-25XKZ-D9UVN": 50
+        },
+        "timestamp": 0
+      }
+    },
+    "EON-3WVJ4-YC57Y-EY5WS": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "7c2fa998d1f5a3332cb847ba5a975da431ed2ebe86c787257b9719e0763bf7e3"
+      }
+    },
+    "EON-6S2XY-FMHZU-3EUYS": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "a9ade73fb0bdab27043a502d08dc3620e4263f37836aa48839b6ba59ddf23c67"
+      }
+    },
+    "EON-S28YZ-PHWK5-6RFVK": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "e38b92ad1dc56ab7a4c762b4863c7ee9eec054bed414b30f225a6ebe33c6cfd3"
+      }
+    },
+    "EON-QG27M-KL5AK-RGK6M": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "7c1be6162e21f1e798928cfb9f118423161ec73e02026264b6a80673a918c300"
+      }
+    },
+    "EON-WALLR-RQAQK-M9XMT": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "c37a929b3e98c8d7cbbff748dba5708e8e05fbaf866ce6f9253e4501d5001325"
+      }
+    },
+    "EON-QXBTE-AA4GN-CBBVT": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-TDL7V-Q3U88-6MWZV": 50,
+          "EON-79H6G-TMJHX-5JNZM": 50
+        },
+        "timestamp": 0
+      },
+      "balance": {
+        "amount": 24000000000000
+      },
+      "public-key": {
+        "pk": "8cbe7012d0e90d983bd48f0061b05081b36e8f66e5f0d83cb5154bdbbc7e04e0"
+      }
+    },
+    "EON-SW4VW-6DJCL-8HU7R": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-TDL7V-Q3U88-6MWZV": 50,
+          "EON-79H6G-TMJHX-5JNZM": 50
+        },
+        "timestamp": 0
+      },
+      "balance": {
+        "amount": 7200000000000
+      },
+      "public-key": {
+        "pk": "c318311e1c1b21734d00d28fe9c16ceb6246f50ddb71489760ae04a58c850498"
+      }
+    },
+    "EON-7NHSR-D3VP5-99V4W": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "8092d810adde0bc93bf35c51288ccfb517f148880065cec09952cddaefd97059"
+      }
+    },
+    "EON-RD2M6-LEG6E-L9DKR": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "df572f2c25c060519ce9340fce3514a6011ed13ad6a9298a6e9b9b95af8f217f"
+      }
+    },
+    "EON-6XT82-ZVT22-D7N6W": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "7fa21c2476d48ddd3c884ec6077f60db0a48c65aa197561d45679b6188337908"
+      }
+    },
+    "EON-NKQ4L-MBNBR-4WXZZ": {
+      "public-key": {
+        "pk": "4e6c8c1d19ba0443292f7a3476d09f1b59ada2fc78ff9bcbbcfd96300a504998"
+      },
+      "voter": {
+        "polls": {
+          "EON-AFVF2-4Q99C-76FPP": 50,
+          "EON-YYKUM-XSR62-TBJWM": 50,
+          "EON-SR49G-LUX8F-UF2TZ": 50,
+          "EON-W2TWM-9PTB2-QKRXT": 50,
+          "EON-AHCSK-UNDYS-Z6V8X": 50,
+          "EON-5VF3K-BYG3B-EEZ3W": 50,
+          "EON-SNUD8-B8LQS-NWC7J": 50,
+          "EON-U83EY-CV5JL-YARVW": 50,
+          "EON-PRS8N-EWWKS-BH7EV": 50,
+          "EON-3DKU5-N2HZ7-4RZ2W": 50,
+          "EON-KVSKC-QP85Z-7B6CQ": 50,
+          "EON-R79MJ-48VJA-ZX57X": 50,
+          "EON-FVNPK-5DSZC-YM84Q": 50,
+          "EON-ML3GZ-9NHFW-UPPPY": 50,
+          "EON-SVZFQ-KBMDE-69FXZ": 50,
+          "EON-V6XRZ-YXPVM-9ZXCU": 50,
+          "EON-XW5KU-E52VV-H23BX": 50,
+          "EON-LVR9C-XACSV-5NZBL": 50,
+          "EON-T5YEP-A3RJ3-DSKNN": 50,
+          "EON-E5XCN-7HF3Z-9GV5S": 50,
+          "EON-F3VZC-3NXXH-LJDQY": 50,
+          "EON-62J34-6C594-XJK5U": 50,
+          "EON-BFUEP-P34JZ-3J6TW": 50,
+          "EON-24Z74-U5UQ4-X33CL": 50,
+          "EON-N6UUF-ZTT8H-4B6FZ": 50,
+          "EON-4EWFG-YKQHS-A9E7V": 50,
+          "EON-42BWW-M9RYN-94D3R": 50,
+          "EON-ZFVHR-B8ATD-2UC5T": 50,
+          "EON-HMSKH-DALGC-676HU": 50,
+          "EON-VAQ99-5LGDC-VW68U": 50,
+          "EON-UL9YG-73C34-KFK3Q": 50,
+          "EON-3HNQ5-BPC2B-7YPKQ": 50,
+          "EON-335B5-EWTVD-UQACJ": 50,
+          "EON-XHV52-DTW6V-4SNGW": 50,
+          "EON-B93JT-D9YDM-TP24L": 50,
+          "EON-YEBU3-CYBCQ-Q5VHJ": 50,
+          "EON-5C7HE-RLMPM-JUNEN": 50,
+          "EON-7YA5J-YC69H-4Z8UV": 50,
+          "EON-TWSXH-92CC9-FVB2S": 50,
+          "EON-2HNLC-MT8ZF-MQJPT": 50,
+          "EON-P3EKV-DFNJT-7XCSP": 50,
+          "EON-J2VX6-6LJPB-8V6PX": 50,
+          "EON-84FZJ-LR7ZZ-PTV8Q": 50,
+          "EON-P3YUA-T9SHR-7JMQY": 50,
+          "EON-F7VPJ-MR4M2-6VR2X": 50,
+          "EON-J9BN9-Q4S7Z-4CLEN": 50,
+          "EON-WDGQH-HDWV9-PRAAZ": 50,
+          "EON-KAZ7F-LVZFD-K3M5P": 50,
+          "EON-K5847-7JD7T-DRZKJ": 50,
+          "EON-4T2E3-S4XZ6-APXXJ": 50,
+          "EON-V633Q-EBAXG-7DDDL": 50,
+          "EON-J7RZJ-XTHWV-LDZ9W": 50,
+          "EON-D79RB-5GH6V-AKW7U": 50,
+          "EON-KC3AU-ZFSZ9-YAA9P": 50,
+          "EON-7CRYZ-UYH9Q-R89LS": 50,
+          "EON-9GSMA-Y7P8Q-3K7SS": 50,
+          "EON-AP3C2-8BNMQ-89SGY": 50,
+          "EON-AZ84L-95S9V-Q3K9W": 50,
+          "EON-3WVJ4-YC57Y-EY5WS": 50,
+          "EON-3TFZU-LRH4A-E596S": 50,
+          "EON-KVNB5-M4T4R-U3XAR": 50,
+          "EON-6S2XY-FMHZU-3EUYS": 50,
+          "EON-MSV5N-8ARK2-ZETBM": 50,
+          "EON-66LQK-9KAZH-9TEKP": 50,
+          "EON-9ZY5Z-3X936-TCN5U": 50,
+          "EON-S28YZ-PHWK5-6RFVK": 50,
+          "EON-QG27M-KL5AK-RGK6M": 50,
+          "EON-HABMN-J2UCW-MZJ7T": 50,
+          "EON-ASRFS-LSYUX-7R8MT": 50,
+          "EON-4CWK5-3HFVH-EUB8K": 50,
+          "EON-88ADA-E26QT-3XUXJ": 50,
+          "EON-WALLR-RQAQK-M9XMT": 50,
+          "EON-X8Q7V-ELBXH-GA7UJ": 50,
+          "EON-WBQ8M-SGULU-ZFZCX": 50,
+          "EON-PKYN4-FMXX2-NSJTQ": 50,
+          "EON-W7NYL-JPZ55-Z4YYU": 50,
+          "EON-M96QU-34X2D-ZG6CN": 50,
+          "EON-7NHSR-D3VP5-99V4W": 50,
+          "EON-7NDFE-8MHRN-TWYAW": 50,
+          "EON-RD2M6-LEG6E-L9DKR": 50,
+          "EON-QNLSR-XP8WL-HK7AU": 50,
+          "EON-NUGJT-YHAUD-MKF6M": 50,
+          "EON-6XT82-ZVT22-D7N6W": 50
+        },
+        "timestamp": 0
+      }
+    },
+    "EON-SNUD8-B8LQS-NWC7J": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "c5adb6a75078936510b06c49bc6fa280ca769d3b3446488f9cc7eef3fd8b8da2"
+      }
+    },
+    "EON-FVNPK-5DSZC-YM84Q": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "053f944279cbd0f99c9d67cfc1e0453c26077a020bf97b2bff64b765c9a0740d"
+      }
+    },
+    "EON-SVZFQ-KBMDE-69FXZ": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "52feed7222399957b7967a0b41b786cf3c7fce598879307ef895cb0c50485f77"
+      }
+    },
+    "EON-TB2DY-26AJ8-CFWUJ": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-TDL7V-Q3U88-6MWZV": 50,
+          "EON-79H6G-TMJHX-5JNZM": 50
+        },
+        "timestamp": 0
+      },
+      "balance": {
+        "amount": 28800000000000
+      },
+      "public-key": {
+        "pk": "b915a09abb541dc704d3344e81b121c11b537c85b449ed0e25e6dd056fda962e"
+      }
+    },
+    "EON-E5XCN-7HF3Z-9GV5S": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "e837d4c717f89a53e5d2bbcc6066ae8786547373ab0bac99b88b17b257759bf2"
+      }
+    },
+    "EON-T5YEP-A3RJ3-DSKNN": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "c46082e0909415d172d9b4474d1e0bd665f783a66bff10d9f27180c6ebe10fc2"
+      }
+    },
+    "EON-F3VZC-3NXXH-LJDQY": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "96921054342c17288b352d0b83701c7904a6c328d5097724713c7c15951f89d0"
+      }
+    },
+    "EON-62J34-6C594-XJK5U": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "4d4218b5171973db07d2de834e762148443f1e0f1c0c6ba526ed0eeaccdc5ea6"
+      }
+    },
+    "EON-BFUEP-P34JZ-3J6TW": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "a059c4b59ee61f385f77f589b6419022042ab7cc871d0055232c6a053829c743"
+      }
+    },
+    "EON-GZLHJ-FCSBL-XUGYQ": {
+      "public-key": {
+        "pk": "56d9d0f8e6744513ad512bac624e108fe78e0e356ba7f4e4c1ce9dff0259c446"
+      },
+      "voter": {
+        "polls": {
+          "EON-AFVF2-4Q99C-76FPP": 50,
+          "EON-YYKUM-XSR62-TBJWM": 50,
+          "EON-SR49G-LUX8F-UF2TZ": 50,
+          "EON-W2TWM-9PTB2-QKRXT": 50,
+          "EON-AHCSK-UNDYS-Z6V8X": 50,
+          "EON-5VF3K-BYG3B-EEZ3W": 50,
+          "EON-SNUD8-B8LQS-NWC7J": 50,
+          "EON-U83EY-CV5JL-YARVW": 50,
+          "EON-PRS8N-EWWKS-BH7EV": 50,
+          "EON-3DKU5-N2HZ7-4RZ2W": 50,
+          "EON-KVSKC-QP85Z-7B6CQ": 50,
+          "EON-R79MJ-48VJA-ZX57X": 50,
+          "EON-FVNPK-5DSZC-YM84Q": 50,
+          "EON-ML3GZ-9NHFW-UPPPY": 50,
+          "EON-SVZFQ-KBMDE-69FXZ": 50,
+          "EON-V6XRZ-YXPVM-9ZXCU": 50,
+          "EON-TB2DY-26AJ8-CFWUJ": 50,
+          "EON-XW5KU-E52VV-H23BX": 50,
+          "EON-LVR9C-XACSV-5NZBL": 50,
+          "EON-T5YEP-A3RJ3-DSKNN": 50,
+          "EON-E5XCN-7HF3Z-9GV5S": 50,
+          "EON-F3VZC-3NXXH-LJDQY": 50,
+          "EON-62J34-6C594-XJK5U": 50,
+          "EON-BFUEP-P34JZ-3J6TW": 50,
+          "EON-8SQEV-2FZJN-BW9WK": 50,
+          "EON-HVKFB-6C7WQ-H5R6K": 50,
+          "EON-24Z74-U5UQ4-X33CL": 50,
+          "EON-N6UUF-ZTT8H-4B6FZ": 50,
+          "EON-4EWFG-YKQHS-A9E7V": 50,
+          "EON-42BWW-M9RYN-94D3R": 50,
+          "EON-ZFVHR-B8ATD-2UC5T": 50,
+          "EON-HMSKH-DALGC-676HU": 50,
+          "EON-VAQ99-5LGDC-VW68U": 50,
+          "EON-UL9YG-73C34-KFK3Q": 50,
+          "EON-3HNQ5-BPC2B-7YPKQ": 50,
+          "EON-335B5-EWTVD-UQACJ": 50,
+          "EON-XHV52-DTW6V-4SNGW": 50,
+          "EON-B93JT-D9YDM-TP24L": 50,
+          "EON-V3NVQ-QU386-C3W3N": 50,
+          "EON-YEBU3-CYBCQ-Q5VHJ": 50,
+          "EON-5C7HE-RLMPM-JUNEN": 50,
+          "EON-7YA5J-YC69H-4Z8UV": 50,
+          "EON-TWSXH-92CC9-FVB2S": 50,
+          "EON-2HNLC-MT8ZF-MQJPT": 50,
+          "EON-P3EKV-DFNJT-7XCSP": 50,
+          "EON-J2VX6-6LJPB-8V6PX": 50,
+          "EON-84FZJ-LR7ZZ-PTV8Q": 50,
+          "EON-P3YUA-T9SHR-7JMQY": 50,
+          "EON-F7VPJ-MR4M2-6VR2X": 50,
+          "EON-J9BN9-Q4S7Z-4CLEN": 50,
+          "EON-WDGQH-HDWV9-PRAAZ": 50,
+          "EON-KAZ7F-LVZFD-K3M5P": 50,
+          "EON-K5847-7JD7T-DRZKJ": 50,
+          "EON-4T2E3-S4XZ6-APXXJ": 50,
+          "EON-V633Q-EBAXG-7DDDL": 50,
+          "EON-J7RZJ-XTHWV-LDZ9W": 50,
+          "EON-D79RB-5GH6V-AKW7U": 50,
+          "EON-KC3AU-ZFSZ9-YAA9P": 50,
+          "EON-7CRYZ-UYH9Q-R89LS": 50,
+          "EON-9GSMA-Y7P8Q-3K7SS": 50,
+          "EON-AP3C2-8BNMQ-89SGY": 50,
+          "EON-AZ84L-95S9V-Q3K9W": 50,
+          "EON-3WVJ4-YC57Y-EY5WS": 50,
+          "EON-QUMDW-U7DSU-R9YYY": 50,
+          "EON-4KBXH-25XKZ-D9UVN": 50,
+          "EON-3TFZU-LRH4A-E596S": 50,
+          "EON-KVNB5-M4T4R-U3XAR": 50,
+          "EON-6S2XY-FMHZU-3EUYS": 50,
+          "EON-MSV5N-8ARK2-ZETBM": 50,
+          "EON-66LQK-9KAZH-9TEKP": 50,
+          "EON-9ZY5Z-3X936-TCN5U": 50,
+          "EON-S28YZ-PHWK5-6RFVK": 50,
+          "EON-QG27M-KL5AK-RGK6M": 50,
+          "EON-HABMN-J2UCW-MZJ7T": 50,
+          "EON-ASRFS-LSYUX-7R8MT": 50,
+          "EON-4CWK5-3HFVH-EUB8K": 50,
+          "EON-Z8Y2P-SJL8U-ZJNEM": 50,
+          "EON-88ADA-E26QT-3XUXJ": 50,
+          "EON-WALLR-RQAQK-M9XMT": 50,
+          "EON-L9SWM-QQVQ3-77GBT": 50,
+          "EON-X8Q7V-ELBXH-GA7UJ": 50,
+          "EON-WBQ8M-SGULU-ZFZCX": 50,
+          "EON-PKYN4-FMXX2-NSJTQ": 50,
+          "EON-W7NYL-JPZ55-Z4YYU": 50,
+          "EON-QXBTE-AA4GN-CBBVT": 50,
+          "EON-SW4VW-6DJCL-8HU7R": 50,
+          "EON-M96QU-34X2D-ZG6CN": 50,
+          "EON-7NHSR-D3VP5-99V4W": 50,
+          "EON-7NDFE-8MHRN-TWYAW": 50,
+          "EON-RD2M6-LEG6E-L9DKR": 50,
+          "EON-QNLSR-XP8WL-HK7AU": 50,
+          "EON-NUGJT-YHAUD-MKF6M": 50,
+          "EON-6XT82-ZVT22-D7N6W": 50
+        },
+        "timestamp": 0
+      }
+    },
+    "EON-24Z74-U5UQ4-X33CL": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "3a2540d1f34999d0a1019708ed341891b9de99ac786e3ef4a31073e725929368"
+      }
+    },
+    "EON-4EWFG-YKQHS-A9E7V": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "64077b4770a643b04fa3a5bcd3c7f07f558d5ec16df2ac7ce9c8e2e1b584a068"
+      }
+    },
+    "EON-ZFVHR-B8ATD-2UC5T": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "3cf07d0a24f797d26535b6577a4af0fbb61f331a29fb0fdf24681444d0f8e322"
+      }
+    },
+    "EON-L9FL9-4B5EN-C3SZJ": {
+      "balance": {
+        "amount": 218830
+      },
+      "public-key": {
+        "pk": "f5c5e40c3d0634675b55304e058c2b149813cabdfee0d3ad3216b7802561107b"
+      }
+    },
+    "EON-YEBU3-CYBCQ-Q5VHJ": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "6083eec3976dc18ce27f59ad88c357a48687246989242e94c8cfceec0efd1a69"
+      }
+    },
+    "EON-CTX3L-AVG6G-6J8EJ": {
+      "balance": {
+        "amount": 1000000
+      },
+      "public-key": {
+        "pk": "3531aa4f28bac91cbf216554b2006a74a57308cc7ece2bd995e93801785a33a1"
+      }
+    },
+    "EON-5C7HE-RLMPM-JUNEN": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "eb02ed1862980dc255a63491fb4021712da97381840b4853d9c02f32ba1c4cf8"
+      }
+    },
+    "EON-RBHPQ-QMBJR-RKEVL": {
+      "public-key": {
+        "pk": "d0134985679117db8cba9e4e7279a10ff7f476e83a954dcde18d6d5737df1d38"
+      },
+      "voter": {
+        "polls": {
+          "EON-AFVF2-4Q99C-76FPP": 50,
+          "EON-YYKUM-XSR62-TBJWM": 50,
+          "EON-SR49G-LUX8F-UF2TZ": 50,
+          "EON-W2TWM-9PTB2-QKRXT": 50,
+          "EON-AHCSK-UNDYS-Z6V8X": 50,
+          "EON-5VF3K-BYG3B-EEZ3W": 50,
+          "EON-SNUD8-B8LQS-NWC7J": 50,
+          "EON-U83EY-CV5JL-YARVW": 50,
+          "EON-PRS8N-EWWKS-BH7EV": 50,
+          "EON-3DKU5-N2HZ7-4RZ2W": 50,
+          "EON-KVSKC-QP85Z-7B6CQ": 50,
+          "EON-R79MJ-48VJA-ZX57X": 50,
+          "EON-FVNPK-5DSZC-YM84Q": 50,
+          "EON-ML3GZ-9NHFW-UPPPY": 50,
+          "EON-SVZFQ-KBMDE-69FXZ": 50,
+          "EON-V6XRZ-YXPVM-9ZXCU": 50,
+          "EON-XW5KU-E52VV-H23BX": 50,
+          "EON-LVR9C-XACSV-5NZBL": 50,
+          "EON-T5YEP-A3RJ3-DSKNN": 50,
+          "EON-E5XCN-7HF3Z-9GV5S": 50,
+          "EON-F3VZC-3NXXH-LJDQY": 50,
+          "EON-62J34-6C594-XJK5U": 50,
+          "EON-BFUEP-P34JZ-3J6TW": 50,
+          "EON-24Z74-U5UQ4-X33CL": 50,
+          "EON-N6UUF-ZTT8H-4B6FZ": 50,
+          "EON-4EWFG-YKQHS-A9E7V": 50,
+          "EON-42BWW-M9RYN-94D3R": 50,
+          "EON-ZFVHR-B8ATD-2UC5T": 50,
+          "EON-HMSKH-DALGC-676HU": 50,
+          "EON-VAQ99-5LGDC-VW68U": 50,
+          "EON-UL9YG-73C34-KFK3Q": 50,
+          "EON-3HNQ5-BPC2B-7YPKQ": 50,
+          "EON-335B5-EWTVD-UQACJ": 50,
+          "EON-XHV52-DTW6V-4SNGW": 50,
+          "EON-B93JT-D9YDM-TP24L": 50,
+          "EON-YEBU3-CYBCQ-Q5VHJ": 50,
+          "EON-5C7HE-RLMPM-JUNEN": 50,
+          "EON-7YA5J-YC69H-4Z8UV": 50,
+          "EON-TWSXH-92CC9-FVB2S": 50,
+          "EON-2HNLC-MT8ZF-MQJPT": 50,
+          "EON-P3EKV-DFNJT-7XCSP": 50,
+          "EON-J2VX6-6LJPB-8V6PX": 50,
+          "EON-84FZJ-LR7ZZ-PTV8Q": 50,
+          "EON-P3YUA-T9SHR-7JMQY": 50,
+          "EON-F7VPJ-MR4M2-6VR2X": 50,
+          "EON-J9BN9-Q4S7Z-4CLEN": 50,
+          "EON-WDGQH-HDWV9-PRAAZ": 50,
+          "EON-KAZ7F-LVZFD-K3M5P": 50,
+          "EON-K5847-7JD7T-DRZKJ": 50,
+          "EON-4T2E3-S4XZ6-APXXJ": 50,
+          "EON-V633Q-EBAXG-7DDDL": 50,
+          "EON-J7RZJ-XTHWV-LDZ9W": 50,
+          "EON-D79RB-5GH6V-AKW7U": 50,
+          "EON-KC3AU-ZFSZ9-YAA9P": 50,
+          "EON-7CRYZ-UYH9Q-R89LS": 50,
+          "EON-9GSMA-Y7P8Q-3K7SS": 50,
+          "EON-AP3C2-8BNMQ-89SGY": 50,
+          "EON-AZ84L-95S9V-Q3K9W": 50,
+          "EON-3WVJ4-YC57Y-EY5WS": 50,
+          "EON-3TFZU-LRH4A-E596S": 50,
+          "EON-KVNB5-M4T4R-U3XAR": 50,
+          "EON-6S2XY-FMHZU-3EUYS": 50,
+          "EON-MSV5N-8ARK2-ZETBM": 50,
+          "EON-66LQK-9KAZH-9TEKP": 50,
+          "EON-9ZY5Z-3X936-TCN5U": 50,
+          "EON-S28YZ-PHWK5-6RFVK": 50,
+          "EON-QG27M-KL5AK-RGK6M": 50,
+          "EON-HABMN-J2UCW-MZJ7T": 50,
+          "EON-ASRFS-LSYUX-7R8MT": 50,
+          "EON-4CWK5-3HFVH-EUB8K": 50,
+          "EON-88ADA-E26QT-3XUXJ": 50,
+          "EON-WALLR-RQAQK-M9XMT": 50,
+          "EON-X8Q7V-ELBXH-GA7UJ": 50,
+          "EON-WBQ8M-SGULU-ZFZCX": 50,
+          "EON-PKYN4-FMXX2-NSJTQ": 50,
+          "EON-W7NYL-JPZ55-Z4YYU": 50,
+          "EON-M96QU-34X2D-ZG6CN": 50,
+          "EON-7NHSR-D3VP5-99V4W": 50,
+          "EON-7NDFE-8MHRN-TWYAW": 50,
+          "EON-RD2M6-LEG6E-L9DKR": 50,
+          "EON-QNLSR-XP8WL-HK7AU": 50,
+          "EON-NUGJT-YHAUD-MKF6M": 50,
+          "EON-6XT82-ZVT22-D7N6W": 50
+        },
+        "timestamp": 0
+      }
+    },
+    "EON-7YA5J-YC69H-4Z8UV": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "81f342b6194f2b1fe0e963c390793e943d6c1126ae555797a617e8b4eb1c5041"
+      }
+    },
+    "EON-2HNLC-MT8ZF-MQJPT": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "619234627dd937b323bc86fb902b100123a377bcf25ff78ecc59647cab7879c7"
+      }
+    },
+    "EON-J2VX6-6LJPB-8V6PX": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "c7a75bf688376b3feffac4e1fb25f6f18ea0f7ac21bb3e497c949867daeb3c02"
+      }
+    },
+    "EON-P3EKV-DFNJT-7XCSP": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "a6af060500565ed0f279dc08586cfa344d9813cfed222e7dfcf022d44f0bf585"
+      }
+    },
+    "EON-84FZJ-LR7ZZ-PTV8Q": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "754d0f3feca10656b2f5a932bf0aea98e0d0d9a5e2ba2f0ca45026a71331a567"
+      }
+    },
+    "EON-P3YUA-T9SHR-7JMQY": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "ae916f6a1382bb2c32743d89731d8a3bd93b330ed2fefddbbeed5671c4c69a22"
+      }
+    },
+    "EON-WDGQH-HDWV9-PRAAZ": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "fda88d7781e1abf6396d835e5e083861e773038cb25fd37a94543395f521f7aa"
+      }
+    },
+    "EON-K5847-7JD7T-DRZKJ": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "5ba14ac3b03dd07f34fdc49d1b43efd2ed0da4804713bd75fa279aaa2597214b"
+      }
+    },
+    "EON-V633Q-EBAXG-7DDDL": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "af6b98cd4a19f5f1e77d33c707f44e3b3135ea4eb1eac0aecfde29adf8300efa"
+      }
+    },
+    "EON-7RZP8-D8UXT-2CY6J": {
+      "balance": {
+        "amount": 2400000000000
+      },
+      "public-key": {
+        "pk": "7a7bc27e8b6f56888779a12fa618628fca49026814fbd52ff60776e800d3febf"
+      }
+    },
+    "EON-D79RB-5GH6V-AKW7U": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "8d02c2ca03b3e313a10535956a50d05bfd972478ed080e0e84c5f36df36bad8c"
+      }
+    },
+    "EON-KC3AU-ZFSZ9-YAA9P": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "585f32eb2b9fc44f2c5f92036c4ad6a1a71cb60479c7e996ea46339a8748a536"
+      }
+    },
+    "EON-7CRYZ-UYH9Q-R89LS": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "810329860617b566679112bb39c8708e55fb6e51c1e5efa769f8c37b9a3bf0d1"
+      }
+    },
+    "EON-45AJS-Z4Y6K-8DCEN": {
+      "public-key": {
+        "pk": "3f11b34e1ae01c8e87152a3bc56a19630e62389290d590fe5fb28725353e5338"
+      },
+      "voter": {
+        "polls": {
+          "EON-AFVF2-4Q99C-76FPP": 50,
+          "EON-YYKUM-XSR62-TBJWM": 50,
+          "EON-SR49G-LUX8F-UF2TZ": 50,
+          "EON-W2TWM-9PTB2-QKRXT": 50,
+          "EON-AHCSK-UNDYS-Z6V8X": 50,
+          "EON-5VF3K-BYG3B-EEZ3W": 50,
+          "EON-SNUD8-B8LQS-NWC7J": 50,
+          "EON-U83EY-CV5JL-YARVW": 50,
+          "EON-PRS8N-EWWKS-BH7EV": 50,
+          "EON-3DKU5-N2HZ7-4RZ2W": 50,
+          "EON-KVSKC-QP85Z-7B6CQ": 50,
+          "EON-R79MJ-48VJA-ZX57X": 50,
+          "EON-FVNPK-5DSZC-YM84Q": 50,
+          "EON-ML3GZ-9NHFW-UPPPY": 50,
+          "EON-SVZFQ-KBMDE-69FXZ": 50,
+          "EON-V6XRZ-YXPVM-9ZXCU": 50,
+          "EON-XW5KU-E52VV-H23BX": 50,
+          "EON-LVR9C-XACSV-5NZBL": 50,
+          "EON-T5YEP-A3RJ3-DSKNN": 50,
+          "EON-E5XCN-7HF3Z-9GV5S": 50,
+          "EON-F3VZC-3NXXH-LJDQY": 50,
+          "EON-62J34-6C594-XJK5U": 50,
+          "EON-BFUEP-P34JZ-3J6TW": 50,
+          "EON-24Z74-U5UQ4-X33CL": 50,
+          "EON-N6UUF-ZTT8H-4B6FZ": 50,
+          "EON-4EWFG-YKQHS-A9E7V": 50,
+          "EON-42BWW-M9RYN-94D3R": 50,
+          "EON-ZFVHR-B8ATD-2UC5T": 50,
+          "EON-HMSKH-DALGC-676HU": 50,
+          "EON-VAQ99-5LGDC-VW68U": 50,
+          "EON-UL9YG-73C34-KFK3Q": 50,
+          "EON-3HNQ5-BPC2B-7YPKQ": 50,
+          "EON-335B5-EWTVD-UQACJ": 50,
+          "EON-XHV52-DTW6V-4SNGW": 50,
+          "EON-B93JT-D9YDM-TP24L": 50,
+          "EON-YEBU3-CYBCQ-Q5VHJ": 50,
+          "EON-5C7HE-RLMPM-JUNEN": 50,
+          "EON-7YA5J-YC69H-4Z8UV": 50,
+          "EON-TWSXH-92CC9-FVB2S": 50,
+          "EON-2HNLC-MT8ZF-MQJPT": 50,
+          "EON-P3EKV-DFNJT-7XCSP": 50,
+          "EON-J2VX6-6LJPB-8V6PX": 50,
+          "EON-84FZJ-LR7ZZ-PTV8Q": 50,
+          "EON-P3YUA-T9SHR-7JMQY": 50,
+          "EON-F7VPJ-MR4M2-6VR2X": 50,
+          "EON-J9BN9-Q4S7Z-4CLEN": 50,
+          "EON-WDGQH-HDWV9-PRAAZ": 50,
+          "EON-KAZ7F-LVZFD-K3M5P": 50,
+          "EON-K5847-7JD7T-DRZKJ": 50,
+          "EON-4T2E3-S4XZ6-APXXJ": 50,
+          "EON-V633Q-EBAXG-7DDDL": 50,
+          "EON-J7RZJ-XTHWV-LDZ9W": 50,
+          "EON-D79RB-5GH6V-AKW7U": 50,
+          "EON-KC3AU-ZFSZ9-YAA9P": 50,
+          "EON-7CRYZ-UYH9Q-R89LS": 50,
+          "EON-9GSMA-Y7P8Q-3K7SS": 50,
+          "EON-AP3C2-8BNMQ-89SGY": 50,
+          "EON-AZ84L-95S9V-Q3K9W": 50,
+          "EON-3WVJ4-YC57Y-EY5WS": 50,
+          "EON-3TFZU-LRH4A-E596S": 50,
+          "EON-KVNB5-M4T4R-U3XAR": 50,
+          "EON-6S2XY-FMHZU-3EUYS": 50,
+          "EON-MSV5N-8ARK2-ZETBM": 50,
+          "EON-66LQK-9KAZH-9TEKP": 50,
+          "EON-9ZY5Z-3X936-TCN5U": 50,
+          "EON-S28YZ-PHWK5-6RFVK": 50,
+          "EON-QG27M-KL5AK-RGK6M": 50,
+          "EON-HABMN-J2UCW-MZJ7T": 50,
+          "EON-ASRFS-LSYUX-7R8MT": 50,
+          "EON-4CWK5-3HFVH-EUB8K": 50,
+          "EON-88ADA-E26QT-3XUXJ": 50,
+          "EON-WALLR-RQAQK-M9XMT": 50,
+          "EON-X8Q7V-ELBXH-GA7UJ": 50,
+          "EON-WBQ8M-SGULU-ZFZCX": 50,
+          "EON-PKYN4-FMXX2-NSJTQ": 50,
+          "EON-W7NYL-JPZ55-Z4YYU": 50,
+          "EON-M96QU-34X2D-ZG6CN": 50,
+          "EON-7NHSR-D3VP5-99V4W": 50,
+          "EON-7NDFE-8MHRN-TWYAW": 50,
+          "EON-RD2M6-LEG6E-L9DKR": 50,
+          "EON-QNLSR-XP8WL-HK7AU": 50,
+          "EON-NUGJT-YHAUD-MKF6M": 50,
+          "EON-6XT82-ZVT22-D7N6W": 50
+        },
+        "timestamp": 0
+      }
+    },
+    "EON-AP3C2-8BNMQ-89SGY": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "8780e54a4bb3410695e84374aa47d3d9f5f23e87da9fd1320463fdff109597b0"
+      }
+    },
+    "EON-QUMDW-U7DSU-R9YYY": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-TDL7V-Q3U88-6MWZV": 50,
+          "EON-79H6G-TMJHX-5JNZM": 50
+        },
+        "timestamp": 0
+      },
+      "balance": {
+        "amount": 480000000000
+      },
+      "public-key": {
+        "pk": "1ac1cdd1977dcdf52338eaeed013024ac481d91a8bfc5fe98d9a197abaa3a3bd"
+      }
+    },
+    "EON-4KBXH-25XKZ-D9UVN": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-TDL7V-Q3U88-6MWZV": 50,
+          "EON-79H6G-TMJHX-5JNZM": 50
+        },
+        "timestamp": 0
+      },
+      "balance": {
+        "amount": 2365120000000
+      },
+      "public-key": {
+        "pk": "137049546d19a0b9947a591c6eab521e7f59f8a7b347c5aabc42ba6595913064"
+      }
+    },
+    "EON-3TFZU-LRH4A-E596S": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "35b001f52a3c781098c64caefc5131abd74923550ebf5c0516171087766956c1"
+      }
+    },
+    "EON-KVNB5-M4T4R-U3XAR": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "01ac491d44baaa82544d50235b7fd4fe6ba0d6e739d25a2b066422159ea1e840"
+      }
+    },
+    "EON-66LQK-9KAZH-9TEKP": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "a0b942dbe01c333cf994cb0bbd8f67bdd659eb98d8e841019cbed8c17a7c13e7"
+      }
+    },
+    "EON-MSV5N-8ARK2-ZETBM": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "83b99757ff949039bd82f33cc5c24373dc586168f62fce3861e34a350b2fb611"
+      }
+    },
+    "EON-9ZY5Z-3X936-TCN5U": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "acafbd35c10c9769b23874f04d3068588c19f3a0915016851a0f908445de391b"
+      }
+    },
+    "EON-HABMN-J2UCW-MZJ7T": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "8d4b3159eef2bebd1c1eb772d618fa659fb387b41b8bed4934d911c3e3b4adf0"
+      }
+    },
+    "EON-ASRFS-LSYUX-7R8MT": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "fca03c43b2333a147cbb24406efe46d3d382d60b4df50406b0fb1292275e7daa"
+      }
+    },
+    "EON-4CWK5-3HFVH-EUB8K": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "a5c803939cab43a3fd9ff5c1131d4e28e68648d227f0f91577b5974388fb6264"
+      }
+    },
+    "EON-88ADA-E26QT-3XUXJ": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "53dd5cea0e6dc75b5baed533d623f92b6404150d70b506820487412afefc4ac8"
+      }
+    },
+    "EON-Z8Y2P-SJL8U-ZJNEM": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-TDL7V-Q3U88-6MWZV": 50,
+          "EON-79H6G-TMJHX-5JNZM": 50
+        },
+        "timestamp": 0
+      },
+      "balance": {
+        "amount": 28800000000000
+      },
+      "public-key": {
+        "pk": "d9e7d30eb5790c54b708430b384546bbda84fa6700a341ed970f13572af43fe2"
+      }
+    },
+    "EON-L9SWM-QQVQ3-77GBT": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-TDL7V-Q3U88-6MWZV": 50,
+          "EON-79H6G-TMJHX-5JNZM": 50
+        },
+        "timestamp": 0
+      },
+      "balance": {
+        "amount": 2190360861646
+      },
+      "public-key": {
+        "pk": "af2f326172158940ac033b286208bcad27a260aeb90104ac05d468390e471d23"
+      }
+    },
+    "EON-X8Q7V-ELBXH-GA7UJ": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "cc5e3463621b2b88a26952400f9078ad43acb86fd4dc841c5c8a12ca9c713042"
+      }
+    },
+    "EON-6KFSF-EAZF2-4RNMQ": {
+      "balance": {
+        "amount": 1000000
+      },
+      "public-key": {
+        "pk": "695ebc2c64705be4e49fe5b464d4da87d0f3ee4f4d4f0c998da71005a2f35ee5"
+      }
+    },
+    "EON-WBQ8M-SGULU-ZFZCX": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "373f64a46c9a418188f97d9a0f16d3c9e2f70e787302c378a95f7568e0999e1d"
+      }
+    },
+    "EON-PKYN4-FMXX2-NSJTQ": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "eacd872a3ee73ff78617f4996ced0c73fa81221ec03c44f2e79827d26ca08963"
+      }
+    },
+    "EON-W7NYL-JPZ55-Z4YYU": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "e0c217024f6f405785c307f8cf46b42add8e3218fab1633e07783f66b8ef94f0"
+      }
+    },
+    "EON-M96QU-34X2D-ZG6CN": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "0b335dc518ea601b40bc5b0b54bd697eaa2446791f59afa8ee9393236da2509d"
+      }
+    },
+    "EON-7NDFE-8MHRN-TWYAW": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "bd909f6e84c160d1f3b3d81494557976e83155a62fd006e58840542cecd28fc5"
+      }
+    },
+    "EON-QNLSR-XP8WL-HK7AU": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "2b3c20a61701a9f138dbee14d227afb25f6ec9439d4864eee44cc1baf7dea1ea"
+      }
+    },
+    "EON-TDL7V-Q3U88-6MWZV": {
+      "public-key": {
+        "pk": "8122f1b1a80f9c7b15c2e727df3658924e8c04f00c238f339edd274d31399075"
+      },
+      "voter": {
+        "polls": {
+          "EON-V3NVQ-QU386-C3W3N": 50,
+          "EON-QXBTE-AA4GN-CBBVT": 50,
+          "EON-SW4VW-6DJCL-8HU7R": 50,
+          "EON-8SQEV-2FZJN-BW9WK": 50,
+          "EON-HVKFB-6C7WQ-H5R6K": 50,
+          "EON-Z8Y2P-SJL8U-ZJNEM": 50,
+          "EON-L9SWM-QQVQ3-77GBT": 50,
+          "EON-QUMDW-U7DSU-R9YYY": 50,
+          "EON-TB2DY-26AJ8-CFWUJ": 50,
+          "EON-4KBXH-25XKZ-D9UVN": 50
+        },
+        "timestamp": 0
+      }
+    },
+    "EON-NUGJT-YHAUD-MKF6M": {
+      "mode": {
+        "delegates": {
+          "owner": 0,
+          "EON-GZLHJ-FCSBL-XUGYQ": 50,
+          "EON-NKQ4L-MBNBR-4WXZZ": 50,
+          "EON-RBHPQ-QMBJR-RKEVL": 50,
+          "EON-45AJS-Z4Y6K-8DCEN": 50
+        },
+        "timestamp": 0
+      },
+      "deposit": {
+        "amount": 25000000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "60cb30234d28b52d267517f19fd8035f5e153fc96696eedc35eb65e80ebac26b"
+      }
+    }
+  }
+}

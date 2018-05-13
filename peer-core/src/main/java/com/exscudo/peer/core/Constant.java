@@ -42,6 +42,26 @@ public class Constant {
      */
     public static final int BLOCK_TRANSACTION_LIMIT = 4000;
     /**
+     * Minimum fee by the transaction processing.
+     */
+    public static final double TRANSACTION_MIN_FEE_PER_BYTE = 10.0 / 1024;
+    /**
+     * Maximum transaction size in bytes
+     */
+    public static final int TRANSACTION_MAX_PAYLOAD_LENGTH = 1024 * 4;
+    /**
+     * Maximum allowed lifetime of a transaction.
+     */
+    public static final int TRANSACTION_MAX_LIFETIME = 600 * 60;
+    /**
+     * The maximum "Note" field size in a transaction
+     */
+    public static final int TRANSACTION_NOTE_MAX_LENGTH = 128;
+    /**
+     * Maximum allowed confirmations of a account.
+     */
+    public static final int TRANSACTION_CONFIRMATIONS_MAX_SIZE = 20;
+    /**
      * The number of blocks, which are stored on limited blockchain
      */
     public static final int STORAGE_FRAME_BLOCK = BLOCK_IN_DAY * 7;

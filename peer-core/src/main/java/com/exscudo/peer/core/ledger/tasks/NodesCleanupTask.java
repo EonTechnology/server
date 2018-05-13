@@ -56,7 +56,7 @@ public class NodesCleanupTask implements Runnable {
 
             step_1_discardColoring(timestamp);
             step_2_colorizeTree_recursive(timestamp);
-            step_3_colorizeTree_sql(timestamp);
+            // step_3_colorizeTree_sql(timestamp);
             step_4_removeColorlessNodes(timestamp);
 
             Loggers.info(NodesCleanupTask.class,

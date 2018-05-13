@@ -6,6 +6,27 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+## 0.12.0 - 2018-05-14 - MainNet fork 1 / TestNet3 fork 1
+
+### Added
+- EON_NETWORK environment variable must be specified for select network (dev/test3/main).
+- Load fork settings from external file.
+
+### Changed
+- Changed API (bot / peer / explorer).
+- Changed API endpoint - specified version.
+- Many internal changes and improvements.
+
+## 0.11.0 - 2018-04-25 - TestNet2 fork 3
+### Added
+- Complex transaction mechanism.
+- New complex transaction: complex payment.
+
+### Changed
+- Optimized SyncBlockListTask - connect to best peer from 5 random peers.
+- NodesCleanupTask can be enabled (by settings).
+- Changing the detection of the remote host IP (if peer under proxy).
+
 ## 0.10.1 - 2018-03-29
 ### Changed
 - NodesCleanupTask is disabled (can damage the State Tree).

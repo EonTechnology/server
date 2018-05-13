@@ -3,9 +3,7 @@ package com.exscudo.peer.core.data;
 import java.util.Map;
 
 import com.exscudo.peer.core.common.Format;
-import com.exscudo.peer.core.crypto.BencodeFormatter;
 import com.exscudo.peer.core.data.identifier.TransactionID;
-import com.exscudo.peer.core.data.mapper.TransactionMapper;
 
 /**
  * Class {@code Transaction} is used to indicate some data signed by the sender,
@@ -23,6 +21,7 @@ public class Transaction extends SignedMessage {
     private Map<String, Object> data;
     private Map<String, Object> confirmations;
     private String note;
+    private Map<String, Transaction> nestedTransactions;
 
     private int length = 0;
 
@@ -207,16 +206,48 @@ public class Transaction extends SignedMessage {
     }
 
     /**
-     * Get object length
+     * Returns the list of nested transactions.
      *
-     * @return length
+     * @return
+     */
+    public Map<String, Transaction> getNestedTransactions() {
+        return nestedTransactions;
+    }
+
+    /**
+     * Sets the list of nested transactions.
+     *
+     * @param nestedTransactions
+     */
+    public void setNestedTransactions(Map<String, Transaction> nestedTransactions) {
+        this.nestedTransactions = nestedTransactions;
+    }
+
+    /**
+     * Returns true if the list of nested transactions is not empty, otherwise - false.
+     *
+     * @return
+     */
+    public boolean hasNestedTransactions() {
+        return (getNestedTransactions() != null && !getNestedTransactions().isEmpty());
+    }
+
+    /**
+     * Returns the difficulty of the transaction.
+     *
+     * @return
      */
     public int getLength() {
-        if (this.length == 0) {
-            byte[] bytes = BencodeFormatter.getBytes(TransactionMapper.convert(this));
-            this.length = bytes.length;
-        }
-        return this.length;
+        return length;
+    }
+
+    /**
+     * Sets the difficulty of the transaction
+     *
+     * @param length
+     */
+    public void setLength(int length) {
+        this.length = length;
     }
 
     @Override

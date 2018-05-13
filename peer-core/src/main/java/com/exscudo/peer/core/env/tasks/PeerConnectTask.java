@@ -45,6 +45,10 @@ public final class PeerConnectTask implements Runnable {
 
         try {
 
+            if (context.getConnectedPeerCount() >= context.getConnectedPoolSize()) {
+                return;
+            }
+
             Peer peer = context.getAnyPeerToConnect();
             if (peer != null) {
 

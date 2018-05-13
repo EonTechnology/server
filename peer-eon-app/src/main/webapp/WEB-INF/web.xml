@@ -23,7 +23,7 @@
 
     <servlet>
         <servlet-name>peerServlet</servlet-name>
-        <servlet-class>com.exscudo.eon.PeerServlet</servlet-class>
+        <servlet-class>com.exscudo.eon.app.PeerServlet</servlet-class>
         <init-param>
             <param-name>contextConfigLocation</param-name>
             <param-value>WEB-INF/spring/peer/servlet-context.xml</param-value>
@@ -33,14 +33,14 @@
     </servlet>
     <servlet-mapping>
         <servlet-name>peerServlet</servlet-name>
-        <url-pattern>/peer/*</url-pattern>
+        <url-pattern>/peer/v1/*</url-pattern>
     </servlet-mapping>
 
     <!-- Bot -->
 
     <servlet>
         <servlet-name>BotServlet</servlet-name>
-        <servlet-class>com.exscudo.eon.BotServlet</servlet-class>
+        <servlet-class>com.exscudo.eon.app.BotServlet</servlet-class>
         <init-param>
             <param-name>contextConfigLocation</param-name>
             <param-value>WEB-INF/spring/bot/servlet-context.xml</param-value>
@@ -50,14 +50,14 @@
     </servlet>
     <servlet-mapping>
         <servlet-name>BotServlet</servlet-name>
-        <url-pattern>/bot/*</url-pattern>
+        <url-pattern>/bot/v1/*</url-pattern>
     </servlet-mapping>
 
     <!-- Blockchain Explorer -->
 
     <servlet>
         <servlet-name>explorerServlet</servlet-name>
-        <servlet-class>com.exscudo.eon.BotServlet</servlet-class>
+        <servlet-class>com.exscudo.eon.app.BotServlet</servlet-class>
         <init-param>
             <param-name>contextConfigLocation</param-name>
             <param-value>WEB-INF/spring/explorer/servlet-context.xml</param-value>
@@ -67,7 +67,7 @@
     </servlet>
     <servlet-mapping>
         <servlet-name>explorerServlet</servlet-name>
-        <url-pattern>/explorer/*</url-pattern>
+        <url-pattern>/explorer/v1/*</url-pattern>
     </servlet-mapping>
 
 
@@ -75,7 +75,7 @@
 
     <servlet>
         <servlet-name>monitorServlet</servlet-name>
-        <servlet-class>com.exscudo.eon.PrometheusServlet</servlet-class>
+        <servlet-class>com.exscudo.eon.app.PrometheusServlet</servlet-class>
         <init-param>
             <param-name>contextConfigLocation</param-name>
             <param-value>WEB-INF/spring/prometheus/servlet-context.xml</param-value>

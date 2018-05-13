@@ -27,3 +27,6 @@ log4j2-*
 /db/*.db-shm
 /db/*.db-wal
 backlog_snapshot.bak
+
+peer-inner-debug.list
+peer-public-debug.list

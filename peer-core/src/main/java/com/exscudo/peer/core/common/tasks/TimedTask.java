@@ -13,9 +13,13 @@ public class TimedTask implements Runnable {
 
     @Override
     public void run() {
+
         long begin = System.nanoTime();
         try {
             mainTask.run();
+        } catch (Throwable th) {
+            Loggers.error(mainTask.getClass(), th);
+            throw th;
         } finally {
             long diff = System.nanoTime() - begin;
             Loggers.debug(mainTask.getClass(), "Timing: {}ms", diff / 1000000.0);

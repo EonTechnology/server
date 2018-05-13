@@ -5,18 +5,19 @@
     <parent>
         <groupId>com.exscudo</groupId>
         <artifactId>peer-all</artifactId>
-        <version>0.10.1-SNAPSHOT</version>
+        <version>0.12.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>peer-eon-app</artifactId>
-    <version>0.10.1-SNAPSHOT</version>
+    <version>0.12.0-SNAPSHOT</version>
     <packaging>war</packaging>
 
     <name>peer-eon-app</name>
     <url>http://maven.apache.org</url>
 
     <properties>
-        <org.springframework-version>4.3.9.RELEASE</org.springframework-version>
+        <org.springframework-version>5.0.5.RELEASE</org.springframework-version>
+        <org.springsecurity-version>5.0.4.RELEASE</org.springsecurity-version>
     </properties>
 
     <dependencies>
@@ -26,34 +27,34 @@
         <dependency>
             <groupId>com.exscudo</groupId>
             <artifactId>peer-eon</artifactId>
-            <version>0.10.1-SNAPSHOT</version>
+            <version>0.12.0-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.exscudo</groupId>
+            <artifactId>peer-eon-tx-builders</artifactId>
+            <version>0.12.0-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>com.exscudo</groupId>
             <artifactId>peer-core</artifactId>
-            <version>0.10.1-SNAPSHOT</version>
+            <version>0.12.0-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.exscudo</groupId>
+            <artifactId>peer-crypto</artifactId>
+            <version>0.12.0-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.exscudo</groupId>
+            <artifactId>json-rpc</artifactId>
+            <version>0.12.0-SNAPSHOT</version>
         </dependency>
 
         <!-- Spring -->
-
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-core</artifactId>
-            <version>${org.springframework-version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-context</artifactId>
-            <version>${org.springframework-version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-web</artifactId>
-            <version>${org.springframework-version}</version>
-        </dependency>
 
         <dependency>
             <groupId>org.springframework</groupId>
@@ -61,18 +62,18 @@
             <version>${org.springframework-version}</version>
         </dependency>
 
-
         <!--Spring security -->
 
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-web</artifactId>
-            <version>5.0.3.RELEASE</version>
+            <version>${org.springsecurity-version}</version>
         </dependency>
+
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-config</artifactId>
-            <version>5.0.3.RELEASE</version>
+            <version>${org.springsecurity-version}</version>
         </dependency>
 
         <!-- Servlet -->
@@ -94,6 +95,13 @@
 
     </dependencies>
     <build>
+
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
 
         <pluginManagement>
             <plugins>

@@ -87,10 +87,10 @@ public class BlockCleanerTask implements Runnable {
         vTimestamp.setValue(timestamp);
         vTag.setValue(0);
 
-        return getBlockIdS(blocksQueryBuilder);
+        return getBlockIds(blocksQueryBuilder);
     }
 
-    private List<BlockID> getBlockIdS(QueryBuilder<DbBlock, Long> blocksQueryBuilder) throws SQLException {
+    private List<BlockID> getBlockIds(QueryBuilder<DbBlock, Long> blocksQueryBuilder) throws SQLException {
         List<DbBlock> dbBlocks = blocksQueryBuilder.query();
         LinkedList<BlockID> res = new LinkedList<>();
         for (DbBlock block : dbBlocks) {
@@ -106,9 +106,13 @@ public class BlockCleanerTask implements Runnable {
             return new LinkedList<>();
         }
 
+        Block lastBlock = blockchainService.getLastBlock();
+        if (lastBlock.getHeight() <= Constant.STORAGE_FRAME_BLOCK) {
+            return new LinkedList<>();
+        }
+
         initQueryBuilder();
 
-        Block lastBlock = blockchainService.getLastBlock();
         storage.metadata().setHistoryFromHeight(lastBlock.getHeight() - Constant.STORAGE_FRAME_BLOCK);
 
         int timestamp = lastBlock.getTimestamp() - Constant.STORAGE_FRAME_BLOCK * Constant.BLOCK_PERIOD;
@@ -116,7 +120,7 @@ public class BlockCleanerTask implements Runnable {
         vTimestamp.setValue(timestamp);
         vTag.setValue(1);
 
-        return getBlockIdS(blocksQueryBuilder);
+        return getBlockIds(blocksQueryBuilder);
     }
 
     private void initQueryBuilder() throws SQLException {
@@ -134,7 +138,7 @@ public class BlockCleanerTask implements Runnable {
 
         if (transactionsDeleteBuilder == null) {
 
-            Dao dao = DaoManager.createDao(storage.getConnectionSource(), DbTransaction.class);
+            Dao<DbTransaction, Long> dao = DaoManager.createDao(storage.getConnectionSource(), DbTransaction.class);
 
             transactionsDeleteBuilder = dao.deleteBuilder();
             transactionsDeleteBuilder.where().eq("block_id", vBlockID);
@@ -147,7 +151,7 @@ public class BlockCleanerTask implements Runnable {
     private void removeBlock(long id) throws SQLException {
 
         if (blocksDeleteBuilder == null) {
-            Dao dao = DaoManager.createDao(storage.getConnectionSource(), DbBlock.class);
+            Dao<DbBlock, Long> dao = DaoManager.createDao(storage.getConnectionSource(), DbBlock.class);
 
             blocksDeleteBuilder = dao.deleteBuilder();
             blocksDeleteBuilder.where().eq("id", vID);

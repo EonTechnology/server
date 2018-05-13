@@ -24,8 +24,8 @@ public class ColoredCoinPropertyDeserializer extends AccountPropertyDeserializer
         Map<String, Object> map = p.getData();
         try {
 
-            long moneySupply = Long.parseLong(String.valueOf(map.get("moneySupply")));
-            int decimalPoint = Integer.parseInt(String.valueOf(map.get("decimalPoint")));
+            long moneySupply = Long.parseLong(String.valueOf(map.get("supply")));
+            int decimalPoint = Integer.parseInt(String.valueOf(map.get("decimal")));
             // Sets only on money creation
             int timestamp = Integer.parseInt(String.valueOf(map.get("timestamp")));
 

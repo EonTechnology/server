@@ -20,8 +20,8 @@ public class ColoredCoinPropertySerializer extends AccountPropertySerializer<Col
 
         if (coloredCoin.getMoneySupply() != 0) {
             HashMap<String, Object> data = new HashMap<>();
-            data.put("moneySupply", coloredCoin.getMoneySupply());
-            data.put("decimalPoint", coloredCoin.getDecimalPoint());
+            data.put("supply", coloredCoin.getMoneySupply());
+            data.put("decimal", coloredCoin.getDecimalPoint());
             // Sets only on money creation
             data.put("timestamp", coloredCoin.getTimestamp());
 

@@ -9,19 +9,16 @@ import com.exscudo.peer.core.common.exceptions.DataAccessException;
 import com.exscudo.peer.core.ledger.storage.DbNode;
 import com.exscudo.peer.core.ledger.storage.DbNodeCache;
 import com.exscudo.peer.core.ledger.storage.DbNodeHelper;
-import com.exscudo.peer.core.storage.CacheManager;
-import com.j256.ormlite.support.ConnectionSource;
+import com.exscudo.peer.core.storage.Storage;
 
 public class CachedNodeCollection implements ITreeNodeCollection {
-    private final ConnectionSource connectionSource;
-    private DbNodeCache cache;
+    private final Storage storage;
     private DbNodeHelper dbNodeHelper;
 
-    public CachedNodeCollection(ConnectionSource connectionSource) {
-        this.connectionSource = connectionSource;
-        this.cache = null;
+    public CachedNodeCollection(Storage storage) {
+        this.storage = storage;
 
-        this.dbNodeHelper = new DbNodeHelper(connectionSource);
+        this.dbNodeHelper = new DbNodeHelper(storage.getConnectionSource());
     }
 
     private static DbNode convert(TreeNode node) {
@@ -75,10 +72,7 @@ public class CachedNodeCollection implements ITreeNodeCollection {
     }
 
     private DbNodeCache getCache() {
-        if (cache == null) {
-            cache = CacheManager.lookupCache(connectionSource, DbNodeCache.class);
-        }
-        return cache;
+        return storage.getDbNodeCache();
     }
 
     @Override
@@ -96,10 +90,15 @@ public class CachedNodeCollection implements ITreeNodeCollection {
             DbNode dbn = find(node.getID());
             if (dbn != null) {
                 if (dbn.getTimestamp() < node.getTimestamp()) {
-                    dbNodeHelper.updateTimestamp(node.getID().getKey(), node.getID().getIndex(), node.getTimestamp());
-                    dbn.setTimestamp(node.getTimestamp());
+                    if (dbNodeHelper.updateTimestamp(node.getID().getKey(),
+                                                     node.getID().getIndex(),
+                                                     node.getTimestamp())) {
+                        dbn.setTimestamp(node.getTimestamp());
+                        return;
+                    }
+                } else {
+                    return;
                 }
-                return;
             }
 
             dbn = convert(node);

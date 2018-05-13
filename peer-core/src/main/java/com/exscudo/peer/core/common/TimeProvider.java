@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Default time provider implementation.
  */
-public class TimeProvider {
+public class TimeProvider implements ITimeProvider {
 
     private AtomicLong offsetTime = new AtomicLong(0);
 
@@ -31,6 +31,7 @@ public class TimeProvider {
      *
      * @return
      */
+    @Override
     public int get() {
         long time = System.currentTimeMillis() + offsetTime.get();
         return (int) ((time + 500) / 1000);

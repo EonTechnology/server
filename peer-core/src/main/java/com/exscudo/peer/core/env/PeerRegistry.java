@@ -1,7 +1,7 @@
 package com.exscudo.peer.core.env;
 
-import java.util.Collection;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
@@ -107,9 +107,9 @@ public class PeerRegistry {
         return peers.keySet().toArray(new String[0]);
     }
 
-    Collection<PeerInfo> findAll(Predicate<PeerInfo> predicate) {
+    List<PeerInfo> findAll(Predicate<PeerInfo> predicate) {
 
-        Collection<PeerInfo> collection = new LinkedList<>();
+        List<PeerInfo> collection = new LinkedList<>();
         Lock lock = readWriteLock.readLock();
         try {
             lock.lock();

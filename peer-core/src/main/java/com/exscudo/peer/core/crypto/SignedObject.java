@@ -9,7 +9,8 @@ public class SignedObject implements Serializable {
     private static final long serialVersionUID = -5465601245276980043L;
 
     protected byte[] signature;
-    private boolean signatureOK = false;
+
+    private boolean verifiedState = false;
 
     public byte[] getSignature() {
         return signature;
@@ -19,31 +20,15 @@ public class SignedObject implements Serializable {
         this.signature = signature;
     }
 
-    /**
-     * Verifies a EDS using an algorithm defined in {@link CryptoProvider}
-     *
-     * @param publicKey for verifying the signature
-     * @return true if signature valid, otherwise - false
-     */
-    public boolean verifySignature(byte[] publicKey) {
-
-        if (!this.signatureOK) {
-            this.signatureOK = CryptoProvider.getInstance().verifySignature(this, publicKey);
-        }
-        return this.signatureOK;
+    public void setVerifiedState() {
+        verifiedState = true;
     }
 
-    /**
-     * Convert object to byte array
-     *
-     * @return bytes
-     */
-    public byte[] getBytes() {
-        return CryptoProvider.getInstance().getBytes(this);
+    public void resetVerifiedState() {
+        verifiedState = false;
     }
 
-    @Override
-    public String toString() {
-        return new String(CryptoProvider.getInstance().getBytes(this));
+    public boolean isVerified() {
+        return verifiedState;
     }
 }

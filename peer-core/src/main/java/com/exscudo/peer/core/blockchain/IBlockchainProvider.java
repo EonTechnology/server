@@ -4,7 +4,7 @@ import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.identifier.BlockID;
 
 /**
- * The {@code IBlockchain} interface provides an abstraction for
+ * The {@code IBlockchainProvider} interface provides an abstraction for
  * accessing the chain of blocks.
  */
 public interface IBlockchainProvider {

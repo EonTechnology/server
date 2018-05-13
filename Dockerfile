@@ -1,11 +1,15 @@
 #FROM maven:3-jdk-8-slim
-#FROM maven:3-jdk-9-slim
+FROM maven:3-jdk-9-slim
 #FROM maven:3-jdk-10-slim
-FROM frekele/maven
+#FROM frekele/maven
 
 RUN mkdir /repository
 ENV SECRET_SEED ""
 ENV FULL_BLOCKCHAIN true
+ENV CLEAN_BLOCKCHAIN false
+ENV INNER_PEER false
+
+ENV EON_NETWORK ""
 
 WORKDIR /app
 
@@ -16,6 +20,8 @@ COPY json-rpc/pom.xml /app/json-rpc/pom.xml
 COPY peer-core/pom.xml /app/peer-core/pom.xml
 COPY peer-eon/pom.xml /app/peer-eon/pom.xml
 COPY peer-eon-app/pom.xml /app/peer-eon-app/pom.xml
+COPY peer-crypto/pom.xml /app/peer-crypto/pom.xml
+COPY peer-eon-tx-builders/pom.xml /app/peer-eon-tx-builders/pom.xml
 
 # Cache depedences
 RUN mvn -Dmaven.repo.local=/repository dependency:go-offline package jetty:help clean --fail-never
@@ -30,6 +36,8 @@ COPY json-rpc/src /app/json-rpc/src
 COPY peer-eon-app/src /app/peer-eon-app/src
 COPY peer-core/src /app/peer-core/src
 COPY peer-eon/src /app/peer-eon/src
+COPY peer-crypto/src /app/peer-crypto/src
+COPY peer-eon-tx-builders/src /app/peer-eon-tx-builders/src
 
 # Compile files
 RUN mvn -Dmaven.repo.local=/repository package install -DskipTests
@@ -41,7 +49,7 @@ VOLUME /app/peer-eon-app/src/main/webapp/WEB-INF
 EXPOSE 9443
 
 ENV MAVEN_OPTS "-XX:+HeapDumpOnOutOfMemoryError -verbose:gc -XX:+PrintGCDetails -XX:+PrintFlagsFinal -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -Xmx350m"
-ENTRYPOINT mvn -o -Dmaven.repo.local=/repository jetty:run -DSECRET_SEED=$SECRET_SEED -Dblockchain.full=$FULL_BLOCKCHAIN
+ENTRYPOINT mvn -o -Dmaven.repo.local=/repository jetty:run -DSECRET_SEED=$SECRET_SEED -Dblockchain.full=$FULL_BLOCKCHAIN -Dblockchain.clean=$CLEAN_BLOCKCHAIN -Dhost.inner=$INNER_PEER
 
 # For debug
 # ENTRYPOINT /bin/bash

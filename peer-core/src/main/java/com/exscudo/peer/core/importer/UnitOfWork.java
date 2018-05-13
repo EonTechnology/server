@@ -2,29 +2,28 @@ package com.exscudo.peer.core.importer;
 
 import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.Map;
-import java.util.TreeMap;
 
 import com.exscudo.peer.core.Constant;
 import com.exscudo.peer.core.IFork;
 import com.exscudo.peer.core.blockchain.Blockchain;
 import com.exscudo.peer.core.blockchain.BlockchainProvider;
-import com.exscudo.peer.core.common.Format;
+import com.exscudo.peer.core.common.ITimeProvider;
+import com.exscudo.peer.core.common.ImmutableTimeProvider;
 import com.exscudo.peer.core.common.TransactionComparator;
 import com.exscudo.peer.core.common.exceptions.IllegalSignatureException;
 import com.exscudo.peer.core.common.exceptions.LifecycleException;
 import com.exscudo.peer.core.common.exceptions.ValidateException;
-import com.exscudo.peer.core.crypto.BencodeFormatter;
-import com.exscudo.peer.core.crypto.CryptoProvider;
 import com.exscudo.peer.core.data.Account;
 import com.exscudo.peer.core.data.Block;
+import com.exscudo.peer.core.data.Generation;
 import com.exscudo.peer.core.data.Transaction;
-import com.exscudo.peer.core.data.mapper.Constants;
-import com.exscudo.peer.core.data.transaction.ITransactionHandler;
-import com.exscudo.peer.core.data.transaction.TransactionContext;
-import com.exscudo.peer.core.data.transaction.ValidationResult;
 import com.exscudo.peer.core.ledger.ILedger;
 import com.exscudo.peer.core.ledger.LedgerProvider;
+import com.exscudo.peer.core.middleware.ILedgerAction;
+import com.exscudo.peer.core.middleware.LedgerActionContext;
+import com.exscudo.peer.core.middleware.TransactionParser;
+import com.exscudo.peer.core.middleware.TransactionValidator;
+import com.exscudo.peer.core.middleware.ValidationResult;
 
 /**
  * Basic implementation of {@code IUnitOfWork} with direct connection to DB.
@@ -90,10 +89,8 @@ public class UnitOfWork implements IUnitOfWork {
             throw r.cause;
         }
 
-        headBlock = currentBlockchain.addBlock(newBlock);
         ledgerProvider.addLedger(ledger);
-
-        return headBlock;
+        return currentBlockchain.addBlock(newBlock);
     }
 
     @Override
@@ -133,7 +130,6 @@ public class UnitOfWork implements IUnitOfWork {
             return ValidationResult.error("Invalid generator. " + newBlock.getSenderID());
         }
 
-        byte[] publicKey = fork.getPublicKey(generator, newBlock.getTimestamp());
         // generation signature
         int height = targetBlock.getHeight() + 1;
         Block generationBlock = targetBlock;
@@ -145,18 +141,27 @@ public class UnitOfWork implements IUnitOfWork {
             generationBlock = currentBlockchain.getByHeight(generationHeight);
         }
 
-        Map<String, Object> gEds = new TreeMap<>();
-        gEds.put("network", fork.getGenesisBlockID().toString());
-        gEds.put(Constants.GENERATION_SIGNATURE, Format.convert(generationBlock.getGenerationSignature()));
-        byte[] gEdsBytes = BencodeFormatter.getBytes(gEds);
-
-        if (!CryptoProvider.getInstance().verifySignature(gEdsBytes, newBlock.getGenerationSignature(), publicKey)) {
+        if (!fork.verifySignature(new Generation(generationBlock.getGenerationSignature()),
+                                  newBlock.getGenerationSignature(),
+                                  generator,
+                                  newBlock.getTimestamp())) {
             return ValidationResult.error(new IllegalSignatureException("The field Generation Signature is incorrect."));
         }
 
         // signature
-        if (!newBlock.verifySignature(publicKey)) {
+        if (!fork.verifySignature(newBlock, newBlock.getSignature(), generator, newBlock.getTimestamp())) {
             return ValidationResult.error(new IllegalSignatureException());
+        }
+
+        if (newBlock.getTransactions() != null) {
+            long payloadLength = 0;
+            for (Transaction tr : newBlock.getTransactions()) {
+                payloadLength += tr.getLength();
+            }
+
+            if (payloadLength > Constant.BLOCK_MAX_PAYLOAD_LENGTH) {
+                return ValidationResult.error(new IllegalSignatureException("Block size is incorrect."));
+            }
         }
 
         // adds the data that is not transmitted over the network
@@ -177,32 +182,43 @@ public class UnitOfWork implements IUnitOfWork {
 
     private ILedger applyBlock(Block newBlock, Block prevBlock, ILedger ledger, IFork fork) throws ValidateException {
 
+        ITimeProvider blockTimeProvider = new ImmutableTimeProvider(newBlock.getTimestamp());
+        TransactionValidator transactionValidator = TransactionValidator.getAllValidators(fork, blockTimeProvider);
+
         ILedger newLedger = ledger;
 
-        ITransactionHandler handler = fork.getTransactionExecutor(newBlock.getTimestamp());
-        TransactionContext ctx = new TransactionContext(newBlock.getTimestamp());
+        LedgerActionContext ctx = new LedgerActionContext(newBlock.getTimestamp(), fork);
         Transaction[] sortedTransactions = newBlock.getTransactions().toArray(new Transaction[0]);
-        Arrays.sort(sortedTransactions, new TransactionComparator());
-        for (Transaction tx : sortedTransactions) {
-            if (currentBlockchain.containsTransaction(tx)) {
-                throw new ValidateException("Transaction already exist in blockchain.");
-            }
-            if (tx.isFuture(newBlock.getTimestamp())) {
-                throw new LifecycleException();
-            }
-            newLedger = handler.run(tx, newLedger, ctx);
-        }
 
         long totalFee = 0;
         for (Transaction tx : sortedTransactions) {
+            int difficulty = fork.getDifficulty(tx, newBlock.getTimestamp());
+            tx.setLength(difficulty);
             totalFee += tx.getFee();
+        }
+        Arrays.sort(sortedTransactions, new TransactionComparator());
+
+        for (Transaction tx : sortedTransactions) {
+
+            if (currentBlockchain.containsTransaction(tx)) {
+                throw new ValidateException("Transaction already exist in blockchain.");
+            }
+
+            ValidationResult r = transactionValidator.validate(tx, newLedger);
+            if (r.hasError) {
+                throw r.cause;
+            }
+
+            ILedgerAction[] actions = TransactionParser.parse(tx);
+
+            for (ILedgerAction action : actions) {
+                newLedger = action.run(newLedger, ctx);
+            }
         }
 
         if (totalFee != 0) {
             Account creator = newLedger.getAccount(newBlock.getSenderID());
-            long balance = fork.getBalance(creator, newBlock.getTimestamp());
-            balance += totalFee;
-            creator = fork.setBalance(creator, balance, newBlock.getTimestamp());
+            creator = fork.reward(creator, totalFee, newBlock.getTimestamp());
             newLedger = newLedger.putAccount(creator);
         }
 

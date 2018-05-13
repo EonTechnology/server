@@ -1,10 +1,14 @@
 package com.exscudo.peer.core.env;
 
 import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import com.exscudo.peer.core.common.events.DispatchableEvent;
 import com.exscudo.peer.core.common.events.Dispatcher;
@@ -28,7 +32,10 @@ public class ExecutionContext {
     private int blacklistingPeriod = 30000;
 
     /* time that the env is in the list of connected */
-    private int connectingPeriod = 60 * 1000;
+    private int connectingPeriod = 3 * 60 * 1000;
+
+    /* pool size for connected peers */
+    private int connectedPoolSize = 25;
 
     /* Factory to create a stub of the service */
     private IServiceProxyFactory proxyFactory;
@@ -96,6 +103,32 @@ public class ExecutionContext {
         }
 
         return new Peer(pi, getProxyFactory());
+    }
+
+    /**
+     * Returns the active peers randomly chosen.
+     *
+     * @return
+     */
+    public List<Peer> getAnyConnectedPeers(int count) {
+        List<PeerInfo> list = getAnyPeers(new PeerBasePredicate(getHost().getPeerID(), isInnerPeersUsing) {
+
+            @Override
+            public boolean test(PeerInfo peer) {
+                return super.test(peer) && peer.getState() == PeerInfo.STATE_CONNECTED;
+            }
+        }, count);
+
+        if (list == null) {
+            return null;
+        }
+
+        return list.stream().map(new Function<PeerInfo, Peer>() {
+            @Override
+            public Peer apply(PeerInfo peerInfo) {
+                return new Peer(peerInfo, getProxyFactory());
+            }
+        }).collect(Collectors.toList());
     }
 
     /**
@@ -212,6 +245,14 @@ public class ExecutionContext {
         this.connectingPeriod = connectingPeriod;
     }
 
+    public int getConnectedPoolSize() {
+        return connectedPoolSize;
+    }
+
+    public void setConnectedPoolSize(int connectedPoolSize) {
+        this.connectedPoolSize = connectedPoolSize;
+    }
+
     public boolean connectPeer(Peer peer) {
         return connectPeer(peer, getConnectingPeriod());
     }
@@ -254,7 +295,7 @@ public class ExecutionContext {
      *
      * @return
      */
-    public int getConnectedPoolSize() {
+    public int getConnectedPeerCount() {
 
         int peerCount = peers.count(new Predicate<PeerInfo>() {
 
@@ -312,6 +353,32 @@ public class ExecutionContext {
                 PeerInfo[] selectedPeers = clone.toArray(new PeerInfo[0]);
                 int hit = ThreadLocalRandom.current().nextInt(selectedPeers.length);
                 return selectedPeers[hit];
+            }
+
+            return null;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public List<PeerInfo> getAnyPeers(Predicate<PeerInfo> predicate, int count) {
+        try {
+
+            List<PeerInfo> clone = peers.findAll(predicate);
+            if (clone.size() > 0) {
+
+                if (count > clone.size()) {
+                    return clone;
+                }
+
+                List<PeerInfo> selected = new LinkedList<>();
+                while (selected.size() != count) {
+
+                    int hit = ThreadLocalRandom.current().nextInt(clone.size());
+                    PeerInfo pi = clone.remove(hit);
+                    selected.add(pi);
+                }
+                return selected;
             }
 
             return null;

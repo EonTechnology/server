@@ -19,7 +19,7 @@ public class RegistrationDataPropertySerializer extends AccountPropertySerialize
     @Override
     public Account doSerialize(RegistrationDataProperty registrationData, Account account) throws IOException {
         HashMap<String, Object> data = new HashMap<>();
-        data.put("publicKey", Format.convert(registrationData.getPublicKey()));
+        data.put("pk", Format.convert(registrationData.getPublicKey()));
 
         return account.putProperty(new AccountProperty(PropertyType.REGISTRATION, data));
     }

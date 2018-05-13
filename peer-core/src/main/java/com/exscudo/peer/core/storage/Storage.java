@@ -7,10 +7,9 @@ import java.sql.Statement;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-import com.exscudo.peer.core.IInitializer;
-import com.exscudo.peer.core.InitializerJson;
 import com.exscudo.peer.core.common.exceptions.DataAccessException;
 import com.exscudo.peer.core.data.identifier.BlockID;
+import com.exscudo.peer.core.ledger.storage.DbNodeCache;
 import com.exscudo.peer.core.storage.migrate.StatementUtils;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
@@ -36,22 +35,18 @@ public class Storage {
 
     private final BasicDataSource dataSource;
     private ConnectionSource connectionSource;
+    private Metadata metadata = null;
+    private volatile DbNodeCache dbNodeCache = new DbNodeCache();
+
+    //
+    // Static members
+    //
 
     public Storage(BasicDataSource dataSource) {
         this.dataSource = dataSource;
     }
 
-    //
-    // Static members
-    //
-    public static Storage create(String connectURI,
-                                 String genesisFile,
-                                 boolean fullSync) throws IOException, ClassNotFoundException, SQLException {
-        return create(connectURI, new InitializerJson(genesisFile, fullSync));
-    }
-
-    public static Storage create(String connectURI,
-                                 IInitializer loader) throws ClassNotFoundException, IOException, SQLException {
+    public static Storage create(String connectURI) throws ClassNotFoundException, IOException, SQLException {
 
         SQLiteConfig config = new SQLiteConfig();
         config.setJournalMode(SQLiteConfig.JournalMode.WAL);
@@ -59,9 +54,7 @@ public class Storage {
         config.setTransactionMode(SQLiteConfig.TransactionMode.EXCLUSIVE);
         BasicDataSource dataSource = createDataSource(connectURI, config);
 
-        Storage storage = new Storage(dataSource);
-        loader.initialize(storage);
-        return storage;
+        return new Storage(dataSource);
     }
 
     public static BasicDataSource createDataSource(String connectURI, SQLiteConfig config) {
@@ -174,10 +167,17 @@ public class Storage {
 
     public Metadata metadata() {
         try {
-            return new Metadata(getConnectionSource());
+            if (metadata == null) {
+                metadata = new Metadata(getConnectionSource());
+            }
+            return metadata;
         } catch (SQLException e) {
             throw new DataAccessException(e);
         }
+    }
+
+    public DbNodeCache getDbNodeCache() {
+        return dbNodeCache;
     }
 
     public static class Metadata {

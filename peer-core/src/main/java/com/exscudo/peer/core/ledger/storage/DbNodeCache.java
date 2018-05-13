@@ -6,7 +6,8 @@ import java.util.Map;
 import com.exscudo.peer.core.common.CachedHashMap;
 
 public class DbNodeCache {
-    private final Map<Long, DbNode> cache = Collections.synchronizedMap(new CachedHashMap<Long, DbNode>(100000));
+    private final CachedHashMap<Long, DbNode> map = new CachedHashMap<Long, DbNode>(100000);
+    private final Map<Long, DbNode> cache = Collections.synchronizedMap(map);
 
     public DbNodeCache() {
     }
@@ -21,5 +22,17 @@ public class DbNodeCache {
 
     public void remove(long id) {
         cache.remove(id);
+    }
+
+    public int getSize() {
+        return cache.size();
+    }
+
+    public long getAdded() {
+        return map.getAdded();
+    }
+
+    public long getRemoved() {
+        return map.getRemoved();
     }
 }

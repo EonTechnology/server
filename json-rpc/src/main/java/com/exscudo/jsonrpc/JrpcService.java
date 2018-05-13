@@ -181,7 +181,7 @@ public class JrpcService {
                         } catch (InvocationTargetException e) {
 
                             Throwable target = e.getTargetException();
-                            if (target instanceof JsonException) {
+                            if (target instanceof IllegalArgumentException) {
                                 if (target.getCause() != null) {
                                     response.setError(new JsonRpcResponse.Error(JsonRpcResponse.INVALID_PARAMS,
                                                                                 target.getCause().getMessage()));
@@ -241,6 +241,22 @@ public class JrpcService {
                 return m;
             }
         }
+
+        if (methodName.contains("_")) {
+
+            String[] nameSet = methodName.split("_");
+            StringBuilder name = new StringBuilder(nameSet[0]);
+            for (int i = 1; i < nameSet.length; i++) {
+                String item = nameSet[i];
+                if (item.length() > 0) {
+                    name.append(Character.toUpperCase(item.charAt(0)));
+                    name.append(item.substring(1));
+                }
+            }
+
+            return getMethod(innerService, name.toString());
+        }
+
         return null;
     }
 

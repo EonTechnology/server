@@ -11,6 +11,7 @@ public class BaseIdentifier implements Serializable {
 
     private final String scheme;
     private long id;
+    private String str = null;
 
     public BaseIdentifier(long id, String scheme) {
         this.id = id;
@@ -18,6 +19,7 @@ public class BaseIdentifier implements Serializable {
     }
 
     public BaseIdentifier(String id, String scheme) {
+        this.str = id;
         this.id = UserFriendlyID.Decode(id, scheme);
         this.scheme = scheme;
     }
@@ -64,7 +66,10 @@ public class BaseIdentifier implements Serializable {
 
     @Override
     public String toString() {
-        return UserFriendlyID.Encode(id, scheme);
+        if (str == null) {
+            str = UserFriendlyID.Encode(id, scheme);
+        }
+        return str;
     }
 
     static class MathID {

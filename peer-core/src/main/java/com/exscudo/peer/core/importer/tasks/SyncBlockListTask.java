@@ -7,6 +7,9 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 
 import com.exscudo.peer.core.Constant;
 import com.exscudo.peer.core.IFork;
@@ -14,7 +17,6 @@ import com.exscudo.peer.core.api.Difficulty;
 import com.exscudo.peer.core.api.IBlockSynchronizationService;
 import com.exscudo.peer.core.backlog.Backlog;
 import com.exscudo.peer.core.blockchain.BlockchainProvider;
-import com.exscudo.peer.core.blockchain.TransactionProvider;
 import com.exscudo.peer.core.common.Loggers;
 import com.exscudo.peer.core.common.TimeProvider;
 import com.exscudo.peer.core.common.exceptions.LifecycleException;
@@ -24,6 +26,7 @@ import com.exscudo.peer.core.common.exceptions.ValidateException;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.identifier.BlockID;
+import com.exscudo.peer.core.data.identifier.TransactionID;
 import com.exscudo.peer.core.env.ExecutionContext;
 import com.exscudo.peer.core.env.Peer;
 import com.exscudo.peer.core.importer.IUnitOfWork;
@@ -49,7 +52,6 @@ public final class SyncBlockListTask implements Runnable {
     private final BlockchainProvider blockchainProvider;
     private final IFork fork;
     private final TimeProvider timeProvider;
-    private final TransactionProvider transactionProvider;
     private final Backlog backlog;
     private LedgerProvider ledgerProvider;
 
@@ -59,8 +61,7 @@ public final class SyncBlockListTask implements Runnable {
                              ExecutionContext context,
                              BlockchainProvider blockchainProvider,
                              TimeProvider timeProvider,
-                             LedgerProvider ledgerProvider,
-                             TransactionProvider transactionProvider) {
+                             LedgerProvider ledgerProvider) {
         this.storage = storage;
         this.context = context;
         this.blockchainProvider = blockchainProvider;
@@ -68,7 +69,6 @@ public final class SyncBlockListTask implements Runnable {
         this.backlog = backlog;
         this.timeProvider = timeProvider;
         this.ledgerProvider = ledgerProvider;
-        this.transactionProvider = transactionProvider;
     }
 
     @Override
@@ -80,77 +80,128 @@ public final class SyncBlockListTask implements Runnable {
                 return;
             }
 
-            Peer peer = context.getAnyConnectedPeer();
-            if (peer == null) {
+            List<Peer> peers = context.getAnyConnectedPeers(6);
+            if (peers == null) {
                 return;
             }
 
-            try {
+            CompletableFuture<?>[] futures = new CompletableFuture<?>[peers.size()];
+            for (int i = 0; i < peers.size(); i++) {
+                futures[i] = requestDifficulty(peers.get(i));
+            }
 
-                IBlockSynchronizationService service = peer.getBlockSynchronizationService();
-                Difficulty remoteState = service.getDifficulty();
+            CompletableFuture.allOf(futures).join();
 
-                Difficulty currentState = new Difficulty(blockchainProvider.getLastBlock());
+            Difficulty targetState = null;
+            Peer targetPeer = null;
+            for (int i = 0; i < futures.length; i++) {
 
-                if (remoteState.compareTo(currentState) == 0) {
-
-                    // The chain of the blocks is synchronized with at
-                    // least one node. Initiate an event and return.
-                    Loggers.trace(SyncBlockListTask.class,
-                                  "The chain of the blocks is synchronized with \"{}\".",
-                                  peer);
-                    context.raiseSynchronizedEvent(this, peer);
-                    return;
+                Peer currPeer = peers.get(i);
+                Difficulty currState = (Difficulty) futures[i].get();
+                if (currState == null) {
+                    continue;
                 }
 
-                if (remoteState.compareTo(currentState) < 0) {
+                Loggers.info(SyncBlockListTask.class, "[{}] CD: {}", currPeer, currState.getDifficulty());
 
-                    // The "difficulty" of the chain at the services node is
-                    // lower than the current one. No need for synchronization.
-                    return;
+                if (targetState == null || currState.compareTo(targetState) > 0) {
+                    targetState = currState;
+                    targetPeer = currPeer;
                 }
+            }
 
-                // Starts the synchronization process, if the "difficulty" of
-                // the last block of the randomly node more than the
-                // "difficulty" of our last block.
+            if (targetPeer != null) {
 
-                Loggers.info(SyncBlockListTask.class,
-                             "Begining synchronization. Difficulty: [this] {}, [{}] {}. ",
-                             currentState.getDifficulty(),
-                             peer,
-                             remoteState.getDifficulty());
-
-                if (shortSyncScheme(service) != null) {
-                    return;
-                }
-
-                while (remoteState.compareTo(currentState) > 0) {
-
-                    Block headBlock = longSyncScheme(service);
-
-                    Difficulty currentStateNew = new Difficulty(headBlock);
-                    if (currentStateNew.compareTo(currentState) == 0) {
-                        return;
-                    }
-                    currentState = currentStateNew;
-                    remoteState = service.getDifficulty();
-                }
-            } catch (RemotePeerException | IOException e) {
-
-                context.disablePeer(peer);
-
-                Loggers.trace(SyncBlockListTask.class, "Failed to execute a request. Target: " + peer, e);
-                Loggers.debug(SyncBlockListTask.class, "The node is disconnected. \"{}\".", peer);
-            } catch (ProtocolException e) {
-
-                context.blacklistPeer(peer);
-
-                Loggers.error(SyncBlockListTask.class, "Failed to sync with '" + peer + "'", e);
-                Loggers.debug(SyncBlockListTask.class, "The node is disconnected. \"{}\".", peer);
-                throw e;
+                Loggers.info(SyncBlockListTask.class, "Target: " + targetPeer);
+                run(targetPeer);
             }
         } catch (Exception e) {
             Loggers.error(SyncBlockListTask.class, e);
+        }
+    }
+
+    private CompletableFuture<?> requestDifficulty(final Peer peer) {
+
+        return CompletableFuture.supplyAsync(new Supplier<Difficulty>() {
+
+            @Override
+            public Difficulty get() {
+
+                try {
+                    return peer.getBlockSynchronizationService().getDifficulty();
+                } catch (IOException e) {
+                    Loggers.warning(SyncBlockListTask.class, "Unable to get difficulty: " + peer, e);
+                    return null;
+                }
+            }
+        });
+    }
+
+    private void run(Peer peer) throws Exception {
+
+        Objects.requireNonNull(peer);
+
+        try {
+
+            IBlockSynchronizationService service = peer.getBlockSynchronizationService();
+            Difficulty remoteState = service.getDifficulty();
+
+            Difficulty currentState = new Difficulty(blockchainProvider.getLastBlock());
+
+            if (remoteState.compareTo(currentState) == 0) {
+
+                // The chain of the blocks is synchronized with at
+                // least one node. Initiate an event and return.
+                Loggers.trace(SyncBlockListTask.class, "The chain of the blocks is synchronized with \"{}\".", peer);
+                context.raiseSynchronizedEvent(this, peer);
+                return;
+            }
+
+            if (remoteState.compareTo(currentState) < 0) {
+
+                // The "difficulty" of the chain at the services node is
+                // lower than the current one. No need for synchronization.
+                return;
+            }
+
+            // Starts the synchronization process, if the "difficulty" of
+            // the last block of the randomly node more than the
+            // "difficulty" of our last block.
+
+            Loggers.info(SyncBlockListTask.class,
+                         "Begining synchronization. Difficulty: [this] {}, [{}] {}. ",
+                         currentState.getDifficulty(),
+                         peer,
+                         remoteState.getDifficulty());
+
+            if (shortSyncScheme(service) != null) {
+                return;
+            }
+
+            while (remoteState.compareTo(currentState) > 0) {
+
+                Block headBlock = longSyncScheme(service);
+
+                Difficulty currentStateNew = new Difficulty(headBlock);
+                if (currentStateNew.compareTo(currentState) == 0) {
+                    return;
+                }
+                currentState = currentStateNew;
+                remoteState = service.getDifficulty();
+            }
+        } catch (RemotePeerException | IOException e) {
+
+            context.disablePeer(peer);
+
+            Loggers.trace(SyncBlockListTask.class, "Failed to execute a request. Target: " + peer, e);
+            Loggers.debug(SyncBlockListTask.class, "The node is disconnected. \"{}\".", peer);
+        } catch (ProtocolException e) {
+
+            context.blacklistPeer(peer);
+
+            Loggers.error(SyncBlockListTask.class, "Failed to sync with '" + peer + "'", e);
+            Loggers.debug(SyncBlockListTask.class, "The node is disconnected. \"{}\".", peer);
+            throw e;
         }
     }
 
@@ -377,77 +428,73 @@ public final class SyncBlockListTask implements Runnable {
 
         Block currBlock = commonBlock;
         IUnitOfWork uow = new UnitOfWork(blockchain, ledgerProvider, fork, commonBlock);
+
         try {
 
-            try {
+            BlockID newBlockID = currBlock.getID();
+            while (futureBlocks.containsKey(newBlockID)) {
 
-                BlockID newBlockID = currBlock.getID();
-                while (futureBlocks.containsKey(newBlockID)) {
-
-                    Block newBlock = futureBlocks.get(newBlockID);
-                    if (newBlock.isFuture(timeProvider.get() + Constant.MAX_LATENCY)) {
-                        throw new LifecycleException(newBlock.getID().toString());
-                    }
-                    if (fork.isPassed(newBlock.getTimestamp())) {
-                        throw new LifecycleException("Incorrect FORK");
-                    }
-
-                    Loggers.info(SyncBlockListTask.class,
-                                 "Block pushing... [{}] {} -> {}",
-                                 newBlock.getHeight(),
-                                 newBlock.getPreviousBlock(),
-                                 newBlock.getID());
-
-                    // Load verified transactions
-                    setVerifiedTransactions(newBlock);
-
-                    currBlock = uow.pushBlock(newBlock);
-                    newBlockID = currBlock.getID();
-
-                    Loggers.info(SyncBlockListTask.class,
-                                 "Block pushed: [{}] {} CD: {}",
-                                 currBlock.getHeight(),
-                                 newBlock.getID(),
-                                 currBlock.getCumulativeDifficulty());
+                Block newBlock = futureBlocks.get(newBlockID);
+                if (newBlock.isFuture(timeProvider.get() + Constant.MAX_LATENCY)) {
+                    throw new LifecycleException(newBlock.getID().toString());
                 }
-            } catch (ValidateException e) {
-                throw new ProtocolException(e);
-            } catch (Exception ignore) {
-                Loggers.error(SyncBlockListTask.class, ignore);
-            }
+                if (fork.isPassed(newBlock.getTimestamp())) {
+                    throw new LifecycleException("Incorrect FORK");
+                }
 
-            Difficulty diff = new Difficulty(currBlock);
-
-            // If node have imported all the blocks, the difficulty should match
-            if (diff.getLastBlockID().equals(targetState.getLastBlockID()) &&
-                    !diff.getDifficulty().equals(targetState.getDifficulty())) {
-                throw new ProtocolException("The Difficulty of the latest block is not valid.");
-            }
-
-            // If node have imported a part of the sequence
-            if (diff.compareTo(currentState) > 0) {
-                uow.commit();
                 Loggers.info(SyncBlockListTask.class,
-                             "Sync complete. [{}]{} -> [{}]{}",
-                             commonBlock.getHeight(),
-                             commonBlock.getID(),
+                             "Block pushing... [{}] {} (tx: {})-> {}",
+                             newBlock.getHeight(),
+                             newBlock.getPreviousBlock(),
+                             newBlock.getTransactions() != null ? newBlock.getTransactions().size() : 0,
+                             newBlock.getID());
+
+                // Load verified transactions
+                setVerifiedTransactions(newBlock);
+
+                currBlock = uow.pushBlock(newBlock);
+                newBlockID = currBlock.getID();
+
+                Loggers.info(SyncBlockListTask.class,
+                             "Block pushed: [{}] {} CD: {}",
                              currBlock.getHeight(),
-                             diff.getLastBlockID());
-            } else {
-
-                // There were problems with the addition of the block. The node
-                // is placed in the black list.
-                throw new ProtocolException("Failed to sync. Before: " +
-                                                    currentState.getDifficulty() +
-                                                    ", after: " +
-                                                    diff.getDifficulty());
+                             newBlock.getID(),
+                             currBlock.getCumulativeDifficulty());
             }
-
-            return currBlock;
-        } catch (Throwable e) {
-
-            throw e;
+        } catch (ValidateException e) {
+            throw new ProtocolException(e);
+        } catch (Exception ex) {
+            Loggers.error(SyncBlockListTask.class, ex);
         }
+
+        Difficulty diff = new Difficulty(currBlock);
+
+        // If node have imported all the blocks, the difficulty should match
+        if (diff.getLastBlockID().equals(targetState.getLastBlockID()) &&
+                !diff.getDifficulty().equals(targetState.getDifficulty())) {
+            throw new ProtocolException("The Difficulty of the latest block is not valid.");
+        }
+
+        // If node have imported a part of the sequence
+        if (diff.compareTo(currentState) > 0) {
+            uow.commit();
+            Loggers.info(SyncBlockListTask.class,
+                         "Sync complete. [{}]{} -> [{}]{}",
+                         commonBlock.getHeight(),
+                         commonBlock.getID(),
+                         currBlock.getHeight(),
+                         diff.getLastBlockID());
+        } else {
+
+            // There were problems with the addition of the block. The node
+            // is placed in the black list.
+            throw new ProtocolException("Failed to sync. Before: " +
+                                                currentState.getDifficulty() +
+                                                ", after: " +
+                                                diff.getDifficulty());
+        }
+
+        return currBlock;
     }
 
     /**
@@ -466,18 +513,29 @@ public final class SyncBlockListTask implements Runnable {
     }
 
     private void setVerifiedTransactions(Block block) {
+
         LinkedList<Transaction> verified = new LinkedList<>();
 
+        Block lastBlock = blockchainProvider.getLastBlock();
+
+        Map<TransactionID, Transaction> lastTrMap = new HashMap<>();
+        if (lastBlock.getTransactions() != null) {
+            for (Transaction tx : lastBlock.getTransactions()) {
+                lastTrMap.put(tx.getID(), tx);
+            }
+        }
+
         for (Transaction tx : block.getTransactions()) {
+
             Transaction fromBacklog = backlog.get(tx.getID());
             if (fromBacklog != null && Arrays.equals(fromBacklog.getSignature(), tx.getSignature())) {
                 verified.add(fromBacklog);
                 continue;
             }
 
-            Transaction fromDB = transactionProvider.getTransaction(tx.getID());
-            if (fromDB != null && Arrays.equals(fromDB.getSignature(), tx.getSignature())) {
-                verified.add(fromDB);
+            Transaction fromLastTx = lastTrMap.get(tx.getID());
+            if (fromLastTx != null && Arrays.equals(fromLastTx.getSignature(), tx.getSignature())) {
+                verified.add(fromLastTx);
                 continue;
             }
 

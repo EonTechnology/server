@@ -19,7 +19,7 @@ public class RegistrationDataPropertyDeserializer extends AccountPropertyDeseria
         Objects.requireNonNull(p, "Public key has not been initialized.");
 
         try {
-            Object o = p.getData().get("publicKey");
+            Object o = p.getData().get("pk");
             byte[] publicKey = Format.convert(String.valueOf(o));
             return new RegistrationDataProperty(publicKey);
         } catch (Exception e) {

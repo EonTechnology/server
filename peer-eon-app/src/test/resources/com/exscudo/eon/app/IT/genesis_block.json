@@ -1,0 +1,106 @@
+{
+  "signature": "1ad90c609f522ec4d16bf79096e09f3384220081e63d92de739661d7e418fc697ce7090262f8925672d19f1d8050a2b4b6d39557fb3632d3e2ddcc3ec004a304",
+  "timestamp": 1507118400,
+  "accounts": {
+    "EON-6MYUK-Q4XYX-RXG9K": {
+      "balance": {
+        "amount": 1000000000
+      },
+      "public-key": {
+        "pk": "69e7b67659982c0f3550cbadb71eb02dd619116924b0a28ec4aea509007ea50e"
+      }
+    },
+    "EON-NRVQC-892FF-475RR": {
+      "balance": {
+        "amount": 1000000000
+      },
+      "deposit": {
+        "amount": 500000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "c8069cf37abb6723feafe5cd93ba4961aaf74e4ac4837fc3c5ffa7a0acea5672"
+      }
+    },
+    "EON-WJRSD-H2NMV-PJR2W": {
+      "balance": {
+        "amount": 1000000000
+      },
+      "public-key": {
+        "pk": "284f4f5a1e7b10539e85767367f876a47a205ef27ecb626cac1627361886d9b4"
+      }
+    },
+    "EON-H3RLK-SDXVJ-QHQNN": {
+      "balance": {
+        "amount": 1000000000
+      },
+      "deposit": {
+        "amount": 500000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "d31f8033d86c1e81d44161ef9e7cf35741b09f9b35cce26d552cdc0abadffc35"
+      }
+    },
+    "EON-GKQXZ-7DMS8-QL65R": {
+      "balance": {
+        "amount": 1000000000
+      },
+      "deposit": {
+        "amount": 500000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "39779d180d22e7691aa9a902f8b8cb88212adac0e4023f92c9012ee1704092f6"
+      }
+    },
+    "EON-NQ67S-D37MR-CSGHT": {
+      "balance": {
+        "amount": 1000000000
+      },
+      "deposit": {
+        "amount": 500000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "e7770eacd6db25e3fa6c5a0eb6e00d592660b10af291ec65a1f6083c9ff66253"
+      }
+    },
+    "EON-X9GUC-6HKPH-CMH5U": {
+      "balance": {
+        "amount": 1000000000
+      },
+      "public-key": {
+        "pk": "97d7aae90ed158bb14cd96e7b434a0ffc2c061c5b7f2eb1c43febeeb5c99c337"
+      }
+    },
+    "EON-WEUCY-TPM29-EK53X": {
+      "balance": {
+        "amount": 1000000000
+      },
+      "deposit": {
+        "amount": 500000000,
+        "timestamp": 0
+      },
+      "public-key": {
+        "pk": "966b3ac5012f3950caa27f3d6632f409ba6e23d6da7ad04f5149efb42d8a1167"
+      }
+    },
+    "EON-R8S9V-59FA9-KLV2X": {
+      "balance": {
+        "amount": 1000000000
+      },
+      "public-key": {
+        "pk": "c9a440cf2b7cb92f6bb9602b9a64f38aed672bc30e1a7e1300b43752cf56541d"
+      }
+    },
+    "EON-GQWNR-U5W9R-K4MTS": {
+      "balance": {
+        "amount": 1000000000
+      },
+      "public-key": {
+        "pk": "e58ae325504acce5ba7172d658def7f0d33e548eed86d874a6cbc59c26643300"
+      }
+    }
+  }
+}

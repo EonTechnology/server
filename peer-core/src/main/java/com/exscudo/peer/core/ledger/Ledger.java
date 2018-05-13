@@ -8,10 +8,9 @@ import java.util.TreeMap;
 import com.exscudo.peer.core.data.Account;
 import com.exscudo.peer.core.data.AccountProperty;
 import com.exscudo.peer.core.data.identifier.AccountID;
-import com.exscudo.peer.core.ledger.tree.CachedNodeCollection;
+import com.exscudo.peer.core.ledger.tree.ITreeNodeCollection;
 import com.exscudo.peer.core.ledger.tree.IValueConverter;
 import com.exscudo.peer.core.ledger.tree.StateTree;
-import com.j256.ormlite.support.ConnectionSource;
 
 /**
  * Abstract implementation of {@code ILedger} interface.
@@ -26,10 +25,9 @@ public class Ledger extends AbstractLedger {
     private final int timestamp;
     private StateTree.State<Account> state;
 
-    public Ledger(ConnectionSource connectionSource, String snapshot, int timestamp) {
-
+    public Ledger(ITreeNodeCollection collection, String snapshot, int timestamp) {
         ValueConverter vc = new ValueConverter();
-        this.stateTree = new StateTree<>(new CachedNodeCollection(connectionSource), vc);
+        this.stateTree = new StateTree<>(collection, vc);
         this.state = null;
         this.timestamp = timestamp;
 
@@ -46,12 +44,15 @@ public class Ledger extends AbstractLedger {
 
     @Override
     public Account getAccount(AccountID accountID) {
+        if (state == null) {
+            return null;
+        }
         return state.get(accountID.getValue());
     }
 
     @Override
     public Ledger putAccount(Account account) {
-        StateTree.State newState = stateTree.newState(state, account.getID().getValue(), account, timestamp);
+        StateTree.State<Account> newState = stateTree.newState(state, account.getID().getValue(), account, timestamp);
         return new Ledger(stateTree, newState, timestamp);
     }
 

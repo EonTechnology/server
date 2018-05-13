@@ -4,8 +4,8 @@ import java.util.concurrent.Callable;
 
 import com.exscudo.peer.core.Constant;
 import com.exscudo.peer.core.data.Block;
-import com.exscudo.peer.core.ledger.storage.DbNodeCache;
-import com.exscudo.peer.core.storage.CacheManager;
+import com.exscudo.peer.core.ledger.tree.CachedNodeCollection;
+import com.exscudo.peer.core.ledger.tree.ITreeNodeCollection;
 import com.exscudo.peer.core.storage.Storage;
 
 public class LedgerProvider {
@@ -13,7 +13,6 @@ public class LedgerProvider {
 
     public LedgerProvider(Storage storage) {
         this.storage = storage;
-        CacheManager.createCache(storage.getConnectionSource(), DbNodeCache.class);
     }
 
     /**
@@ -23,13 +22,16 @@ public class LedgerProvider {
      * @return {@code ILedger} object or null
      */
     public ILedger getLedger(Block block) {
-        return new CachedLedger(new Ledger(storage.getConnectionSource(),
-                                           block.getSnapshot(),
-                                           block.getTimestamp() + Constant.BLOCK_PERIOD));
+        return getLedger(block.getSnapshot(), block.getTimestamp() + Constant.BLOCK_PERIOD);
     }
 
-    public void addLedger(ILedger ledger) {
-        storage.callInTransaction(new Callable<Void>() {
+    public ILedger getLedger(String snapshot, int timestamp) {
+        ITreeNodeCollection collection = new CachedNodeCollection(storage);
+        return new CachedLedger(new Ledger(collection, snapshot, timestamp));
+    }
+
+    public Void addLedger(ILedger ledger) {
+        return storage.callInTransaction(new Callable<Void>() {
 
             @Override
             public Void call() throws Exception {

@@ -1,23 +1,6 @@
 package com.exscudo.peer.core.blockchain.storage;
 
-import java.math.BigInteger;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
-import com.exscudo.peer.core.common.Format;
-import com.exscudo.peer.core.data.Block;
-import com.exscudo.peer.core.data.Transaction;
-import com.exscudo.peer.core.data.identifier.AccountID;
-import com.exscudo.peer.core.data.identifier.BlockID;
-import com.exscudo.peer.core.storage.Storage;
-import com.j256.ormlite.dao.Dao;
-import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.field.DatabaseField;
-import com.j256.ormlite.stmt.ArgumentHolder;
-import com.j256.ormlite.stmt.QueryBuilder;
-import com.j256.ormlite.stmt.ThreadLocalSelectArg;
 import com.j256.ormlite.table.DatabaseTable;
 
 @SuppressWarnings("unused")
@@ -59,36 +42,6 @@ public class DbBlock {
 
     public DbBlock() {
 
-    }
-
-    public DbBlock(Block block) {
-
-        this.setId(block.getID().getValue());
-        this.setVersion(block.getVersion());
-        this.setTimestamp(block.getTimestamp());
-        this.setPreviousBlock(block.getPreviousBlock().getValue());
-        this.setSenderID(block.getSenderID().getValue());
-        this.setSignature(Format.convert(block.getSignature()));
-        this.setHeight(block.getHeight());
-        this.setGenerationSignature(Format.convert(block.getGenerationSignature()));
-        this.setCumulativeDifficulty(block.getCumulativeDifficulty().toString());
-        this.setSnapshot(block.getSnapshot());
-        this.setTag(0);
-    }
-
-    public Block toBlock(final Storage storage) {
-
-        Block block = new LazyBlock(storage);
-        block.setVersion(getVersion());
-        block.setTimestamp(getTimestamp());
-        block.setPreviousBlock(new BlockID(getPreviousBlock()));
-        block.setGenerationSignature(Format.convert(getGenerationSignature()));
-        block.setSenderID(new AccountID(getSenderID()));
-        block.setSignature(Format.convert(getSignature()));
-        block.setSnapshot(getSnapshot());
-        block.setHeight(getHeight());
-        block.setCumulativeDifficulty(new BigInteger(getCumulativeDifficulty()));
-        return block;
     }
 
     public long getId() {
@@ -177,56 +130,5 @@ public class DbBlock {
 
     public void setTag(int tag) {
         this.tag = tag;
-    }
-
-    private static class LazyBlock extends Block {
-        private final Storage storage;
-        private boolean txLoaded = false;
-
-        private QueryBuilder<DbTransaction, Long> getTransactionsBuilder = null;
-        private ArgumentHolder vBlockID = new ThreadLocalSelectArg();
-
-        private LazyBlock(Storage storage) {
-            super();
-            this.storage = storage;
-        }
-
-        @Override
-        public Collection<Transaction> getTransactions() {
-            if (!txLoaded) {
-                try {
-
-                    List<Transaction> transactions = new ArrayList<>();
-                    for (DbTransaction dbtx : getTransactions(getID())) {
-                        transactions.add(dbtx.toTransaction());
-                    }
-
-                    setTransactions(transactions);
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-            return super.getTransactions();
-        }
-
-        @Override
-        public void setTransactions(Collection<Transaction> transactions) {
-            txLoaded = true;
-            super.setTransactions(transactions);
-        }
-
-        public List<DbTransaction> getTransactions(BlockID blockID) throws SQLException {
-
-            if (getTransactionsBuilder == null) {
-
-                Dao dao = DaoManager.createDao(storage.getConnectionSource(), DbTransaction.class);
-
-                getTransactionsBuilder = dao.queryBuilder();
-                getTransactionsBuilder.where().eq("block_id", vBlockID);
-            }
-
-            vBlockID.setValue(blockID.getValue());
-            return getTransactionsBuilder.query();
-        }
     }
 }

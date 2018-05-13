@@ -88,11 +88,11 @@ public class AccountProperties {
     }
 
     public static ValidationModeProperty getValidationMode(Account account) {
-        return getProperty(account, ValidationModeProperty.class);
+        return AccountProperties.getProperty(account, ValidationModeProperty.class);
     }
 
     public static VotePollsProperty getVoter(Account account) {
-        return getProperty(account, VotePollsProperty.class);
+        return AccountProperties.getProperty(account, VotePollsProperty.class);
     }
 
     public static ColoredCoinProperty getColoredCoin(Account account) {

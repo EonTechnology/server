@@ -1,0 +1,22 @@
+{
+  "min_deposit_size": 500000000,
+  "date_end_all": "2018-05-25T12:00:00.00Z",
+  "forks": [
+    {
+      "number": 1,
+      "date_begin": "2018-01-01T12:00:00.00Z",
+      "add_tx_types": [
+        "Registration",
+        "Payment",
+        "Deposit"
+      ]
+    },
+    {
+      "number": 2,
+      "date_begin": "2018-02-01T12:00:00.00Z",
+      "remove_tx_types": [
+        "PaymentTTT"
+      ]
+    }
+  ]
+}

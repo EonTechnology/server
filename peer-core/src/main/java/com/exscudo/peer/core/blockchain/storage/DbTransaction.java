@@ -1,14 +1,5 @@
 package com.exscudo.peer.core.blockchain.storage;
 
-import java.util.Map;
-
-import com.dampcake.bencode.Bencode;
-import com.dampcake.bencode.Type;
-import com.exscudo.peer.core.common.Format;
-import com.exscudo.peer.core.data.Transaction;
-import com.exscudo.peer.core.data.identifier.AccountID;
-import com.exscudo.peer.core.data.identifier.BaseIdentifier;
-import com.exscudo.peer.core.data.identifier.TransactionID;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
@@ -64,67 +55,11 @@ public class DbTransaction {
     @DatabaseField(columnName = "note")
     private String note;
 
+    @DatabaseField(columnName = "nested_transactions")
+    private String nestedTransactions;
+
     public DbTransaction() {
 
-    }
-
-    public DbTransaction(Transaction transaction) {
-
-        this.setId(transaction.getID().getValue());
-        this.setVersion(transaction.getVersion());
-        this.setTimestamp(transaction.getTimestamp());
-        this.setDeadline(transaction.getDeadline());
-        this.setSenderID(transaction.getSenderID().getValue());
-        this.setFee(transaction.getFee());
-        this.setReference(BaseIdentifier.getValueOrRef(transaction.getReference()));
-        this.setType(transaction.getType());
-        this.setSignature(Format.convert(transaction.getSignature()));
-        if (transaction.getData() != null) {
-            Bencode bencode = new Bencode();
-            byte[] encoded = bencode.encode(transaction.getData());
-            this.setAttachment(new String(encoded, bencode.getCharset()));
-        }
-        if (transaction.getConfirmations() != null) {
-            Bencode bencode = new Bencode();
-            byte[] encoded = bencode.encode(transaction.getConfirmations());
-            this.setConfirmations(new String(encoded, bencode.getCharset()));
-        }
-        this.setNote(transaction.getNote());
-    }
-
-    public Transaction toTransaction() {
-
-        Transaction tx = new VerifiedTransaction();
-
-        tx.setType(getType());
-        tx.setVersion(getVersion());
-        tx.setTimestamp(getTimestamp());
-        tx.setDeadline(getDeadline());
-        if (getReference() != 0L) {
-            tx.setReference(new TransactionID(getReference()));
-        }
-        tx.setSenderID(new AccountID(getSenderID()));
-        tx.setFee(getFee());
-        tx.setSignature(Format.convert(getSignature()));
-
-        Map<String, Object> data = null;
-        String attachmentText = getAttachment();
-        if (attachmentText != null && attachmentText.length() > 0) {
-            Bencode bencode = new Bencode();
-            data = bencode.decode(attachmentText.getBytes(), Type.DICTIONARY);
-        }
-        tx.setData(data);
-
-        Map<String, Object> confirmations = null;
-        String confirmationText = getConfirmations();
-        if (confirmationText != null && confirmationText.length() > 0) {
-            Bencode bencode = new Bencode();
-            confirmations = bencode.decode(confirmationText.getBytes(), Type.DICTIONARY);
-        }
-        tx.setConfirmations(confirmations);
-        tx.setNote(getNote());
-
-        return tx;
     }
 
     public long getId() {
@@ -285,10 +220,11 @@ public class DbTransaction {
         this.note = note;
     }
 
-    private static class VerifiedTransaction extends Transaction {
-        @Override
-        public boolean verifySignature(byte[] publicKey) {
-            return true;
-        }
+    public String getNestedTransactions() {
+        return nestedTransactions;
+    }
+
+    public void setNestedTransactions(String nestedTransactions) {
+        this.nestedTransactions = nestedTransactions;
     }
 }

@@ -19,20 +19,21 @@ CREATE UNIQUE INDEX "blocks_id_idx" ON "blocks" ("id");
 
 
 CREATE TABLE IF NOT EXISTS "nodes" (
-    "row_id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
-	"key" text NOT NULL,
-	"index" integer NOT NULL,
-	"timestamp" integer NOT NULL,
-	"type" integer NOT NULL,
-	"mask" integer NOT NULL,
-	"mask_length" integer NOT NULL,
-	"right_node_id" text,
-	"left_node_id" text,
-	"value" text,
-	"color" integer NOT NULL DEFAULT 0
+  "row_id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
+  "key" text NOT NULL,
+  "index" integer NOT NULL,
+  "timestamp" integer NOT NULL,
+  "type" integer NOT NULL,
+  "mask" integer NOT NULL,
+  "mask_length" integer NOT NULL,
+  "right_node_id" text,
+  "left_node_id" text,
+  "value" text,
+  "color" integer NOT NULL DEFAULT 0
 );
 
 CREATE INDEX "nodes_index_idx" ON "nodes" ("index");
+CREATE INDEX "nodes_color" ON "nodes" ("color");
 
 
 CREATE TABLE "settings" (
@@ -59,8 +60,10 @@ CREATE TABLE "transactions" (
   "block_id" integer NOT NULL,
   "height" integer NOT NULL,
   "version" integer NOT NULL,
+  "tag" integer NOT NULL,
   "confirmations" text DEFAULT NULL,
-  "tag" integer NOT NULL);
+  "note" text DEFAULT NULL,
+  "nested_transactions" text DEFAULT NULL);
 
 CREATE UNIQUE INDEX "transactions_id_block_id_idx" ON "transactions" ("id", "block_id");
 CREATE INDEX "transactions_id_idx" ON "transactions" ("id");
@@ -68,3 +71,12 @@ CREATE INDEX "transactions_tag_timestamp_idx" ON "transactions" ("tag", "timesta
 CREATE INDEX "transactions_sender_id_idx" ON "transactions" ("sender_id");
 CREATE INDEX "transactions_recipient_id_idx" ON "transactions" ("recipient_id");
 CREATE INDEX "transactions_id_block_idx" ON "transactions" ("block_id");
+
+
+CREATE TABLE "nested_transactions" (
+  "row_id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
+  "id" integer NOT NULL,
+  "owner_id" integer NOT NULL,
+  "block_id" integer NOT NULL,
+  "height" integer NOT NULL);
+

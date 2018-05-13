@@ -3,6 +3,10 @@
        xmlns="http://www.springframework.org/schema/beans"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
+    <bean id="verifier" class="com.exscudo.eon.app.utils.ConfigHelper" factory-method="verifyNetwork">
+        <constructor-arg type="java.lang.String" value="#{systemEnvironment['EON_NETWORK']}"/>
+    </bean>
+
     <bean id="propertyConfigurer"
           class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
         <property name="systemPropertiesModeName" value="SYSTEM_PROPERTIES_MODE_OVERRIDE"/>
@@ -10,50 +14,63 @@
             <list>
                 <value>WEB-INF/spring/host.properties</value>
                 <value>WEB-INF/spring/connection.properties</value>
+                <value>classpath:eon_network/#{systemEnvironment['EON_NETWORK']?:"dev"}/network.properties</value>
+                <value>classpath:app.properties</value>
             </list>
         </property>
     </bean>
 
-    <bean id="config" class="com.exscudo.eon.cfg.Config">
-        <property name="dbUrl" value="${database.path}"/>
+    <bean id="config" class="com.exscudo.eon.app.cfg.Config">
+
+        <property name="dbUrl" value="${network.database}"/>
+        <property name="genesisFile" value="${network.genesis}"/>
+        <property name="forksFile" value="${network.forks}"/>
+
         <property name="host" value="${host.address}"/>
+        <property name="inner" value="${host.inner}"/>
+
         <property name="blacklistingPeriod" value="${connection.blacklistingPeriod}"/>
         <property name="readTimeout" value="${connection.readTimeout}"/>
         <property name="connectTimeout" value="${connection.connectTimeout}"/>
+        <property name="connectedPoolSize" value="${connection.poolSize}"/>
+
         <property name="seed" value="#{systemProperties['SECRET_SEED']}"/>
-        <property name="genesisFile" value="${host.genesis}"/>
+
         <property name="fullSync" value="${blockchain.full}"/>
+        <property name="useCleaner" value="${blockchain.clean}"/>
+
+        <property name="version" value="${version}"/>
 
         <property name="publicPeers">
-            <bean class="com.exscudo.eon.utils.ConfigHelper" factory-method="getStringsFromLastExists">
+            <bean class="com.exscudo.eon.app.utils.ConfigHelper" factory-method="getStringsFromLastExists">
                 <constructor-arg value=";"/>
                 <constructor-arg>
                     <list>
-                        <value type="java.io.File">WEB-INF/spring/public-peer.list</value>
-                        <value type="java.io.File">WEB-INF/spring/public-peer-debug.list</value>
+                        <value type="java.io.File">classpath:${peers.public}</value>
+                        <value type="java.io.File">WEB-INF/spring/peer-public-debug.list</value>
                     </list>
                 </constructor-arg>
             </bean>
         </property>
         <property name="innerPeers">
-            <bean class="com.exscudo.eon.utils.ConfigHelper" factory-method="getStringsFromLastExists">
+            <bean class="com.exscudo.eon.app.utils.ConfigHelper" factory-method="getStringsFromLastExists">
                 <constructor-arg type="java.lang.String" value=";"/>
                 <constructor-arg>
                     <list>
-                        <value type="java.io.File">WEB-INF/spring/type-peer.list</value>
-                        <value type="java.io.File">WEB-INF/spring/type-peer-debug.list</value>
+                        <value type="java.io.File">classpath:${peers.inner}</value>
+                        <value type="java.io.File">WEB-INF/spring/peer-inner-debug.list</value>
                     </list>
                 </constructor-arg>
             </bean>
         </property>
     </bean>
 
-    <bean id="peerStarter" class="com.exscudo.eon.cfg.PeerStarter">
+    <bean id="peerStarter" class="com.exscudo.eon.app.cfg.PeerStarter">
         <constructor-arg ref="config"/>
     </bean>
 
     <!-- Run tasks -->
-    <bean id="engine" factory-method="init" destroy-method="destory" class="com.exscudo.eon.cfg.Engine">
+    <bean id="engine" factory-method="init" destroy-method="destory" class="com.exscudo.eon.app.cfg.Engine">
         <constructor-arg ref="peerStarter"/>
     </bean>
 

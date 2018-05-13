@@ -9,11 +9,6 @@ import com.exscudo.peer.core.data.identifier.AccountID;
 public class ValidationModeProperty {
 
     /**
-     * Maximum allowed delegates of a account.
-     */
-    public static final int MAX_DELEGATES = 20;
-
-    /**
      * Minimum weight.
      */
     public static final int MIN_WEIGHT = 0;

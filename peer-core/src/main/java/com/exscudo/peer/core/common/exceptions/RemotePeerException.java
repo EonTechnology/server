@@ -1,12 +1,10 @@
 package com.exscudo.peer.core.common.exceptions;
 
-import com.exscudo.jsonrpc.JsonException;
-
 /**
  * The class {@code RemotePeerException} and its subclasses indicates an error
  * occurred while accessing to the services env.
  */
-public class RemotePeerException extends JsonException {
+public class RemotePeerException extends IllegalArgumentException {
     private static final long serialVersionUID = 1L;
 
     /**

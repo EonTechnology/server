@@ -8,9 +8,9 @@ import com.exscudo.peer.core.data.Account;
 import com.exscudo.peer.core.data.AccountProperty;
 import com.exscudo.peer.core.data.identifier.AccountID;
 import com.exscudo.peer.eon.PropertyType;
-import com.exscudo.peer.eon.TransactionType;
 import com.exscudo.peer.eon.ledger.AccountPropertySerializer;
 import com.exscudo.peer.eon.ledger.state.ValidationModeProperty;
+import com.exscudo.peer.tx.TransactionType;
 
 public class ValidationModePropertySerializer extends AccountPropertySerializer<ValidationModeProperty> {
 

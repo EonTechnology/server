@@ -7,38 +7,41 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.exscudo.peer.core.Constant;
 import com.exscudo.peer.core.IFork;
 import com.exscudo.peer.core.backlog.IBacklog;
 import com.exscudo.peer.core.blockchain.IBlockchainProvider;
-import com.exscudo.peer.core.blockchain.events.BlockEvent;
-import com.exscudo.peer.core.blockchain.events.IBlockEventListener;
-import com.exscudo.peer.core.common.Format;
+import com.exscudo.peer.core.blockchain.events.BlockchainEvent;
+import com.exscudo.peer.core.blockchain.events.IBlockchainEventListener;
+import com.exscudo.peer.core.blockchain.events.UpdatedBlockchainEvent;
+import com.exscudo.peer.core.common.ITimeProvider;
+import com.exscudo.peer.core.common.ImmutableTimeProvider;
 import com.exscudo.peer.core.common.Loggers;
 import com.exscudo.peer.core.common.TransactionComparator;
-import com.exscudo.peer.core.crypto.BencodeFormatter;
 import com.exscudo.peer.core.crypto.ISigner;
 import com.exscudo.peer.core.data.Account;
 import com.exscudo.peer.core.data.Block;
+import com.exscudo.peer.core.data.Generation;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.identifier.AccountID;
 import com.exscudo.peer.core.data.identifier.TransactionID;
-import com.exscudo.peer.core.data.mapper.Constants;
-import com.exscudo.peer.core.data.transaction.ITransactionHandler;
-import com.exscudo.peer.core.data.transaction.TransactionContext;
 import com.exscudo.peer.core.env.events.IPeerEventListener;
 import com.exscudo.peer.core.env.events.PeerEvent;
 import com.exscudo.peer.core.importer.tasks.GenerateBlockTask;
 import com.exscudo.peer.core.ledger.ILedger;
 import com.exscudo.peer.core.ledger.LedgerProvider;
+import com.exscudo.peer.core.middleware.ILedgerAction;
+import com.exscudo.peer.core.middleware.LedgerActionContext;
+import com.exscudo.peer.core.middleware.TransactionParser;
+import com.exscudo.peer.core.middleware.TransactionValidator;
+import com.exscudo.peer.core.middleware.ValidationResult;
 
 /**
  * Creates the next block for the chain.
  */
-public class BlockGenerator implements IPeerEventListener, IBlockEventListener {
+public class BlockGenerator implements IPeerEventListener, IBlockchainEventListener {
 
     private final AtomicBoolean isGenAllowed = new AtomicBoolean();
     private final IBacklog backlog;
@@ -95,7 +98,7 @@ public class BlockGenerator implements IPeerEventListener, IBlockEventListener {
         while (indexes.hasNext() && map.size() < Constant.BLOCK_TRANSACTION_LIMIT) {
             TransactionID id = indexes.next();
             Transaction tx = backlog.get(id);
-            if (tx != null && !tx.isFuture(currentTimestamp)) {
+            if (tx != null && !tx.isFuture(currentTimestamp) && !tx.isExpired(currentTimestamp)) {
                 map.put(id, tx);
             }
         }
@@ -104,7 +107,9 @@ public class BlockGenerator implements IPeerEventListener, IBlockEventListener {
         while (parallelBlock != null) {
             for (Transaction tx : parallelBlock.getTransactions()) {
 
-                if (!tx.isFuture(currentTimestamp)) {
+                if (!tx.isFuture(currentTimestamp) && !tx.isExpired(currentTimestamp)) {
+                    int difficulty = fork.getDifficulty(tx, currentTimestamp);
+                    tx.setLength(difficulty);
                     map.put(tx.getID(), tx);
                 }
             }
@@ -142,14 +147,13 @@ public class BlockGenerator implements IPeerEventListener, IBlockEventListener {
             targetBlock = blockchain.getBlockByHeight(targetHeight);
         }
 
-        Map<String, Object> gEds = new TreeMap<>();
-        gEds.put("network", fork.getGenesisBlockID().toString());
-        gEds.put(Constants.GENERATION_SIGNATURE, Format.convert(targetBlock.getGenerationSignature()));
-        byte[] gEdsBytes = BencodeFormatter.getBytes(gEds);
-        byte[] generationSignature = getSigner().sign(gEdsBytes);
+        Generation generation = new Generation(targetBlock.getGenerationSignature());
+        byte[] generationSignature = getSigner().sign(generation, fork.getGenesisBlockID());
 
-        ITransactionHandler handler = fork.getTransactionExecutor(timestamp);
-        TransactionContext ctx = new TransactionContext(timestamp);
+        LedgerActionContext ctx = new LedgerActionContext(timestamp, fork);
+
+        ITimeProvider blockTimeProvider = new ImmutableTimeProvider(timestamp);
+        TransactionValidator transactionValidator = TransactionValidator.getAllValidators(fork, blockTimeProvider);
 
         Arrays.sort(transactions, new TransactionComparator());
         int payloadLength = 0;
@@ -161,7 +165,21 @@ public class BlockGenerator implements IPeerEventListener, IBlockEventListener {
             }
 
             try {
-                ledger = handler.run(tx, ledger, ctx);
+
+                ILedger newLedger = ledger;
+
+                ValidationResult r = transactionValidator.validate(tx, newLedger);
+                if (r.hasError) {
+                    throw r.cause;
+                }
+
+                ILedgerAction[] actions = TransactionParser.parse(tx);
+
+                for (ILedgerAction action : actions) {
+                    newLedger = action.run(newLedger, ctx);
+                }
+
+                ledger = newLedger;
                 payload.add(tx);
                 payloadLength += txLength;
             } catch (Exception e) {
@@ -179,9 +197,7 @@ public class BlockGenerator implements IPeerEventListener, IBlockEventListener {
 
         if (totalFee != 0) {
             Account creator = ledger.getAccount(senderID);
-            long balance = fork.getBalance(creator, timestamp);
-            balance += totalFee;
-            creator = fork.setBalance(creator, balance, timestamp);
+            creator = fork.reward(creator, totalFee, timestamp);
             ledger = ledger.putAccount(creator);
         }
 
@@ -194,7 +210,7 @@ public class BlockGenerator implements IPeerEventListener, IBlockEventListener {
         newBlock.setGenerationSignature(generationSignature);
         newBlock.setTransactions(payload);
         newBlock.setSnapshot(ledger.getHash());
-        newBlock.setSignature(getSigner().sign(newBlock.getBytes()));
+        newBlock.setSignature(getSigner().sign(newBlock, fork.getGenesisBlockID()));
 
         BigInteger diff = fork.getDifficultyAddition(newBlock, generator, timestamp);
         BigInteger cumulativeDifficulty = previousBlock.getCumulativeDifficulty().add(diff);
@@ -203,28 +219,32 @@ public class BlockGenerator implements IPeerEventListener, IBlockEventListener {
         return newBlock;
     }
 
-    /* IBlockEventListener members */
+    // region IBlockchainEventListener members
 
     @Override
-    public void onBeforeChanging(BlockEvent event) {
+    public void onChanging(BlockchainEvent event) {
         isGenAllowed.set(false);
     }
 
     @Override
-    public void onLastBlockChanged(BlockEvent event) {
+    public void onChanged(UpdatedBlockchainEvent event) {
 
         if (useFastGeneration) {
             isGenAllowed.set(true);
         }
     }
 
-    /* IPeerEventListener */
+    // endregion
+
+    // region IPeerEventListener members
 
     @Override
     public void onSynchronized(PeerEvent event) {
         // The blocks is synchronized with at least one env.
         isGenAllowed.set(true);
     }
+
+    // endregion
 
     public boolean isGenerationAllowed() {
         return isGenAllowed.get();

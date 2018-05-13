@@ -3,7 +3,6 @@ package com.exscudo.peer.core.importer.tasks;
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
@@ -13,41 +12,51 @@ import com.exscudo.peer.core.api.ISnapshotSynchronizationService;
 import com.exscudo.peer.core.blockchain.BlockchainProvider;
 import com.exscudo.peer.core.blockchain.storage.DbBlock;
 import com.exscudo.peer.core.blockchain.storage.DbTransaction;
+import com.exscudo.peer.core.blockchain.storage.converters.DTOConverter;
 import com.exscudo.peer.core.common.Loggers;
 import com.exscudo.peer.core.common.exceptions.RemotePeerException;
 import com.exscudo.peer.core.data.Account;
-import com.exscudo.peer.core.data.AccountProperty;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.identifier.AccountID;
 import com.exscudo.peer.core.data.identifier.BlockID;
 import com.exscudo.peer.core.env.ExecutionContext;
 import com.exscudo.peer.core.env.Peer;
-import com.exscudo.peer.core.ledger.Ledger;
+import com.exscudo.peer.core.ledger.ILedger;
+import com.exscudo.peer.core.ledger.LedgerProvider;
 import com.exscudo.peer.core.ledger.storage.DbNode;
 import com.exscudo.peer.core.storage.Storage;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.stmt.DeleteBuilder;
 
+/**
+ * Performs the task of initial synchronization from a snapshot.
+ * <p>
+ * In the first step, the states of the accounts is loaded. The states correspond
+ * to the block of day-old. Next, the subsequent blocks are loaded
+ */
 public class SyncSnapshotTask implements Runnable {
 
     private final Storage storage;
     private final ExecutionContext context;
     private final IFork fork;
     private final BlockchainProvider blockchainProvider;
+    private final LedgerProvider ledgerProvider;
     private boolean disabled = false;
     private Block genesis = null;
 
     public SyncSnapshotTask(Storage storage,
                             ExecutionContext context,
                             IFork fork,
-                            BlockchainProvider blockchainProvider) {
+                            BlockchainProvider blockchainProvider,
+                            LedgerProvider ledgerProvider) {
 
         this.storage = storage;
         this.context = context;
         this.fork = fork;
         this.blockchainProvider = blockchainProvider;
+        this.ledgerProvider = ledgerProvider;
     }
 
     @Override
@@ -104,66 +113,49 @@ public class SyncSnapshotTask implements Runnable {
                 }
             });
 
-            Ledger ledger =
-                    new Ledger(storage.getConnectionSource(), null, block.getTimestamp() + Constant.BLOCK_PERIOD);
+            ILedger ledger = ledgerProvider.getLedger(null, block.getTimestamp() + Constant.BLOCK_PERIOD);
 
-            Map<String, Object> accSetMap = service.getAccounts(block.getID().toString());
+            Account[] accounts = service.getAccounts(block.getID().toString());
 
             Set<String> totalAccSet = new HashSet<>();
 
             Loggers.info(SyncSnapshotTask.class, "Loading accounts...");
 
-            while (accSetMap != null) {
+            while (accounts != null) {
                 boolean imported = false;
                 BigInteger maxAcc = BigInteger.ZERO;
 
-                for (String id : accSetMap.keySet()) {
+                for (Account account : accounts) {
 
-                    if (totalAccSet.contains(id)) {
+                    if (totalAccSet.contains(account.getID().toString())) {
                         continue;
                     }
+                    ledger = ledger.putAccount(account);
 
-                    Map<String, Object> accMap = (Map<String, Object>) accSetMap.get(id);
-                    Account acc = new Account(new AccountID(id));
-                    for (String p : accMap.keySet()) {
-                        Map<String, Object> data = (Map<String, Object>) accMap.get(p);
-                        AccountProperty property = new AccountProperty(p, data);
-                        acc = acc.putProperty(property);
-                    }
-
-                    ledger = ledger.putAccount(acc);
-
-                    BigInteger reversed = new BigInteger(Long.toHexString(Long.reverse(acc.getID().getValue())), 16);
+                    BigInteger reversed =
+                            new BigInteger(Long.toHexString(Long.reverse(account.getID().getValue())), 16);
                     maxAcc = maxAcc.max(reversed);
 
-                    totalAccSet.add(id);
+                    totalAccSet.add(account.getID().toString());
                     imported = true;
                 }
 
                 if (imported) {
-                    Ledger finalLedger = ledger;
-                    storage.callInTransaction(new Callable<Void>() {
-                        @Override
-                        public Void call() throws Exception {
-                            try {
-                                finalLedger.save();
-                            } catch (Throwable tx) {
-                                Loggers.error(SyncSnapshotTask.class, tx);
-                            }
-                            return null;
-                        }
-                    });
 
-                    ledger = new Ledger(storage.getConnectionSource(),
-                                        ledger.getHash(),
-                                        block.getTimestamp() + Constant.BLOCK_PERIOD);
+                    try {
+                        ledgerProvider.addLedger(ledger);
+                    } catch (Throwable tx) {
+                        Loggers.error(SyncSnapshotTask.class, tx);
+                    }
 
-                    accSetMap = service.getNextAccounts(block.getID().toString(),
-                                                        new AccountID(Long.reverse(maxAcc.longValue())).toString());
+                    ledger = ledgerProvider.getLedger(ledger.getHash(), block.getTimestamp() + Constant.BLOCK_PERIOD);
+
+                    accounts = service.getNextAccounts(block.getID().toString(),
+                                                       new AccountID(Long.reverse(maxAcc.longValue())).toString());
 
                     Loggers.info(SyncSnapshotTask.class, "Loaded accounts: {}", totalAccSet.size());
                 } else {
-                    accSetMap = null;
+                    accounts = null;
                 }
             }
 
@@ -199,20 +191,19 @@ public class SyncSnapshotTask implements Runnable {
             blockSet.put(block.getID(), block);
 
             Loggers.info(SyncSnapshotTask.class, "Validating signatures...");
-            for (Block b : blockSet.values()) {
-                Account generator = ledger.getAccount(b.getSenderID());
-                byte[] publicKey = fork.getPublicKey(generator, b.getTimestamp());
-                if (!b.verifySignature(publicKey)) {
-                    throw new RemotePeerException("Bad block signature");
-                }
 
-                if (b.getTransactions() != null) {
-                    for (Transaction tx : block.getTransactions()) {
-                        Account account = ledger.getAccount(tx.getSenderID());
-                        byte[] pk = fork.getPublicKey(account, b.getTimestamp());
-                        if (!tx.verifySignature(pk)) {
-                            throw new RemotePeerException("Bad transaction signature");
-                        }
+            Account generator = ledger.getAccount(block.getSenderID());
+
+            if (!fork.verifySignature(block, block.getSignature(), generator, block.getTimestamp())) {
+                throw new RemotePeerException("Bad block signature");
+            }
+
+            if (block.getTransactions() != null) {
+                for (Transaction tx : block.getTransactions()) {
+                    Account account = ledger.getAccount(tx.getSenderID());
+
+                    if (!fork.verifySignature(tx, tx.getSignature(), account, block.getTimestamp())) {
+                        throw new RemotePeerException("Bad transaction signature");
                     }
                 }
             }
@@ -223,22 +214,18 @@ public class SyncSnapshotTask implements Runnable {
             Dao<DbTransaction, Long> daoTransactions =
                     DaoManager.createDao(storage.getConnectionSource(), DbTransaction.class);
 
-            Ledger finalLedger = ledger;
-
             storage.callInTransaction(new Callable<Void>() {
                 @Override
                 public Void call() throws Exception {
 
                     for (Block b : blockSet.values()) {
-                        daoBlocks.create(new DbBlock(b));
+                        daoBlocks.create(DTOConverter.convert(b));
                         if (b.getTransactions() != null) {
                             for (Transaction transaction : b.getTransactions()) {
-                                daoTransactions.create(new DbTransaction(transaction));
+                                daoTransactions.create(DTOConverter.convert(transaction));
                             }
                         }
                     }
-
-                    finalLedger.save();
 
                     daoBlocks.updateBuilder().updateColumnValue("tag", 1).update();
                     daoTransactions.updateBuilder().updateColumnValue("tag", 1).update();
@@ -267,7 +254,7 @@ public class SyncSnapshotTask implements Runnable {
 
     private void fillHeight(Block block) {
         if (genesis == null) {
-            genesis = blockchainProvider.getBlock(blockchainProvider.getGenesisBlockID());
+            genesis = blockchainProvider.getBlock(fork.getGenesisBlockID());
         }
 
         int height = (block.getTimestamp() - genesis.getTimestamp()) / Constant.BLOCK_PERIOD;

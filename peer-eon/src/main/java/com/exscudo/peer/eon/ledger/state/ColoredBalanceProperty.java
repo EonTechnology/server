@@ -5,10 +5,10 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
 
-import com.exscudo.peer.eon.ColoredCoinID;
+import com.exscudo.peer.tx.ColoredCoinID;
 
 public class ColoredBalanceProperty implements Iterable<ColoredCoinID> {
-
+    private static final int COLORED_COIN_LIMIT = 10000;
     /**
      * Contains a list of balances by colors.
      */
@@ -48,6 +48,14 @@ public class ColoredBalanceProperty implements Iterable<ColoredCoinID> {
         long balance = getBalance(color) - amount;
         setBalance(balance, color);
         return this;
+    }
+
+    public boolean isFull() {
+        return coloredBalances.size() >= COLORED_COIN_LIMIT;
+    }
+
+    public boolean containBalance(ColoredCoinID color) {
+        return coloredBalances.containsKey(color.toString());
     }
 
     public Map<String, Object> getProperty() {

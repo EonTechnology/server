@@ -1,57 +1,38 @@
 package com.exscudo.peer.core.backlog;
 
-import java.sql.SQLException;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import com.exscudo.peer.core.Constant;
-import com.exscudo.peer.core.blockchain.events.BlockEvent;
-import com.exscudo.peer.core.blockchain.events.IBlockEventListener;
-import com.exscudo.peer.core.blockchain.storage.DbTransaction;
+import com.exscudo.peer.core.blockchain.events.BlockchainEvent;
+import com.exscudo.peer.core.blockchain.events.IBlockchainEventListener;
+import com.exscudo.peer.core.blockchain.events.UpdatedBlockchainEvent;
 import com.exscudo.peer.core.common.Loggers;
-import com.exscudo.peer.core.common.exceptions.DataAccessException;
 import com.exscudo.peer.core.common.exceptions.ValidateException;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Transaction;
-import com.exscudo.peer.core.storage.Storage;
-import com.j256.ormlite.dao.Dao;
-import com.j256.ormlite.dao.DaoManager;
-import com.j256.ormlite.stmt.ArgumentHolder;
-import com.j256.ormlite.stmt.QueryBuilder;
-import com.j256.ormlite.stmt.ThreadLocalSelectArg;
-import com.j256.ormlite.stmt.Where;
 
 /**
  * Performs the task of removing expired transaction, duplicate transactions,
- * transactions with invalid signatures
+ * transactions with invalid signatures, etc.
+ * <p>
+ * In other words, re-import of transactions taking into account the new state.
  */
-public class BacklogCleaner implements IBlockEventListener {
+public class BacklogCleaner implements IBlockchainEventListener {
 
-    private final Storage storage;
-    private final IBacklog backlog;
+    private final Backlog backlog;
 
     private Thread thread = null;
     private SortedSet<Transaction> set = Collections.synchronizedSortedSet(new TreeSet<>(new TransactionComparator()));
 
-    // region Prepared Statement
-
-    private QueryBuilder<DbTransaction, Long> forkedBuilder;
-    private ArgumentHolder vTimestamp = new ThreadLocalSelectArg();
-    private ArgumentHolder vTimestampSub = new ThreadLocalSelectArg();
-
-    // endregion
-
-    public BacklogCleaner(IBacklog backlog, Storage storage) {
+    public BacklogCleaner(Backlog backlog) {
 
         this.backlog = backlog;
-        this.storage = storage;
     }
 
-    private synchronized void removeInvalidTransaction(Block lastBlock) {
+    private synchronized void removeInvalidTransaction(Block lastBlock, List<Transaction> forked) {
 
         try {
 
@@ -60,13 +41,11 @@ public class BacklogCleaner implements IBlockEventListener {
                 thread.join();
             }
 
-            int timePeriod = lastBlock.getTimestamp() - Constant.SECONDS_IN_DAY;
-
-            List<Transaction> forked = getForkedTransactions(timePeriod);
             List<Transaction> copy = backlog.copyAndClear();
 
             set.addAll(forked);
             set.addAll(copy);
+            set.removeAll(lastBlock.getTransactions());
 
             if (!set.isEmpty()) {
 
@@ -86,69 +65,26 @@ public class BacklogCleaner implements IBlockEventListener {
         }
     }
 
-    /**
-     * Get transaction from forked blockchain and that not exist in main blockchain
-     *
-     * @param timestamp time limit for search
-     * @return transaction list
-     */
-    private List<Transaction> getForkedTransactions(int timestamp) throws SQLException {
-
-        try {
-
-            if (forkedBuilder == null) {
-
-                Dao<DbTransaction, Long> dao = DaoManager.createDao(storage.getConnectionSource(), DbTransaction.class);
-
-                // Ids of transactions in main blockchain
-                QueryBuilder<DbTransaction, Long> subQueryBuilder = dao.queryBuilder();
-                subQueryBuilder.selectColumns("id");
-                Where<DbTransaction, Long> sw = subQueryBuilder.where();
-
-                sw.gt("timestamp", vTimestampSub);
-                sw.and().eq("tag", 1);
-
-                // Forked transactions not in main blockchain
-                forkedBuilder = dao.queryBuilder();
-                Where<DbTransaction, Long> w = forkedBuilder.where();
-                w.gt("timestamp", vTimestamp);
-                w.and().eq("tag", 0);
-                w.and().notIn("id", subQueryBuilder);
-            }
-
-            vTimestampSub.setValue(timestamp);
-            vTimestamp.setValue(timestamp);
-
-            List<DbTransaction> dbTransactions = forkedBuilder.query();
-
-            // Convert List<DbTransaction> to List<Transaction>
-            LinkedList<Transaction> res = new LinkedList<>();
-            for (DbTransaction tx : dbTransactions) {
-                res.add(tx.toTransaction());
-            }
-
-            return res;
-        } catch (SQLException e) {
-            throw new DataAccessException(e);
-        }
-    }
+    // region IBlockchainEventListener members
 
     @Override
-    public void onBeforeChanging(BlockEvent event) {
+    public void onChanging(BlockchainEvent event) {
 
     }
 
     @Override
-    public void onLastBlockChanged(BlockEvent event) {
-        removeInvalidTransaction(event.block);
+    public void onChanged(UpdatedBlockchainEvent event) {
+        removeInvalidTransaction(event.block, event.forked);
     }
+
+    //endregion
 
     private static class CleanRunnable implements Runnable {
 
         private final SortedSet<Transaction> set;
-        private final IBacklog backlog;
+        private final Backlog backlog;
 
-        public CleanRunnable(SortedSet<Transaction> set, IBacklog backlog) {
+        CleanRunnable(SortedSet<Transaction> set, Backlog backlog) {
 
             this.set = set;
             this.backlog = backlog;

@@ -18,7 +18,6 @@ public final class SyncTimeTask implements Runnable {
      * SNTP UDP port
      */
     private static final int PORT = 123;
-    // TODO: load NTP_SERVER_NAME from configuration.
     private static final String NTP_SERVER_NAME = "pool.ntp.org";
     private static final int TIMEOUT = 10000;
     private final TimeProvider timeProvider;

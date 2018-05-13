@@ -7,13 +7,14 @@ import java.util.Objects;
 import java.util.concurrent.Callable;
 
 import com.exscudo.peer.core.Constant;
-import com.exscudo.peer.core.IFork;
 import com.exscudo.peer.core.api.Difficulty;
-import com.exscudo.peer.core.blockchain.events.BlockEventManager;
+import com.exscudo.peer.core.blockchain.events.BlockchainEventManager;
 import com.exscudo.peer.core.blockchain.storage.DbBlock;
 import com.exscudo.peer.core.blockchain.storage.DbTransaction;
+import com.exscudo.peer.core.blockchain.storage.converters.DTOConverter;
 import com.exscudo.peer.core.common.exceptions.DataAccessException;
 import com.exscudo.peer.core.data.Block;
+import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.identifier.BlockID;
 import com.exscudo.peer.core.storage.Storage;
 import com.j256.ormlite.dao.Dao;
@@ -22,13 +23,15 @@ import com.j256.ormlite.stmt.ArgumentHolder;
 import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.stmt.ThreadLocalSelectArg;
 import com.j256.ormlite.stmt.UpdateBuilder;
+import com.j256.ormlite.stmt.Where;
 
+/**
+ * Basic implementation of {@code IBlockchainProvider}.
+ */
 public class BlockchainProvider implements IBlockchainProvider {
     private final Storage storage;
-    private final IFork fork;
-    private final BlockEventManager blockEventManager;
+    private final BlockchainEventManager blockchainEventManager;
 
-    private BlockID genesisBlockID;
     private volatile Block lastBlock;
 
     // region Prepared Statements
@@ -52,12 +55,15 @@ public class BlockchainProvider implements IBlockchainProvider {
     private ArgumentHolder vHeightBegin = new ThreadLocalSelectArg();
     private ArgumentHolder vHeightEnd = new ThreadLocalSelectArg();
 
+    private QueryBuilder<DbTransaction, Long> forkedBuilder;
+    private ArgumentHolder vTimestamp = new ThreadLocalSelectArg();
+    private ArgumentHolder vTimestampSub = new ThreadLocalSelectArg();
+
     // endregion
 
-    public BlockchainProvider(Storage storage, IFork fork, BlockEventManager blockEventManager) throws SQLException {
+    public BlockchainProvider(Storage storage, BlockchainEventManager blockchainEventManager) throws SQLException {
         this.storage = storage;
-        this.fork = fork;
-        this.blockEventManager = blockEventManager;
+        this.blockchainEventManager = blockchainEventManager;
 
         try {
 
@@ -72,12 +78,7 @@ public class BlockchainProvider implements IBlockchainProvider {
 
     public void initialize() throws SQLException {
         Storage.Metadata metadata = storage.metadata();
-        genesisBlockID = metadata.getGenesisBlockID();
         lastBlock = getBlock(metadata.getLastBlockID());
-    }
-
-    public BlockID getGenesisBlockID() {
-        return genesisBlockID;
     }
 
     @Override
@@ -98,7 +99,7 @@ public class BlockchainProvider implements IBlockchainProvider {
 
             DbBlock dbBlock = getBuilder.queryForFirst();
             if (dbBlock != null) {
-                return dbBlock.toBlock(storage);
+                return DTOConverter.convert(dbBlock, storage);
             }
 
             return null;
@@ -120,7 +121,7 @@ public class BlockchainProvider implements IBlockchainProvider {
 
             DbBlock dbBlock = getByHBuilder.queryForFirst();
             if (dbBlock != null) {
-                return dbBlock.toBlock(storage);
+                return DTOConverter.convert(dbBlock, storage);
             }
 
             return null;
@@ -202,17 +203,33 @@ public class BlockchainProvider implements IBlockchainProvider {
     }
 
     protected void setPointerTo(Block newHead) {
-        storage.callInTransaction(new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
 
-                changeHead(getLastBlock(), newHead);
+        final Block oldHead = getLastBlock();
+
+        List<DbTransaction> forked = storage.callInTransaction(new Callable<List<DbTransaction>>() {
+            @Override
+            public List<DbTransaction> call() throws Exception {
+
+                changeHead(oldHead, newHead);
                 storage.metadata().setLastBlockID(newHead.getID());
                 lastBlock = newHead;
 
-                return null;
+                return getForkedTransactions(newHead.getTimestamp() - Constant.SECONDS_IN_DAY);
             }
         });
+
+        if (!oldHead.getID().equals(getLastBlock().getID())) {
+
+            LinkedList<Transaction> list = null;
+            if (forked != null) {
+                // Convert List<DbTransaction> to List<Transaction>
+                list = new LinkedList<>();
+                for (DbTransaction tx : forked) {
+                    list.add(DTOConverter.convert(tx));
+                }
+            }
+            blockchainEventManager.raiseBlockchainChanged(this, newHead, list);
+        }
     }
 
     private void changeHead(Block oldHead, Block newHead) throws SQLException {
@@ -238,7 +255,7 @@ public class BlockchainProvider implements IBlockchainProvider {
         }
     }
 
-    public BlockID getPreviousBlockId(BlockID blockID) throws SQLException {
+    private BlockID getPreviousBlockId(BlockID blockID) throws SQLException {
 
         if (getPrevIdBuilder == null) {
             getPrevIdBuilder = daoBlocks.queryBuilder();
@@ -323,17 +340,51 @@ public class BlockchainProvider implements IBlockchainProvider {
     }
 
     public Blockchain getBlockchain(Block block) {
-        blockEventManager.raiseBeforeChanging(this, block);
+        blockchainEventManager.raiseBlockchainChanging(this, block);
         // TODO: check that block is exists
-        return new Blockchain(storage, block, fork);
+        return new Blockchain(storage, block);
     }
 
     public Block setBlockchain(Blockchain blockchain) {
-        Block oldLastBlock = getLastBlock();
-        Block newLastBlock = setLastBlock(blockchain.getLastBlock());
-        if (!newLastBlock.getID().equals(oldLastBlock.getID())) {
-            blockEventManager.raiseLastBlockChanged(this, newLastBlock);
+        return setLastBlock(blockchain.getLastBlock());
+    }
+
+    /**
+     * Get transaction from forked blockchain and that not exist in main blockchain
+     *
+     * @param timestamp time limit for search
+     * @return transaction list
+     */
+    private List<DbTransaction> getForkedTransactions(int timestamp) {
+
+        try {
+
+            if (forkedBuilder == null) {
+
+                Dao<DbTransaction, Long> dao = DaoManager.createDao(storage.getConnectionSource(), DbTransaction.class);
+
+                // Ids of transactions in main blockchain
+                QueryBuilder<DbTransaction, Long> subQueryBuilder = dao.queryBuilder();
+                subQueryBuilder.selectColumns("id");
+                Where<DbTransaction, Long> sw = subQueryBuilder.where();
+
+                sw.gt("timestamp", vTimestampSub);
+                sw.and().eq("tag", 1);
+
+                // Forked transactions not in main blockchain
+                forkedBuilder = dao.queryBuilder();
+                Where<DbTransaction, Long> w = forkedBuilder.where();
+                w.gt("timestamp", vTimestamp);
+                w.and().eq("tag", 0);
+                w.and().notIn("id", subQueryBuilder);
+            }
+
+            vTimestampSub.setValue(timestamp);
+            vTimestamp.setValue(timestamp);
+
+            return forkedBuilder.query();
+        } catch (SQLException e) {
+            throw new DataAccessException(e);
         }
-        return newLastBlock;
     }
 }

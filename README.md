@@ -1,4 +1,3 @@
-
 EON peer core source code.
 
 
@@ -25,36 +24,57 @@ Follows the standard Maven building procedure (see https://maven.apache.org/).
 mvn package
 ```
 
+EON_NETWORK environment variable must be specified for select network (dev/test3/main)
+
 Run embedded server:
 ```bash
 mvn jetty:run
 ```
 
-Run with setting generation account:
+Run with setting generation account and network:
 ```bash
-mvn jetty:run -DSECRET_SEED=...
+EON_NETWORK=test3 mvn jetty:run -DSECRET_SEED=...
 ```
 
 Or build and run docker-image
 ```bash
 docker build -t eon/peer .
-docker run -d -v $(pwd)/db:/app/db -p 9443:9443 -e SECRET_SEED=... eon/peer
+docker run -d -v $(pwd)/db:/app/db -p 9443:9443 -e EON_NETWORK=test3 -e SECRET_SEED=... eon/peer
 ```
+
+
+Enable database clearing
+----------------
+Clears the database from the side blockchain and unused items in the state tree.
+Disabled by default.
+
+To enable:
+* Jetty: `mvn jetty:run -Dblockchain.clean=true ...`
+* Docker: `docker run ... -e CLEAN_BLOCKCHAIN=true ...`
 
 Truncate history
 ----------------
-To truncate history:
+A weekly block history is stored. Fast initial synchronization is used.
+Disabled by default.
+
+Database clearing should be enabled.
+
+To enable:
 * Jetty: `mvn jetty:run -Dblockchain.full=false ...`
 * Docker: `docker run ... -e FULL_BLOCKCHAIN=false ...`
 
-Directory Layout 
+Directory Layout
 ----------------
 
 **peer-core** - Core of the node without binding to the organization of data storage and the implementation of the transport.
 
+**peer-crypto** - Crypto library with the implementation of the crypto interface.
+
 **peer-eon** - EON-specific code. Contains implementation of transaction handlers.
 
 **peer-eon-app** - Implementation of simple bot API and JSON-RPC transport.
+
+**peer-eon-tx-builders** - Transaction builders for all supported transaction types (used only for test scope).
 
 **json-rpc** - Simple implementation of the JRPC protocol.
 
@@ -62,4 +82,5 @@ License
 -------
 
 Project is issued under GNU LESSER GENERAL PUBLIC LICENSE version 3.0
+
 Uses the library under MIT License ( https://github.com/InstantWebP2P/tweetnacl-java/blob/master/LICENSE ).

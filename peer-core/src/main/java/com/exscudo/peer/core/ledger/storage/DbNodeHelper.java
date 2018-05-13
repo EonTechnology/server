@@ -10,6 +10,7 @@ import com.j256.ormlite.stmt.ThreadLocalSelectArg;
 import com.j256.ormlite.stmt.UpdateBuilder;
 import com.j256.ormlite.support.ConnectionSource;
 
+//WARNING: Nodes are cached before saving. Data can be corrupted if helper used directly
 public class DbNodeHelper {
 
     private final Dao<DbNode, Long> dao;
