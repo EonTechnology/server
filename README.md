@@ -16,8 +16,8 @@ operations.
 This repository contains the implementation of the peer.
 
 
-How to build 
-------------
+How to build and run
+--------------------
 
 Follows the standard Maven building procedure (see https://maven.apache.org/).
 ```bash
@@ -33,18 +33,18 @@ mvn jetty:run
 
 Run with setting generation account and network:
 ```bash
-EON_NETWORK=test3 mvn jetty:run -DSECRET_SEED=...
+EON_NETWORK=... mvn jetty:run -DSECRET_SEED=...
 ```
 
 Or build and run docker-image
 ```bash
 docker build -t eon/peer .
-docker run -d -v $(pwd)/db:/app/db -p 9443:9443 -e EON_NETWORK=test3 -e SECRET_SEED=... eon/peer
+docker run -d -v $(pwd)/db:/app/db -p 9443:9443 -e EON_NETWORK=... -e SECRET_SEED=... eon/peer
 ```
 
 
 Enable database clearing
-----------------
+------------------------
 Clears the database from the side blockchain and unused items in the state tree.
 Disabled by default.
 
