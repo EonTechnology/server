@@ -134,8 +134,8 @@ public class DTOConverterTest {
         Assert.assertEquals(dbTx.getConfirmations(), new String(bencode.encode(tx.getConfirmations())));
 
         Map<String, Object> map = new HashMap<>();
-        map.put(tx1.getID().toString(), TransactionMapper.convert(tx1));
-        map.put(tx2.getID().toString(), TransactionMapper.convert(tx2));
+        map.put(tx1.getID().toString(), StorageTransactionMapper.convert(tx1));
+        map.put(tx2.getID().toString(), StorageTransactionMapper.convert(tx2));
         Assert.assertEquals(dbTx.getNestedTransactions(), new String(bencode.encode(map)));
     }
 }

@@ -10,7 +10,7 @@ import com.exscudo.peer.core.data.identifier.BlockID;
 /**
  * Convert transaction to Map
  */
-class TransactionMapper {
+class CryptoTransactionMapper {
 
     /**
      * Convert transaction to map

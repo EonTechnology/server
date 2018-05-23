@@ -6,8 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
-## 0.12.0 - 2018-05-14 - MainNet fork 1 / TestNet3 fork 1
+## 0.12.1 - 2018-05-23 - MainNet fork 2 / TestNet3 fork 2
+### Changed
+- The transactions verification during block import has been changed. The transactions which have the full copy on current node are checked by the simple scheme.
 
+## 0.12.0 - 2018-05-14 - MainNet fork 1 / TestNet3 fork 1
 ### Added
 - EON_NETWORK environment variable must be specified for select network (dev/test3/main).
 - Load fork settings from external file.

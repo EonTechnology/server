@@ -2,7 +2,6 @@ package com.exscudo.peer.core.importer.tasks;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -17,6 +16,7 @@ import com.exscudo.peer.core.api.Difficulty;
 import com.exscudo.peer.core.api.IBlockSynchronizationService;
 import com.exscudo.peer.core.backlog.Backlog;
 import com.exscudo.peer.core.blockchain.BlockchainProvider;
+import com.exscudo.peer.core.blockchain.storage.converters.StorageTransactionMapper;
 import com.exscudo.peer.core.common.Loggers;
 import com.exscudo.peer.core.common.TimeProvider;
 import com.exscudo.peer.core.common.exceptions.LifecycleException;
@@ -101,8 +101,6 @@ public final class SyncBlockListTask implements Runnable {
                 if (currState == null) {
                     continue;
                 }
-
-                Loggers.info(SyncBlockListTask.class, "[{}] CD: {}", currPeer, currState.getDifficulty());
 
                 if (targetState == null || currState.compareTo(targetState) > 0) {
                     targetState = currState;
@@ -527,14 +525,16 @@ public final class SyncBlockListTask implements Runnable {
 
         for (Transaction tx : block.getTransactions()) {
 
+            Map<String, Object> map = StorageTransactionMapper.convert(tx);
+
             Transaction fromBacklog = backlog.get(tx.getID());
-            if (fromBacklog != null && Arrays.equals(fromBacklog.getSignature(), tx.getSignature())) {
+            if (fromBacklog != null && map.equals(StorageTransactionMapper.convert(fromBacklog))) {
                 verified.add(fromBacklog);
                 continue;
             }
 
             Transaction fromLastTx = lastTrMap.get(tx.getID());
-            if (fromLastTx != null && Arrays.equals(fromLastTx.getSignature(), tx.getSignature())) {
+            if (fromLastTx != null && map.equals(StorageTransactionMapper.convert(fromLastTx))) {
                 verified.add(fromLastTx);
                 continue;
             }

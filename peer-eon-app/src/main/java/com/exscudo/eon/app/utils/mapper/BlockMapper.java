@@ -36,7 +36,7 @@ public class BlockMapper {
 
             ArrayList<Object> list = new ArrayList<>(transactions.length);
             for (Transaction tx : transactions) {
-                list.add(TransactionMapper.convert(tx));
+                list.add(TransaportTransactionMapper.convert(tx));
             }
             map.put(Constants.TRANSACTIONS, list);
         }
@@ -72,7 +72,7 @@ public class BlockMapper {
             }
             for (Object txObj : (Iterable) aObj) {
                 @SuppressWarnings("unchecked")
-                Transaction tx = TransactionMapper.convert((Map<String, Object>) txObj);
+                Transaction tx = TransaportTransactionMapper.convert((Map<String, Object>) txObj);
                 txMap.add(tx);
             }
             block.setTransactions(txMap);

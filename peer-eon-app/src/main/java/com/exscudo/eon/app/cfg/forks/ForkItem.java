@@ -34,26 +34,6 @@ public class ForkItem implements Item {
     }
 
     @Override
-    public long getBegin() {
-        return begin;
-    }
-
-    @Override
-    public void setBegin(long begin) {
-        this.begin = begin;
-    }
-
-    @Override
-    public long getEnd() {
-        return end;
-    }
-
-    @Override
-    public void setEnd(long end) {
-        this.end = end;
-    }
-
-    @Override
     public boolean isCome(int timestamp) {
         return timestamp * 1000L > begin;
     }
@@ -101,6 +81,26 @@ public class ForkItem implements Item {
     @Override
     public boolean needConvertAccounts() {
         return false;
+    }
+
+    @Override
+    public long getBegin() {
+        return begin;
+    }
+
+    @Override
+    public void setBegin(long begin) {
+        this.begin = begin;
+    }
+
+    @Override
+    public long getEnd() {
+        return end;
+    }
+
+    @Override
+    public void setEnd(long end) {
+        this.end = end;
     }
 
     public void addTxType(int type) {

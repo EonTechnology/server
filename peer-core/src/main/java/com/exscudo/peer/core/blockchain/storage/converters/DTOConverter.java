@@ -84,7 +84,7 @@ public class DTOConverter {
             Bencode bencode = new Bencode();
             Map<String, Object> map = new HashMap<>();
             for (Transaction nestedTx : transaction.getNestedTransactions().values()) {
-                map.put(nestedTx.getID().toString(), TransactionMapper.convert(nestedTx));
+                map.put(nestedTx.getID().toString(), StorageTransactionMapper.convert(nestedTx));
             }
             byte[] encoded = bencode.encode(map);
             dbTx.setNestedTransactions(new String(encoded, bencode.getCharset()));
@@ -134,7 +134,7 @@ public class DTOConverter {
 
             nestedTransaction = new HashMap<>();
             for (Map.Entry<String, Object> entry : map.entrySet()) {
-                Transaction nestedTx = TransactionMapper.convert((Map<String, Object>) entry.getValue());
+                Transaction nestedTx = StorageTransactionMapper.convert((Map<String, Object>) entry.getValue());
                 nestedTx.setVerifiedState();
                 nestedTransaction.put(entry.getKey(), nestedTx);
             }

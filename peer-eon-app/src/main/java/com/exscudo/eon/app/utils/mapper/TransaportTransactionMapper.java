@@ -1,4 +1,4 @@
-package com.exscudo.peer.core.blockchain.storage.converters;
+package com.exscudo.eon.app.utils.mapper;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -12,7 +12,7 @@ import com.exscudo.peer.core.data.identifier.TransactionID;
 /**
  * Convert Transaction to and from Map
  */
-class TransactionMapper {
+public class TransaportTransactionMapper {
 
     /**
      * Convert transaction to map
@@ -23,6 +23,7 @@ class TransactionMapper {
     public static Map<String, Object> convert(Transaction transaction) {
         Map<String, Object> map = new TreeMap<>();
 
+        map.put(Constants.ID, transaction.getID().toString());
         if (transaction.getSignature() != null) {
             map.put(Constants.SIGNATURE, Format.convert(transaction.getSignature()));
         }
@@ -49,10 +50,11 @@ class TransactionMapper {
         if (transaction.hasNestedTransactions()) {
             Map<String, Object> nestedTxMap = new HashMap<>();
             for (Map.Entry<String, Transaction> e : transaction.getNestedTransactions().entrySet()) {
-                nestedTxMap.put(e.getKey(), TransactionMapper.convert(e.getValue()));
+                nestedTxMap.put(e.getKey(), TransaportTransactionMapper.convert(e.getValue()));
             }
             map.put(Constants.NESTED_TRANSACTIONS, nestedTxMap);
         }
+
         return map;
     }
 
@@ -63,6 +65,7 @@ class TransactionMapper {
      * @return transaction
      */
     public static Transaction convert(Map<String, Object> map) {
+
         Transaction tx = new Transaction();
 
         int type = Integer.parseInt(map.get(Constants.TYPE).toString());
@@ -111,7 +114,7 @@ class TransactionMapper {
             for (Object k : ((Map<?, ?>) nestedObj).keySet()) {
 
                 Object v = ((Map) nestedObj).get(k);
-                Transaction nestedTx = TransactionMapper.convert((Map<String, Object>) v);
+                Transaction nestedTx = TransaportTransactionMapper.convert((Map<String, Object>) v);
                 nestedTransactions.put(String.valueOf(k), nestedTx);
             }
         }
@@ -128,6 +131,7 @@ class TransactionMapper {
         tx.setSignature(signature);
         tx.setNote(note);
         tx.setNestedTransactions(nestedTransactions);
+
         return tx;
     }
 }

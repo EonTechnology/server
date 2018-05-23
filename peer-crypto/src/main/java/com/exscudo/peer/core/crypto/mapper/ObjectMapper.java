@@ -27,7 +27,7 @@ public class ObjectMapper {
     public Map<String, Object> convert(Object object) {
 
         if (object instanceof Transaction) {
-            return TransactionMapper.convert((Transaction) object, networkID);
+            return CryptoTransactionMapper.convert((Transaction) object, networkID);
         }
         if (object instanceof Block) {
             return BlockMapper.convert((Block) object, networkID);

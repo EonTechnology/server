@@ -6,7 +6,7 @@ import java.util.Set;
 import com.dampcake.bencode.Bencode;
 import com.dampcake.bencode.Type;
 import com.exscudo.TestSigner;
-import com.exscudo.eon.app.utils.mapper.TransactionMapper;
+import com.exscudo.eon.app.utils.mapper.TransaportTransactionMapper;
 import com.exscudo.peer.core.common.Format;
 import com.exscudo.peer.core.crypto.ISigner;
 import com.exscudo.peer.core.data.Transaction;
@@ -31,7 +31,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-public class TransactionMapperTest {
+public class TransaportTransactionMapperTest {
     private Bencode bencode = new Bencode();
     private ISigner signer;
     private BlockID networkID;
@@ -192,12 +192,12 @@ public class TransactionMapperTest {
     }
 
     private void checkTransaction(Transaction tran, String data) throws IllegalArgumentException {
-        byte[] bytes = bencode.encode(TransactionMapper.convert(tran));
+        byte[] bytes = bencode.encode(TransaportTransactionMapper.convert(tran));
         String s = new String(bytes);
         Assert.assertEquals(data, s);
 
         Map<String, Object> decoded = bencode.decode(data.getBytes(), Type.DICTIONARY);
-        assertEquals(tran, TransactionMapper.convert(decoded));
+        assertEquals(tran, TransaportTransactionMapper.convert(decoded));
     }
 
     private void assertEquals(Transaction a, Transaction b) {
