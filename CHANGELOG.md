@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+## 0.12.2 - 2018-05-30 - MainNet fork 3 / TestNet3 fork 3
+### Changed
+- End date of the fork.
 
 ## 0.12.1 - 2018-05-23 - MainNet fork 2 / TestNet3 fork 2
 ### Changed

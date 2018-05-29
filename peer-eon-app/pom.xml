@@ -5,11 +5,11 @@
     <parent>
         <groupId>com.exscudo</groupId>
         <artifactId>peer-all</artifactId>
-        <version>0.12.1-SNAPSHOT</version>
+        <version>0.12.2-SNAPSHOT</version>
     </parent>
 
     <artifactId>peer-eon-app</artifactId>
-    <version>0.12.1-SNAPSHOT</version>
+    <version>0.12.2-SNAPSHOT</version>
     <packaging>war</packaging>
 
     <name>peer-eon-app</name>
@@ -27,31 +27,31 @@
         <dependency>
             <groupId>com.exscudo</groupId>
             <artifactId>peer-eon</artifactId>
-            <version>0.12.1-SNAPSHOT</version>
+            <version>0.12.2-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>com.exscudo</groupId>
             <artifactId>peer-eon-tx-builders</artifactId>
-            <version>0.12.1-SNAPSHOT</version>
+            <version>0.12.2-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>com.exscudo</groupId>
             <artifactId>peer-core</artifactId>
-            <version>0.12.1-SNAPSHOT</version>
+            <version>0.12.2-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>com.exscudo</groupId>
             <artifactId>peer-crypto</artifactId>
-            <version>0.12.1-SNAPSHOT</version>
+            <version>0.12.2-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>com.exscudo</groupId>
             <artifactId>json-rpc</artifactId>
-            <version>0.12.1-SNAPSHOT</version>
+            <version>0.12.2-SNAPSHOT</version>
         </dependency>
 
         <!-- Spring -->
