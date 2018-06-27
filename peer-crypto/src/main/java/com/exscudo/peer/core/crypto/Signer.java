@@ -2,9 +2,7 @@ package com.exscudo.peer.core.crypto;
 
 import java.util.Objects;
 
-import com.exscudo.peer.core.common.BencodeFormatter;
 import com.exscudo.peer.core.common.Format;
-import com.exscudo.peer.core.common.IFormatter;
 import com.exscudo.peer.core.common.Loggers;
 import com.exscudo.peer.core.crypto.mapper.ObjectMapper;
 import com.exscudo.peer.core.crypto.signatures.Ed25519Signature;
@@ -13,10 +11,12 @@ import com.exscudo.peer.core.data.identifier.BlockID;
 public class Signer implements ISigner {
     private final ISignature signature;
     private final ISignature.KeyPair keyPair;
+    private final IFormatter formatter;
 
     public Signer(ISignature signature, byte[] seed) {
         this.signature = signature;
         this.keyPair = signature.getKeyPair(seed);
+        this.formatter = new BencodeFormatter();
     }
 
     public static Signer createNew(String seed) {
@@ -40,7 +40,6 @@ public class Signer implements ISigner {
     public byte[] sign(Object obj, BlockID networkID) {
 
         ObjectMapper mapper = new ObjectMapper(Objects.requireNonNull(networkID));
-        IFormatter formatter = new BencodeFormatter();
 
         byte[] message;
         try {

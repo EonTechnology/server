@@ -1,7 +1,8 @@
-package com.exscudo.peer.core.common;
+package com.exscudo.peer.core.crypto;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
@@ -10,8 +11,18 @@ import com.dampcake.bencode.BencodeOutputStream;
 /**
  * Converting a Map to Bencode message.
  */
-public class BencodeFormatter implements IFormatter {
+class BencodeFormatter implements IFormatter {
+    private final Locale locale;
 
+    public BencodeFormatter() {
+        this(Locale.ENGLISH);
+    }
+
+    public BencodeFormatter(Locale locale) {
+        this.locale = locale;
+    }
+
+    @Override
     public byte[] getBytes(Map<String, Object> map) {
         Objects.requireNonNull(map);
         try {
@@ -23,7 +34,7 @@ public class BencodeFormatter implements IFormatter {
                 }
 
                 String str = outStream.toString();
-                return str.toUpperCase().getBytes();
+                return str.toUpperCase(locale).getBytes();
             }
         } catch (IOException e) {
             throw new RuntimeException(e);

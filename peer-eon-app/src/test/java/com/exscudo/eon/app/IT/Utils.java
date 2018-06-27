@@ -163,8 +163,8 @@ public class Utils {
 
             this.transactionTypes.addAll(Lists.newArrayList(TransactionType.getTypes()));
 
-            this.estimator = new TransactionEstimator();
             this.cryptoProvider = CryptoProvider.getInstance();
+            this.estimator = new TransactionEstimator(this.cryptoProvider.getFormatter());
         }
 
         @Override

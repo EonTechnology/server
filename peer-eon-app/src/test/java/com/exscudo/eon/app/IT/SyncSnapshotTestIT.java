@@ -1,9 +1,13 @@
 package com.exscudo.eon.app.IT;
 
+import java.util.Random;
+
 import com.exscudo.eon.app.cfg.PeerStarter;
 import com.exscudo.peer.core.Constant;
 import com.exscudo.peer.core.common.TimeProvider;
 import com.exscudo.peer.core.data.Block;
+import com.exscudo.peer.core.data.Transaction;
+import com.exscudo.peer.tx.midleware.builders.RegistrationBuilder;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
@@ -41,7 +45,7 @@ public class SyncSnapshotTestIT {
     }
 
     @Test
-    public void step_1_sync_snapshot() throws Exception {
+    public void step_1_sync_snapshot() {
 
         Block lastBlock = ctx1.blockExplorerService.getLastBlock();
 
@@ -59,7 +63,7 @@ public class SyncSnapshotTestIT {
     }
 
     @Test
-    public void step_2_sync_short() throws Exception {
+    public void step_2_sync_short() {
 
         Block lastBlock = ctx1.blockExplorerService.getLastBlock();
 
@@ -77,7 +81,7 @@ public class SyncSnapshotTestIT {
     }
 
     @Test
-    public void step_3_sync_very_short() throws Exception {
+    public void step_3_sync_very_short() {
 
         Block lastBlock = ctx1.blockExplorerService.getLastBlock();
 
@@ -94,5 +98,35 @@ public class SyncSnapshotTestIT {
                             ctx2.blockExplorerService.getLastBlock().getID());
     }
 
-    // TODO: add test on blocks with transactions (heads and target)
+    @Test
+    public void step_4_sync_not_empty_block() throws Exception {
+
+        Random random = new Random();
+
+        for (int i = 0; i < Constant.BLOCK_IN_DAY * 2; i++) {
+            Block lastBlock = ctx1.blockExplorerService.getLastBlock();
+            int time = lastBlock.getTimestamp() + Constant.BLOCK_PERIOD + 1;
+            Mockito.when(mockTimeProvider.get()).thenReturn(time);
+
+            byte[] pk = new byte[32];
+            random.nextBytes(pk);
+            Transaction tx = RegistrationBuilder.createNew(pk)
+                                                .validity(lastBlock.getTimestamp() + 100, 3600)
+                                                .build(ctx1.getNetworkID(), ctx1.getSigner());
+
+            ctx1.transactionBotService.putTransaction(tx);
+
+            ctx1.generateBlockForNow();
+
+            lastBlock = ctx1.blockExplorerService.getLastBlock();
+            Assert.assertEquals(1, lastBlock.getTransactions().size());
+        }
+
+        ctx2.syncSnapshotTask.run();
+        ctx2.syncBlockListTask.run();
+
+        Assert.assertEquals("Blockchain synchronized",
+                            ctx1.blockExplorerService.getLastBlock().getID(),
+                            ctx2.blockExplorerService.getLastBlock().getID());
+    }
 }

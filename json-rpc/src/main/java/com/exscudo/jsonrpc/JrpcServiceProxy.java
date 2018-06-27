@@ -7,6 +7,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.GZIPInputStream;
@@ -119,9 +120,9 @@ public class JrpcServiceProxy {
             outputStream.close();
             if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
                 String ceHeader = connection.getHeaderField("Content-Encoding");
-                InputStream inputStream = ceHeader != null && ceHeader.toLowerCase().equals("gzip")
-                                          ? new GZIPInputStream(connection.getInputStream())
-                                          : connection.getInputStream();
+                InputStream inputStream =
+                        ceHeader != null && ceHeader.toLowerCase(Locale.ENGLISH).equals("gzip") ? new GZIPInputStream(
+                                connection.getInputStream()) : connection.getInputStream();
                 ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
                 byte[] buffer = new byte[65536];
                 int numberOfBytes;

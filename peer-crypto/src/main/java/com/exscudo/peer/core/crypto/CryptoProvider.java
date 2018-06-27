@@ -2,17 +2,17 @@ package com.exscudo.peer.core.crypto;
 
 import java.util.Objects;
 
-import com.exscudo.peer.core.common.BencodeFormatter;
-import com.exscudo.peer.core.common.IFormatter;
 import com.exscudo.peer.core.crypto.mapper.ObjectMapper;
 import com.exscudo.peer.core.crypto.signatures.Ed25519Signature;
 import com.exscudo.peer.core.data.identifier.BlockID;
 
 public class CryptoProvider {
     private final ISignature signature;
+    private final IFormatter formatter;
 
     public CryptoProvider(ISignature signature) {
         this.signature = signature;
+        this.formatter = new BencodeFormatter();
     }
 
     public static CryptoProvider getInstance() {
@@ -36,7 +36,6 @@ public class CryptoProvider {
     public boolean verify(Object obj, BlockID networkID, byte[] signature, byte[] publicKey) {
 
         ObjectMapper mapper = new ObjectMapper(Objects.requireNonNull(networkID));
-        IFormatter formatter = new BencodeFormatter();
 
         byte[] message;
         try {
@@ -46,5 +45,9 @@ public class CryptoProvider {
         }
 
         return this.signature.verify(message, signature, publicKey);
+    }
+
+    public IFormatter getFormatter() {
+        return formatter;
     }
 }

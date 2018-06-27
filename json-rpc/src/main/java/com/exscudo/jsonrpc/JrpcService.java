@@ -5,6 +5,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -249,7 +250,7 @@ public class JrpcService {
             for (int i = 1; i < nameSet.length; i++) {
                 String item = nameSet[i];
                 if (item.length() > 0) {
-                    name.append(Character.toUpperCase(item.charAt(0)));
+                    name.append(item.substring(0, 1).toUpperCase(Locale.ENGLISH));
                     name.append(item.substring(1));
                 }
             }

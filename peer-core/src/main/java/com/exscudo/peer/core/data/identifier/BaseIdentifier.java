@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Locale;
 
 import com.exscudo.peer.core.common.Format;
 
@@ -158,7 +159,7 @@ public class BaseIdentifier implements Serializable {
 
         static long Decode(String idString, final String prefix) throws IllegalArgumentException {
 
-            idString = idString.trim().toUpperCase();
+            idString = idString.trim().toUpperCase(Locale.ENGLISH);
 
             if (idString.length() != ID_LEN + prefix.length()) {
                 throw new IllegalArgumentException(idString);

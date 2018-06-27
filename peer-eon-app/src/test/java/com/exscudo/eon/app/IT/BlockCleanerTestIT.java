@@ -61,10 +61,10 @@ public class BlockCleanerTestIT {
             Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 + 1);
 
             Transaction tx1 = PaymentBuilder.createNew(10000L, recipient2)
-                                            .validity(mockTimeProvider.get(), 3600)
+                                            .validity(lastBlock.getTimestamp() + 100, 3600)
                                             .build(ctx1.getNetworkID(), ctx1.getSigner());
             Transaction tx2 = PaymentBuilder.createNew(10000L, recipient1)
-                                            .validity(mockTimeProvider.get(), 3600)
+                                            .validity(lastBlock.getTimestamp() + 100, 3600)
                                             .build(ctx1.getNetworkID(), ctx1.getSigner());
 
             ctx1.transactionBotService.putTransaction(tx1);

@@ -5,6 +5,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+## 0.12.3 - 2018-06-27 - MainNet fork 4 / TestNet3 fork 4
+### Changed
+- End date of the fork.
+- Fix converting the Bencode-string to upper case.
+
 ## 0.12.2 - 2018-05-30 - MainNet fork 3 / TestNet3 fork 3
 ### Changed
 - End date of the fork.

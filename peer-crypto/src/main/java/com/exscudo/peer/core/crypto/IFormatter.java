@@ -1,4 +1,4 @@
-package com.exscudo.peer.core.common;
+package com.exscudo.peer.core.crypto;
 
 import java.util.Map;
 

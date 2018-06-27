@@ -29,8 +29,8 @@ public class ForkItem implements Item {
 
         this.blockVersion = 1;
         this.maxNoteLength = Constant.TRANSACTION_NOTE_MAX_LENGTH;
-        this.estimator = new TransactionEstimator();
         this.cryptoProvider = CryptoProvider.getInstance();
+        this.estimator = new TransactionEstimator(this.cryptoProvider.getFormatter());
     }
 
     @Override
