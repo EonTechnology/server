@@ -19,6 +19,7 @@ import com.exscudo.peer.core.blockchain.storage.DbBlock;
 import com.exscudo.peer.core.blockchain.storage.DbNestedTransaction;
 import com.exscudo.peer.core.blockchain.storage.DbTransaction;
 import com.exscudo.peer.core.common.ITimeProvider;
+import com.exscudo.peer.core.common.ITransactionEstimator;
 import com.exscudo.peer.core.common.ImmutableTimeProvider;
 import com.exscudo.peer.core.common.TimeProvider;
 import com.exscudo.peer.core.common.exceptions.DataAccessException;
@@ -28,13 +29,13 @@ import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.identifier.AccountID;
 import com.exscudo.peer.core.data.identifier.TransactionID;
-import com.exscudo.peer.core.ledger.AbstractLedger;
 import com.exscudo.peer.core.ledger.ILedger;
 import com.exscudo.peer.core.ledger.LedgerProvider;
 import com.exscudo.peer.core.middleware.ILedgerAction;
+import com.exscudo.peer.core.middleware.ITransactionParser;
 import com.exscudo.peer.core.middleware.LedgerActionContext;
-import com.exscudo.peer.core.middleware.TransactionParser;
 import com.exscudo.peer.core.middleware.TransactionValidator;
+import com.exscudo.peer.core.middleware.TransactionValidatorFabric;
 import com.exscudo.peer.core.middleware.ValidationResult;
 import com.exscudo.peer.core.storage.Storage;
 import com.j256.ormlite.dao.Dao;
@@ -59,8 +60,10 @@ public class Backlog implements IBacklog {
 
     private final IBlockchainProvider blockchain;
     private final LedgerProvider ledgerProvider;
-    private final IFork fork;
     private final TimeProvider timeProvider;
+    private final IFork fork;
+    private final TransactionValidatorFabric transactionValidatorFabric;
+    private final ITransactionEstimator estimator;
 
     private NotImmutableCachedLedger ledger;
     private LedgerActionContext ctx;
@@ -78,19 +81,23 @@ public class Backlog implements IBacklog {
 
     // endregion
 
-    public Backlog(BacklogEventManager backlogEventManager,
-                   IFork fork,
+    public Backlog(IFork fork,
+                   BacklogEventManager backlogEventManager,
                    Storage storage,
                    IBlockchainProvider blockchain,
                    LedgerProvider ledgerProvider,
-                   TimeProvider timeProvider) {
+                   TimeProvider timeProvider,
+                   TransactionValidatorFabric transactionValidatorFabric,
+                   ITransactionEstimator estimator) {
 
-        this.backlogEventManager = backlogEventManager;
         this.fork = fork;
+        this.backlogEventManager = backlogEventManager;
         this.storage = storage;
         this.blockchain = blockchain;
         this.ledgerProvider = ledgerProvider;
         this.timeProvider = timeProvider;
+        this.transactionValidatorFabric = transactionValidatorFabric;
+        this.estimator = estimator;
 
         InitContext(blockchain.getLastBlock());
     }
@@ -110,7 +117,7 @@ public class Backlog implements IBacklog {
             return;
         }
 
-        int difficulty = fork.getDifficulty(transaction, ctx.getTimestamp());
+        int difficulty = estimator.estimate(transaction);
         transaction.setLength(difficulty);
         ValidationResult r = transactionValidator.validate(transaction, ledger);
         if (r.hasError) {
@@ -118,11 +125,12 @@ public class Backlog implements IBacklog {
             throw r.cause;
         }
 
+        ITransactionParser parser = fork.getParser(ctx.getTimestamp());
         // ValidateException can throws after ledger changes.
         NotImmutableCachedLedger newLedger = new NotImmutableCachedLedger(ledger);
 
         try {
-            ILedgerAction[] actions = TransactionParser.parse(transaction);
+            ILedgerAction[] actions = parser.parse(transaction);
             for (ILedgerAction action : actions) {
                 action.run(newLedger, ctx);
             }
@@ -251,11 +259,11 @@ public class Backlog implements IBacklog {
         };
 
         ledger = new NotImmutableCachedLedger(ledgerProvider.getLedger(block));
-        ctx = new LedgerActionContext(timestamp, fork);
-        transactionValidator = TransactionValidator.getAllValidators(fork, blockTimeProvider, peerTimeProvider);
+        ctx = new LedgerActionContext(timestamp);
+        transactionValidator = transactionValidatorFabric.getAllValidators(blockTimeProvider, peerTimeProvider);
     }
 
-    private static class NotImmutableCachedLedger extends AbstractLedger {
+    private static class NotImmutableCachedLedger implements ILedger {
 
         Map<AccountID, Account> cache = Collections.synchronizedMap(new HashMap<>());
         private ILedger base;

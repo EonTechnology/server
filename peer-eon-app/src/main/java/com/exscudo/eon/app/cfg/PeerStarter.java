@@ -9,19 +9,21 @@ import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 
 import com.exscudo.eon.app.jsonrpc.JrpcServiceProxyFactory;
-import com.exscudo.peer.core.IFork;
+import com.exscudo.eon.app.utils.TransactionEstimator;
 import com.exscudo.peer.core.backlog.Backlog;
 import com.exscudo.peer.core.backlog.BacklogCleaner;
 import com.exscudo.peer.core.backlog.events.BacklogEventManager;
 import com.exscudo.peer.core.blockchain.Blockchain;
 import com.exscudo.peer.core.blockchain.BlockchainProvider;
+import com.exscudo.peer.core.blockchain.ITransactionMapper;
+import com.exscudo.peer.core.blockchain.TransactionMapper;
 import com.exscudo.peer.core.blockchain.events.BlockchainEventManager;
 import com.exscudo.peer.core.common.Format;
+import com.exscudo.peer.core.common.IAccountHelper;
+import com.exscudo.peer.core.common.ITransactionEstimator;
 import com.exscudo.peer.core.common.TimeProvider;
 import com.exscudo.peer.core.crypto.CryptoProvider;
 import com.exscudo.peer.core.crypto.ISigner;
@@ -35,35 +37,39 @@ import com.exscudo.peer.core.env.ExecutionContext;
 import com.exscudo.peer.core.importer.BlockGenerator;
 import com.exscudo.peer.core.ledger.ILedger;
 import com.exscudo.peer.core.ledger.LedgerProvider;
-import com.exscudo.peer.core.middleware.TransactionParser;
 import com.exscudo.peer.core.storage.Initializer;
 import com.exscudo.peer.core.storage.Storage;
-import com.exscudo.peer.eon.midleware.CompositeTransactionParser;
-import com.exscudo.peer.eon.midleware.parsers.ColoredCoinPaymentParser;
-import com.exscudo.peer.eon.midleware.parsers.ColoredCoinRegistrationParser;
-import com.exscudo.peer.eon.midleware.parsers.ColoredCoinSupplyParser;
-import com.exscudo.peer.eon.midleware.parsers.ComplexPaymentParser;
-import com.exscudo.peer.eon.midleware.parsers.DelegateParser;
-import com.exscudo.peer.eon.midleware.parsers.DepositParser;
-import com.exscudo.peer.eon.midleware.parsers.PaymentParser;
-import com.exscudo.peer.eon.midleware.parsers.PublicationParser;
-import com.exscudo.peer.eon.midleware.parsers.QuorumParser;
-import com.exscudo.peer.eon.midleware.parsers.RegistrationParser;
-import com.exscudo.peer.eon.midleware.parsers.RejectionParser;
-import com.exscudo.peer.tx.TransactionType;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class PeerStarter {
 
+    private static final Block ZERO_BLOCK = new Block() {
+        {
+            setVersion(-1);
+            setTimestamp(0);
+            setPreviousBlock(new BlockID(0));
+            setSenderID(new AccountID(0));
+            setGenerationSignature(new byte[0]);
+            setSignature(new byte[0]);
+            setHeight(-1);
+            setCumulativeDifficulty(BigInteger.ZERO);
+            setTransactions(new ArrayList<>());
+            setSnapshot("");
+        }
+
+        @Override
+        public BlockID getID() {
+            return new BlockID(0);
+        }
+    };
     private final Config config;
     private ExecutionContext executionContext = null;
     private Storage storage = null;
     private TimeProvider timeProvider = null;
     private Backlog backlog = null;
     private BlockchainProvider blockchainProvider = null;
-
-    private IFork fork = null;
+    private Fork fork = null;
     private JrpcServiceProxyFactory proxyFactory = null;
     private ISigner signer = null;
     private BlockGenerator blockGenerator = null;
@@ -72,41 +78,23 @@ public class PeerStarter {
     private LedgerProvider ledgerProvider = null;
     private BlockchainEventManager blockchainEventManager = null;
     private BacklogEventManager backlogEventManager = null;
+    private TransactionValidatorFabricImpl transactionValidatorFabric = null;
+    private ITransactionEstimator estimator = null;
+    private IAccountHelper accountHelper = null;
+    private ITransactionMapper transactionMapper;
+    private BlockID networkID;
 
     public PeerStarter(Config config) throws IOException, SQLException, ClassNotFoundException {
         this.config = config;
-
-        TransactionParser.init(CompositeTransactionParser.create()
-                                                         .addParser(TransactionType.Registration,
-                                                                    new RegistrationParser())
-                                                         .addParser(TransactionType.Payment, new PaymentParser())
-                                                         .addParser(TransactionType.Deposit, new DepositParser())
-                                                         .addParser(TransactionType.Delegate, new DelegateParser())
-                                                         .addParser(TransactionType.Quorum, new QuorumParser())
-                                                         .addParser(TransactionType.Rejection, new RejectionParser())
-                                                         .addParser(TransactionType.Publication,
-                                                                    new PublicationParser())
-                                                         .addParser(TransactionType.ColoredCoinRegistration,
-                                                                    new ColoredCoinRegistrationParser())
-                                                         .addParser(TransactionType.ColoredCoinPayment,
-                                                                    new ColoredCoinPaymentParser())
-                                                         .addParser(TransactionType.ColoredCoinSupply,
-                                                                    new ColoredCoinSupplyParser())
-                                                         .addParser(TransactionType.ComplexPayment,
-                                                                    new ComplexPaymentParser(CompositeTransactionParser.create()
-                                                                                                                       .addParser(
-                                                                                                                               TransactionType.Payment,
-                                                                                                                               new PaymentParser())
-                                                                                                                       .addParser(
-                                                                                                                               TransactionType.ColoredCoinPayment,
-                                                                                                                               new ColoredCoinPaymentParser())
-                                                                                                                       .build()))
-                                                         .build());
-
-        initialize();
     }
 
-    private void initialize() throws IOException, SQLException, ClassNotFoundException {
+    public static PeerStarter create(Config config) throws SQLException, IOException, ClassNotFoundException {
+        PeerStarter peerStarter = new PeerStarter(config);
+        peerStarter.initialize();
+        return peerStarter;
+    }
+
+    public void initialize() throws IOException, SQLException, ClassNotFoundException {
         ObjectMapper objectMapper = new ObjectMapper();
 
         URI uri;
@@ -121,7 +109,7 @@ public class PeerStarter {
 
         byte[] signature = Format.convert(genesisBlock.get("signature").toString());
         int timestamp = Integer.parseInt(genesisBlock.get("timestamp").toString());
-        BlockID networkID = new BlockID(signature, timestamp);
+        networkID = new BlockID(signature, timestamp);
 
         Storage storage = Storage.create(config.getDbUrl());
         try {
@@ -135,7 +123,7 @@ public class PeerStarter {
         } catch (SQLException ignore) {
 
         }
-        Initializer initializer = new Initializer();
+        Initializer initializer = new Initializer(getFork());
         initializer.initialize(storage);
 
         String id = storage.metadata().getProperty("GENESIS_BLOCK_ID");
@@ -148,62 +136,6 @@ public class PeerStarter {
         }
         checkSynchronizingMode(storage);
         setStorage(storage);
-    }
-
-    private ForkProperties parseForkProperties() throws IOException {
-
-        URI uri;
-        try {
-            uri = this.getClass().getClassLoader().getResource(config.getForksFile()).toURI();
-        } catch (URISyntaxException e) {
-            throw new IOException(e);
-        }
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        byte[] json = Files.readAllBytes(Paths.get(uri));
-        Map<String, Object> forksMap = objectMapper.readValue(json, new TypeReference<Map<String, Object>>() {
-        });
-
-        ForkProperties props = new ForkProperties();
-        props.setMinDepositSize(Long.parseLong(forksMap.get("min_deposit_size").toString()));
-        props.setDateEndAll(forksMap.get("date_end_all").toString());
-
-        List<ForkProperties.Period> forksPeriods = new LinkedList<>();
-
-        @SuppressWarnings("unchecked")
-        List<Map<String, Object>> periodJson = (List<Map<String, Object>>) forksMap.get("forks");
-        for (Map<String, Object> map : periodJson) {
-
-            ForkProperties.Period p = new ForkProperties.Period();
-
-            p.setNumber((Integer) map.get("number"));
-            p.setDateBegin(map.get("date_begin").toString());
-
-            if (map.containsKey("add_tx_types")) {
-                @SuppressWarnings("unchecked")
-                List<String> list = (List<String>) map.get("add_tx_types");
-                p.setAddedTxTypes(list.toArray(new String[0]));
-            }
-            if (map.containsKey("remove_tx_types")) {
-                @SuppressWarnings("unchecked")
-                List<String> list = (List<String>) map.get("remove_tx_types");
-                p.setRemovedTxTypes(list.toArray(new String[0]));
-            }
-
-            forksPeriods.add(p);
-
-            int size = 2;
-            size += map.containsKey("add_tx_types") ? 1 : 0;
-            size += map.containsKey("remove_tx_types") ? 1 : 0;
-
-            if (size != map.size()) {
-                throw new IOException("Invalid forks-file format");
-            }
-        }
-
-        props.setPeriods(forksPeriods.toArray(new ForkProperties.Period[0]));
-
-        return props;
     }
 
     private void checkSynchronizingMode(Storage storage) throws SQLException {
@@ -230,8 +162,6 @@ public class PeerStarter {
     }
 
     private void loadGenesis(Storage storage, Map<String, Object> map) throws IOException, SQLException {
-
-        UnsafeBlockchain blockchain = new UnsafeBlockchain(storage);
 
         Block block = new Block();
         block.setVersion(-1);
@@ -264,9 +194,11 @@ public class PeerStarter {
 
         ledgerProvider.addLedger(ledger);
 
+        BlockchainProvider blockchainProvider = new BlockchainProvider(storage, null);
+        Blockchain blockchain = blockchainProvider.createBlockchain();
+        blockchain.addBlock(ZERO_BLOCK);
         blockchain.addBlock(block);
-        blockchain.save();
-        storage.metadata().setProperty("GENESIS_BLOCK_ID", Long.toString(block.getID().getValue()));
+        blockchainProvider.initialize(blockchain, block.getID(), 0);
     }
 
     public ExecutionContext getExecutionContext() throws SQLException, IOException, ClassNotFoundException {
@@ -325,12 +257,14 @@ public class PeerStarter {
 
     public Backlog getBacklog() throws SQLException, IOException, ClassNotFoundException {
         if (backlog == null) {
-            setBacklog(new Backlog(getBacklogEventManager(),
-                                   getFork(),
+            setBacklog(new Backlog(getFork(),
+                                   getBacklogEventManager(),
                                    getStorage(),
                                    getBlockchainProvider(),
                                    getLedgerProvider(),
-                                   getTimeProvider()));
+                                   getTimeProvider(),
+                                   getTransactionValidatorFabric(),
+                                   getEstimator()));
         }
         return backlog;
     }
@@ -341,7 +275,9 @@ public class PeerStarter {
 
     public BlockchainProvider getBlockchainProvider() throws SQLException, IOException, ClassNotFoundException {
         if (blockchainProvider == null) {
-            setBlockchainProvider(new BlockchainProvider(getStorage(), getBlockchainEventManager()));
+            BlockchainProvider bp = new BlockchainProvider(getStorage(), getBlockchainEventManager());
+            bp.initialize();
+            setBlockchainProvider(bp);
         }
         return blockchainProvider;
     }
@@ -350,15 +286,22 @@ public class PeerStarter {
         this.blockchainProvider = blockchainProvider;
     }
 
-    public IFork getFork() throws SQLException, IOException, ClassNotFoundException {
+    public Fork getFork() throws SQLException, IOException, ClassNotFoundException {
         if (fork == null) {
-            ForkProperties forkProps = parseForkProperties();
-            setFork(ForkInitializer.init(getStorage().metadata().getGenesisBlockID(), forkProps));
+            URI uri;
+            try {
+                uri = this.getClass().getClassLoader().getResource(config.getForksFile()).toURI();
+            } catch (URISyntaxException e) {
+                throw new IOException(e);
+            }
+
+            ForkProperties forkProps = ForkProperties.parse(uri);
+            setFork(ForkInitializer.init(networkID, forkProps));
         }
         return fork;
     }
 
-    public void setFork(IFork fork) {
+    public void setFork(Fork fork) {
         this.fork = fork;
     }
 
@@ -414,7 +357,10 @@ public class PeerStarter {
                                                  getSigner(),
                                                  getBacklog(),
                                                  getBlockchainProvider(),
-                                                 getLedgerProvider()));
+                                                 getLedgerProvider(),
+                                                 getTransactionValidatorFabric(),
+                                                 getEstimator(),
+                                                 getAccountHelper()));
         }
         return blockGenerator;
     }
@@ -484,58 +430,47 @@ public class PeerStarter {
         return config;
     }
 
-    private static class UnsafeBlockchain extends Blockchain {
-
-        private static final Block ZERO_BLOCK = new Block() {
-            {
-                setVersion(-1);
-                setTimestamp(0);
-                setPreviousBlock(new BlockID(0));
-                setSenderID(new AccountID(0));
-                setGenerationSignature(new byte[0]);
-                setSignature(new byte[0]);
-                setHeight(-1);
-                setCumulativeDifficulty(BigInteger.ZERO);
-                setTransactions(new ArrayList<>());
-                setSnapshot("");
-            }
-
-            @Override
-            public BlockID getID() {
-                return new BlockID(0);
-            }
-        };
-
-        private final Storage storage;
-
-        public UnsafeBlockchain(Storage storage) {
-            super(storage, ZERO_BLOCK);
-
-            addBlock(ZERO_BLOCK);
-            this.storage = storage;
+    public TransactionValidatorFabricImpl getTransactionValidatorFabric() throws SQLException, IOException, ClassNotFoundException {
+        if (transactionValidatorFabric == null) {
+            setTransactionValidatorFabric(new TransactionValidatorFabricImpl(getFork(), getAccountHelper()));
         }
+        return transactionValidatorFabric;
+    }
 
-        public void save() throws SQLException {
+    public void setTransactionValidatorFabric(TransactionValidatorFabricImpl transactionValidatorFabric) {
+        this.transactionValidatorFabric = transactionValidatorFabric;
+    }
 
-            BlockchainProvider mockService = new BlockchainProvider(storage, new BlockchainEventManager()) {
-
-                @Override
-                public void initialize() {
-                }
-
-                @Override
-                public Block getLastBlock() {
-                    return ZERO_BLOCK;
-                }
-
-                @Override
-                public Block setLastBlock(Block newLastBlock) {
-                    super.setPointerTo(newLastBlock);
-                    return newLastBlock;
-                }
-            };
-
-            mockService.setBlockchain(this);
+    public ITransactionEstimator getEstimator() {
+        if (estimator == null) {
+            setEstimator(new TransactionEstimator(CryptoProvider.getInstance().getFormatter()));
         }
+        return estimator;
+    }
+
+    public void setEstimator(ITransactionEstimator estimator) {
+        this.estimator = estimator;
+    }
+
+    public IAccountHelper getAccountHelper() throws SQLException, IOException, ClassNotFoundException {
+        if (accountHelper == null) {
+            setAccountHelper(new AccountHelper(getFork()));
+        }
+        return accountHelper;
+    }
+
+    public void setAccountHelper(IAccountHelper accountHelper) {
+        this.accountHelper = accountHelper;
+    }
+
+    public ITransactionMapper getTransactionMapper() throws SQLException, IOException, ClassNotFoundException {
+        if (transactionMapper == null) {
+            transactionMapper = new TransactionMapper(getStorage(), getFork());
+        }
+        return transactionMapper;
+    }
+
+    public void setTransactionMapper(ITransactionMapper transactionMapper) {
+        this.transactionMapper = transactionMapper;
     }
 }

@@ -7,6 +7,7 @@ import com.exscudo.peer.core.data.Account;
 import com.exscudo.peer.core.data.AccountProperty;
 import com.exscudo.peer.eon.PropertyType;
 import com.exscudo.peer.eon.ledger.AccountPropertyDeserializer;
+import com.exscudo.peer.eon.ledger.state.ColoredCoinEmitMode;
 import com.exscudo.peer.eon.ledger.state.ColoredCoinProperty;
 
 public class ColoredCoinPropertyDeserializer extends AccountPropertyDeserializer {
@@ -29,10 +30,19 @@ public class ColoredCoinPropertyDeserializer extends AccountPropertyDeserializer
             // Sets only on money creation
             int timestamp = Integer.parseInt(String.valueOf(map.get("timestamp")));
 
+            ColoredCoinEmitMode emitMode = ColoredCoinEmitMode.PRESET;
+            String mode = (String) map.get("mode");
+            if (mode != null) {
+                emitMode = ColoredCoinEmitMode.fromString(mode);
+                if (emitMode == null) {
+                    throw new UnsupportedOperationException();
+                }
+            }
+
+            coloredCoin.setAttributes(new ColoredCoinProperty.Attributes(decimalPoint, timestamp));
             coloredCoin.setMoneySupply(moneySupply);
-            coloredCoin.setDecimalPoint(decimalPoint);
-            coloredCoin.setTimestamp(timestamp);
-        } catch (NumberFormatException e) {
+            coloredCoin.setEmitMode(emitMode);
+        } catch (NumberFormatException | UnsupportedOperationException e) {
             throw new IOException(e);
         }
 

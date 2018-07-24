@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import com.exscudo.peer.core.blockchain.storage.DbAccTransaction;
 import com.exscudo.peer.core.blockchain.storage.DbTransaction;
 import com.exscudo.peer.core.blockchain.storage.converters.DTOConverter;
 import com.exscudo.peer.core.common.exceptions.DataAccessException;
@@ -18,7 +19,6 @@ import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.stmt.ArgumentHolder;
 import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.stmt.ThreadLocalSelectArg;
-import com.j256.ormlite.stmt.Where;
 
 public class TransactionService {
 
@@ -27,8 +27,8 @@ public class TransactionService {
     private final Storage storage;
 
     private QueryBuilder<DbTransaction, Long> getPageBuilder = null;
-    private ArgumentHolder vRecipient = new ThreadLocalSelectArg();
-    private ArgumentHolder vSender = new ThreadLocalSelectArg();
+    private QueryBuilder<DbAccTransaction, Long> getPageBuilderSubQ = null;
+    private ArgumentHolder vAccount = new ThreadLocalSelectArg();
 
     private QueryBuilder<DbTransaction, Long> getByBlockBuilder = null;
     private ArgumentHolder vBlockID = new ThreadLocalSelectArg();
@@ -48,8 +48,7 @@ public class TransactionService {
      * Find all transactions for account
      *
      * @param accountId account id
-     * @return transaction map. Empty if user does not exist or has not sent any
-     * transaction.
+     * @return transaction map. Empty if user does not exist or has not sent any transaction.
      * @throws SQLException problems with the DB
      */
     public List<Transaction> getPage(AccountID accountId, long from, int limit) {
@@ -59,17 +58,23 @@ public class TransactionService {
             if (getPageBuilder == null) {
 
                 Dao<DbTransaction, Long> dao = DaoManager.createDao(storage.getConnectionSource(), DbTransaction.class);
+                Dao<DbAccTransaction, Long> daoAcc =
+                        DaoManager.createDao(storage.getConnectionSource(), DbAccTransaction.class);
+
+                getPageBuilderSubQ = daoAcc.queryBuilder();
+                getPageBuilderSubQ.selectColumns("transaction_id")
+                                  .where()
+                                  .eq("tag", 1)
+                                  .and()
+                                  .eq("account_id", vAccount);
+                getPageBuilderSubQ.orderBy("timestamp", false);
 
                 getPageBuilder = dao.queryBuilder();
-                Where<DbTransaction, Long> w = getPageBuilder.where();
-                w.and(w.eq("tag", 1), w.or(w.eq("recipient_id", vRecipient), w.eq("sender_id", vSender)));
-                getPageBuilder.orderBy("timestamp", false);
+                getPageBuilder.where().in("id", getPageBuilderSubQ);
             }
 
-            vRecipient.setValue(accountId.getValue());
-            vSender.setValue(accountId.getValue());
-
-            getPageBuilder.offset(from).limit((long) limit);
+            vAccount.setValue(accountId.getValue());
+            getPageBuilderSubQ.offset(from).limit((long) limit);
 
             return convert(getPageBuilder.query());
         } catch (SQLException e) {

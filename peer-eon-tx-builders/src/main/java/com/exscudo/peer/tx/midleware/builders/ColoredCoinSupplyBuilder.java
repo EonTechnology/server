@@ -18,4 +18,8 @@ public class ColoredCoinSupplyBuilder extends TransactionBuilder<ColoredCoinSupp
     public static ColoredCoinSupplyBuilder createNew() {
         return createNew(0L);
     }
+
+    public static ColoredCoinSupplyBuilder createNew(String mode) {
+        return new ColoredCoinSupplyBuilder().withParam("supply", mode);
+    }
 }

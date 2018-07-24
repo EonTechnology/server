@@ -1,12 +1,12 @@
 package com.exscudo.eon.app.IT;
 
-import com.exscudo.eon.app.cfg.PeerStarter;
-import com.exscudo.peer.core.IFork;
 import com.exscudo.peer.core.common.TimeProvider;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.identifier.AccountID;
 import com.exscudo.peer.core.data.identifier.BlockID;
+import com.exscudo.peer.eon.midleware.parsers.PaymentParser;
+import com.exscudo.peer.tx.TransactionType;
 import com.exscudo.peer.tx.midleware.builders.PaymentBuilder;
 import org.junit.Assert;
 import org.junit.Before;
@@ -27,23 +27,18 @@ public class TransactionNetworkTestIT {
     private PeerContext ctx1;
     private PeerContext ctx2;
 
-    private IFork fork1;
-    private IFork fork2;
-
     @Before
     public void setUp() throws Exception {
         mockTimeProvider = Mockito.mock(TimeProvider.class);
 
-        PeerStarter ps1 = PeerStarterFactory.create(GENERATOR, mockTimeProvider);
-        fork1 = Mockito.spy(ps1.getFork());
-        ps1.setFork(fork1);
-
-        PeerStarter ps2 = PeerStarterFactory.create(GENERATOR2, mockTimeProvider);
-        fork2 = Mockito.spy(ps2.getFork());
-        ps2.setFork(fork2);
-
-        ctx1 = new PeerContext(ps1);
-        ctx2 = new PeerContext(ps2);
+        ctx1 = new PeerContext(PeerStarterFactory.create()
+                                                 .route(TransactionType.Payment, new PaymentParser())
+                                                 .seed(GENERATOR)
+                                                 .build(mockTimeProvider));
+        ctx2 = new PeerContext(PeerStarterFactory.create()
+                                                 .route(TransactionType.Payment, new PaymentParser())
+                                                 .seed(GENERATOR2)
+                                                 .build(mockTimeProvider));
     }
 
     @Test
@@ -71,8 +66,8 @@ public class TransactionNetworkTestIT {
 
         Block lastBlock = ctx1.blockExplorerService.getLastBlock();
 
-        BlockID genesisBlockID = fork1.getGenesisBlockID();
-        Mockito.when(fork1.getGenesisBlockID()).thenReturn(new BlockID(1L));
+        BlockID genesisBlockID = ctx1.fork.getGenesisBlockID();
+        Mockito.when(ctx1.fork.getGenesisBlockID()).thenReturn(new BlockID(1L));
         Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 + 1);
 
         Transaction tx = PaymentBuilder.createNew(100L, new AccountID(ctx2.getSigner().getPublicKey()))
@@ -80,7 +75,7 @@ public class TransactionNetworkTestIT {
                                        .build(new BlockID(1L), ctx1.getSigner());
         ctx1.transactionBotService.putTransaction(tx);
 
-        Mockito.when(fork1.getGenesisBlockID()).thenReturn(genesisBlockID);
+        Mockito.when(ctx1.fork.getGenesisBlockID()).thenReturn(genesisBlockID);
 
         ctx2.setPeerToConnect(ctx1);
         ctx2.syncTransactionListTask.run();
@@ -104,7 +99,7 @@ public class TransactionNetworkTestIT {
                                lastBlock.getID(),
                                ctx2.blockExplorerService.getLastBlock().getID());
 
-        Mockito.when(fork1.getGenesisBlockID()).thenReturn(new BlockID(1L));
+        Mockito.when(ctx1.fork.getGenesisBlockID()).thenReturn(new BlockID(1L));
         Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 * 2 + 1);
 
         Transaction tx = PaymentBuilder.createNew(100L, new AccountID(ctx2.getSigner().getPublicKey()))

@@ -51,6 +51,9 @@ class CryptoTransactionMapper {
             map.put(Constants.NESTED_TRANSACTIONS, nestedTxMap);
         }
         map.put(Constants.NETWORK, networkID.toString());
+        if (transaction.getPayer() != null) {
+            map.put(Constants.PAYER, transaction.getPayer().toString());
+        }
 
         return map;
     }

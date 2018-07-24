@@ -65,7 +65,7 @@ public class SyncSnapshotService extends BaseService implements ISnapshotSynchro
         Block block = blockchain.getBlock(id);
         ILedger ledger = ledgerProvider.getLedger(block);
 
-        return getAccFromIterator(ledger.iterator());
+        return getAccounts(ledger.iterator());
     }
 
     @Override
@@ -77,18 +77,29 @@ public class SyncSnapshotService extends BaseService implements ISnapshotSynchro
 
         AccountID accID = new AccountID(accountID);
         if (ledger.getAccount(accID) != null) {
-            return getAccFromIterator(ledger.iterator(accID));
+            return getAccounts(walkTo(ledger.iterator(), accID));
         }
 
         return null;
     }
 
-    private Account[] getAccFromIterator(Iterator<Account> iterator) {
+    private Account[] getAccounts(Iterator<Account> iterator) {
 
         List<Account> accounts = new ArrayList<>();
         while (iterator.hasNext() && accounts.size() < ACCOUNT_LIMIT) {
             accounts.add(iterator.next());
         }
         return accounts.toArray(new Account[0]);
+    }
+
+    private Iterator<Account> walkTo(Iterator<Account> iterator, AccountID id) {
+        //noinspection WhileLoopReplaceableByForEach
+        while (iterator.hasNext()) {
+            Account next = iterator.next();
+            if (next.getID().equals(id)) {
+                return iterator;
+            }
+        }
+        return null;
     }
 }

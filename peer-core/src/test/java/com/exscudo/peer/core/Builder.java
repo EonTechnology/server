@@ -24,6 +24,7 @@ public class Builder {
     private String note;
     private List<Transaction> nestedTransaction;
     private TransactionID referenceID;
+    private AccountID payerID;
 
     public static Builder newTransaction(TimeProvider timeProvider) {
         return newTransaction(timeProvider.get());
@@ -78,6 +79,11 @@ public class Builder {
         return this;
     }
 
+    public Builder payedBy(AccountID payerID) {
+        this.payerID = payerID;
+        return this;
+    }
+
     public Transaction build(BlockID networkID, ISigner signer) throws Exception {
 
         Transaction tx = new Transaction();
@@ -86,6 +92,7 @@ public class Builder {
         tx.setTimestamp(timestamp);
         tx.setDeadline(deadline);
         tx.setReference(referenceID);
+        tx.setPayer(payerID);
         tx.setSenderID(new AccountID(signer.getPublicKey()));
         tx.setFee(fee);
         tx.setData(data);

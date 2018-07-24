@@ -1,5 +1,6 @@
 package com.exscudo.peer.eon.midleware;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -15,7 +16,7 @@ import com.exscudo.peer.core.middleware.ITransactionParser;
 public class CompositeTransactionParser implements ITransactionParser {
     private final Map<Integer, ITransactionParser> dictionary;
 
-    private CompositeTransactionParser(Map<Integer, ITransactionParser> map) {
+    public CompositeTransactionParser(Map<Integer, ITransactionParser> map) {
         dictionary = new ConcurrentHashMap<>(map);
     }
 
@@ -45,7 +46,7 @@ public class CompositeTransactionParser implements ITransactionParser {
     }
 
     @Override
-    public AccountID getRecipient(Transaction transaction) throws ValidateException {
+    public Collection<AccountID> getDependencies(Transaction transaction) throws ValidateException {
 
         ITransactionParser parser;
         try {
@@ -53,7 +54,7 @@ public class CompositeTransactionParser implements ITransactionParser {
         } catch (NamingException e) {
             throw new ValidateException(Resources.TRANSACTION_TYPE_UNKNOWN);
         }
-        return parser.getRecipient(transaction);
+        return parser.getDependencies(transaction);
     }
 
     public static class Builder {

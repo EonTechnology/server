@@ -65,7 +65,7 @@
         </property>
     </bean>
 
-    <bean id="peerStarter" class="com.exscudo.eon.app.cfg.PeerStarter">
+    <bean id="peerStarter" class="com.exscudo.eon.app.cfg.PeerStarter" factory-method="create">
         <constructor-arg ref="config"/>
     </bean>
 

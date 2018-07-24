@@ -1,12 +1,15 @@
 package com.exscudo.eon.app.IT;
 
 import com.exscudo.peer.core.Constant;
+import com.exscudo.peer.core.blockchain.storage.DbAccTransaction;
 import com.exscudo.peer.core.blockchain.storage.DbBlock;
 import com.exscudo.peer.core.blockchain.storage.DbTransaction;
 import com.exscudo.peer.core.common.TimeProvider;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.identifier.AccountID;
+import com.exscudo.peer.eon.midleware.parsers.PaymentParser;
+import com.exscudo.peer.tx.TransactionType;
 import com.exscudo.peer.tx.midleware.builders.PaymentBuilder;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
@@ -36,8 +39,15 @@ public class BlockCleanerTestIT {
     public void setUp() throws Exception {
         mockTimeProvider = Mockito.mock(TimeProvider.class);
 
-        ctx1 = new PeerContext(PeerStarterFactory.create(GENERATOR, mockTimeProvider, true));
-        ctx2 = new PeerContext(PeerStarterFactory.create(GENERATOR2, mockTimeProvider, false));
+        ctx1 = new PeerContext(PeerStarterFactory.create()
+                                                 .route(TransactionType.Payment, new PaymentParser())
+                                                 .seed(GENERATOR)
+                                                 .build(mockTimeProvider));
+        ctx2 = new PeerContext(PeerStarterFactory.create()
+                                                 .route(TransactionType.Payment, new PaymentParser())
+                                                 .seed(GENERATOR2)
+                                                 .disableFullSync()
+                                                 .build(mockTimeProvider));
 
         ctx1.syncBlockPeerService = Mockito.spy(ctx1.syncBlockPeerService);
         ctx2.syncBlockPeerService = Mockito.spy(ctx2.syncBlockPeerService);
@@ -95,11 +105,17 @@ public class BlockCleanerTestIT {
         Dao<DbTransaction, Long> txDao2 = DaoManager.createDao(ctx2.storage.getConnectionSource(), DbTransaction.class);
         Dao<DbBlock, Long> blockDao1 = DaoManager.createDao(ctx1.storage.getConnectionSource(), DbBlock.class);
         Dao<DbBlock, Long> blockDao2 = DaoManager.createDao(ctx2.storage.getConnectionSource(), DbBlock.class);
+        Dao<DbAccTransaction, Long> accTxDao1 =
+                DaoManager.createDao(ctx1.storage.getConnectionSource(), DbAccTransaction.class);
+        Dao<DbAccTransaction, Long> accTxDao2 =
+                DaoManager.createDao(ctx2.storage.getConnectionSource(), DbAccTransaction.class);
 
         long txC1 = txDao1.countOf();
         long txC2 = txDao2.countOf();
         long txB1 = blockDao1.countOf();
         long txB2 = blockDao2.countOf();
+        long txA1 = accTxDao1.countOf();
+        long txA2 = accTxDao2.countOf();
 
         Block lastBlock = ctx1.blockExplorerService.getLastBlock();
         int timestamp = lastBlock.getTimestamp() + 180 * LIMIT_BLOCK_COUNT + 1;
@@ -115,6 +131,8 @@ public class BlockCleanerTestIT {
         Assert.assertNotEquals(txC2, txDao2.countOf());
         Assert.assertNotEquals(txB1, blockDao1.countOf());
         Assert.assertNotEquals(txB2, blockDao2.countOf());
+        Assert.assertNotEquals(txA1, accTxDao1.countOf());
+        Assert.assertNotEquals(txA2, accTxDao2.countOf());
 
         Assert.assertEquals("Blockchain synchronized",
                             ctx1.blockExplorerService.getLastBlock().getID(),
@@ -129,11 +147,15 @@ public class BlockCleanerTestIT {
         // Full history
         // BLOCK_COUNT transactions sent to each feast
         Assert.assertEquals(BLOCK_COUNT * 2, txDao1.countOf());
+        // BLOCK_COUNT  for recipient1 transactions
+        // (BLOCK_COUNT * 2) for recipient2 transactions
+        Assert.assertEquals(BLOCK_COUNT + BLOCK_COUNT * 2, accTxDao1.countOf());
         // (BLOCK_IN_DAY + BLOCK_COUNT + 1) blocks after, but in DB zero block and genesis block
         Assert.assertEquals(BLOCK_COUNT + LIMIT_BLOCK_COUNT, blockDao1.countOf() - 2);
 
         // Cleaned history
         Assert.assertEquals(0, txDao2.countOf());
+        Assert.assertEquals(0, accTxDao2.countOf());
         Assert.assertEquals(Constant.STORAGE_FRAME_BLOCK, blockDao2.countOf() - 3);
     }
 }

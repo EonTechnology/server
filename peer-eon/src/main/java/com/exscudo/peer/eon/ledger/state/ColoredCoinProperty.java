@@ -9,45 +9,51 @@ public class ColoredCoinProperty {
     public static final int MAX_DECIMAL_POINT = 10;
     public static final long MIN_EMISSION_SIZE = 1L;
 
+    private Attributes attributes = null;
     private long moneySupply = 0L;
-    private int decimalPoint = 0;
-    private int timestamp = -1;
+    private ColoredCoinEmitMode emitMode = null;
+
+    public Attributes getAttributes() {
+        return attributes;
+    }
+
+    public ColoredCoinProperty setAttributes(Attributes attributes) {
+        this.attributes = attributes;
+        return this;
+    }
 
     public long getMoneySupply() {
         return moneySupply;
     }
 
     public ColoredCoinProperty setMoneySupply(long moneySupply) {
-        ensureRange(moneySupply);
+        if (moneySupply < 0) {
+            throw new IllegalArgumentException();
+        }
         this.moneySupply = moneySupply;
         return this;
     }
 
-    private void ensureRange(long value) {
-        if (value < 0) {
-            throw new IllegalArgumentException();
-        }
+    public ColoredCoinEmitMode getEmitMode() {
+        return emitMode;
     }
 
-    public int getDecimalPoint() {
-        return decimalPoint;
-    }
-
-    public ColoredCoinProperty setDecimalPoint(int decimalPoint) {
-        this.decimalPoint = decimalPoint;
-        return this;
-    }
-
-    public int getTimestamp() {
-        return timestamp;
-    }
-
-    public ColoredCoinProperty setTimestamp(int timestamp) {
-        this.timestamp = timestamp;
+    public ColoredCoinProperty setEmitMode(ColoredCoinEmitMode emitMode) {
+        this.emitMode = emitMode;
         return this;
     }
 
     public boolean isIssued() {
-        return moneySupply != 0L;
+        return attributes != null;
+    }
+
+    public static class Attributes {
+        public final int decimalPoint;
+        public final int timestamp;
+
+        public Attributes(int decimalPoint, int timestamp) {
+            this.decimalPoint = decimalPoint;
+            this.timestamp = timestamp;
+        }
     }
 }

@@ -30,37 +30,51 @@ public class DummyServiceTest {
     public void setUp() throws Exception {
         Map<String, Object> map = new HashMap<>();
         map.put("class", new DummyServiceImpl());
-        baseService = new JrpcService(map);
+        baseService = new JrpcService(new CompositeInnerService(map));
     }
 
     @Test
     public void parse_error() throws Exception {
-        checkRequest("/com/exscudo/jsonrpc/request_parse_error.json", "/com/exscudo/jsonrpc/parse_error.json");
+        checkRequest("/com/exscudo/jsonrpc/request_parse_error.json", "/com/exscudo/jsonrpc/response_parse_error.json");
     }
 
     @Test
     public void invalid_request() throws Exception {
-        checkRequest("/com/exscudo/jsonrpc/request_invalid.json", "/com/exscudo/jsonrpc/invalid_request.json");
+        checkRequest("/com/exscudo/jsonrpc/request_invalid_version.json",
+                     "/com/exscudo/jsonrpc/response_invalid_version.json");
     }
 
     @Test
     public void method_not_found() throws Exception {
-        checkRequest("/com/exscudo/jsonrpc/request.json", "/com/exscudo/jsonrpc/method_not_found.json");
+        checkRequest("/com/exscudo/jsonrpc/request_method_not_found.json",
+                     "/com/exscudo/jsonrpc/response_method_not_found.json");
     }
 
     @Test
     public void server_error() throws Exception {
-        checkRequest("/com/exscudo/jsonrpc/request_method2.json", "/com/exscudo/jsonrpc/server_error.json");
+        checkRequest("/com/exscudo/jsonrpc/request_server_error.json",
+                     "/com/exscudo/jsonrpc/response_server_error.json");
     }
 
     @Test
     public void invalid_params() throws Exception {
-        checkRequest("/com/exscudo/jsonrpc/request_method1.json", "/com/exscudo/jsonrpc/invalid_params.json");
+        checkRequest("/com/exscudo/jsonrpc/request_invalid_params.json",
+                     "/com/exscudo/jsonrpc/response_invalid_params.json");
     }
 
     @Test
     public void success() throws Exception {
-        checkRequest("/com/exscudo/jsonrpc/request_method.json", "/com/exscudo/jsonrpc/success.json");
+        checkRequest("/com/exscudo/jsonrpc/request_success.json", "/com/exscudo/jsonrpc/response_success.json");
+    }
+
+    @Test
+    public void success_1() throws Exception {
+        checkRequest("/com/exscudo/jsonrpc/request_success_1.json", "/com/exscudo/jsonrpc/response_success_1.json");
+    }
+
+    @Test
+    public void success_2() throws Exception {
+        checkRequest("/com/exscudo/jsonrpc/request_success_2.json", "/com/exscudo/jsonrpc/response_success_2.json");
     }
 
     private void checkRequest(String requestPath, String responsePath) throws Exception {

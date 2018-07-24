@@ -2,9 +2,9 @@ package com.exscudo.eon.app.cfg.forks;
 
 import java.util.Set;
 
-import com.exscudo.eon.app.cfg.ITransactionEstimator;
 import com.exscudo.peer.core.crypto.CryptoProvider;
 import com.exscudo.peer.core.data.Account;
+import com.exscudo.peer.core.middleware.ITransactionParser;
 
 public interface Item {
 
@@ -14,13 +14,9 @@ public interface Item {
 
     int getNumber();
 
-    int getMaxNoteLength();
-
     Set<Integer> getTransactionTypes();
 
     int getBlockVersion();
-
-    ITransactionEstimator getEstimator();
 
     CryptoProvider getCryptoProvider();
 
@@ -35,4 +31,6 @@ public interface Item {
     long getEnd();
 
     void setEnd(long end);
+
+    ITransactionParser getParser();
 }

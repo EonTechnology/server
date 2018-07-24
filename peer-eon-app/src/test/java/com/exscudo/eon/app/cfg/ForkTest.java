@@ -6,8 +6,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.time.Instant;
 
-import com.exscudo.eon.app.IT.Utils;
-import com.exscudo.eon.app.cfg.forks.Item;
+import com.exscudo.eon.app.cfg.forks.ForkItem;
 import com.exscudo.peer.core.data.identifier.BlockID;
 import org.junit.Before;
 import org.junit.Test;
@@ -18,9 +17,9 @@ public class ForkTest {
 
     @Before
     public void setUp() throws Exception {
-        forkState = new Fork(new BlockID(0L), new Item[] {
-                new Utils.TestItem(1, Instant.ofEpochMilli(1 * 1000L).toString()),
-                new Utils.TestItem(2, Instant.ofEpochMilli(100 * 1000L).toString())
+        forkState = new Fork(new BlockID(0L), new ForkItem[] {
+                new ForkItem(1, Instant.ofEpochMilli(1 * 1000L).toString()),
+                new ForkItem(2, Instant.ofEpochMilli(100 * 1000L).toString())
         }, Instant.ofEpochMilli(200 * 1000L).toString());
     }
 

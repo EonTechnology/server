@@ -5,27 +5,50 @@
     {
       "number": 1,
       "date_begin": "2018-01-01T12:00:00.00Z",
-      "add_tx_types": [
-        "Registration",
-        "Payment",
-        "Deposit"
-      ]
+      "parser": {
+        "add": {
+          "Registration": "com.exscudo.peer.eon.midleware.parsers.RegistrationParser",
+          "Payment": "com.exscudo.peer.eon.midleware.parsers.PaymentParser",
+          "Deposit": "com.exscudo.peer.eon.midleware.parsers.DepositParser"
+        }
+      },
+      "validator": {
+        "add": [
+          "com.exscudo.peer.core.middleware.rules.DeadlineValidationRule",
+          "com.exscudo.peer.core.middleware.rules.LengthValidationRule",
+          "com.exscudo.peer.core.middleware.rules.ReferencedTransactionValidationRule"
+        ]
+      }
     },
     {
       "number": 2,
       "date_begin": "2018-02-01T12:00:00.00Z",
-      "remove_tx_types": [
-        "Payment"
-      ]
+      "parser": {
+        "remove": [
+          "Payment"
+        ]
+      },
+      "validator": {
+        "remove": [
+          "com.exscudo.peer.core.middleware.rules.DeadlineValidationRule"
+        ]
+      }
     },
     {
       "number": 3,
       "date_begin": "2018-03-01T12:00:00.00Z",
-      "add_tx_types": [
-        "ColoredCoinRegistration",
-        "ColoredCoinPayment",
-        "ColoredCoinSupply"
-      ]
+      "parser": {
+        "add": {
+          "Publication": "com.exscudo.peer.eon.midleware.parsers.PublicationParser",
+          "ColoredCoinRegistration": "com.exscudo.peer.eon.midleware.parsers.ColoredCoinRegistrationParserV1",
+          "ColoredCoinPayment": "com.exscudo.peer.eon.midleware.parsers.ColoredCoinPaymentParser"
+        }
+      },
+      "validator": {
+        "add": [
+          "com.exscudo.peer.core.middleware.rules.TypeValidationRule"
+        ]
+      }
     }
   ]
 }

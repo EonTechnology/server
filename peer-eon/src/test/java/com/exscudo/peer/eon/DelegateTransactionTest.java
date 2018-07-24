@@ -12,7 +12,6 @@ import com.exscudo.peer.core.crypto.ISigner;
 import com.exscudo.peer.core.data.Account;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.identifier.AccountID;
-import com.exscudo.peer.core.middleware.ITransactionParser;
 import com.exscudo.peer.eon.ledger.AccountProperties;
 import com.exscudo.peer.eon.ledger.state.BalanceProperty;
 import com.exscudo.peer.eon.ledger.state.RegistrationDataProperty;
@@ -35,11 +34,6 @@ public class DelegateTransactionTest extends AbstractTransactionTest {
     private ISigner delegate_2 = new Signer("2233445566778899aabbccddeeff00112233445566778899aabbccddeeff0011");
     private Account senderAccount;
     private Account delegateAccount1;
-
-    @Override
-    protected ITransactionParser getParser() {
-        return parser;
-    }
 
     @Before
     @Override
@@ -68,7 +62,7 @@ public class DelegateTransactionTest extends AbstractTransactionTest {
         expectedException.expectMessage(Resources.ATTACHMENT_UNKNOWN_TYPE);
 
         Transaction tx = new TransactionBuilder(TransactionType.Delegate).build(networkID, sender);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -78,7 +72,7 @@ public class DelegateTransactionTest extends AbstractTransactionTest {
 
         AccountID id = new AccountID(sender.getPublicKey());
         Transaction tx = DelegateBuilder.createNew(id, 60).build(networkID, sender);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -90,7 +84,7 @@ public class DelegateTransactionTest extends AbstractTransactionTest {
         HashMap<String, Object> map = new HashMap<>();
         map.put("delegate id", 50);
         Transaction tx = new TransactionBuilder(TransactionType.Delegate, map).build(networkID, sender);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -102,7 +96,7 @@ public class DelegateTransactionTest extends AbstractTransactionTest {
         HashMap<String, Object> map = new HashMap<>();
         map.put(id.toString(), "weight");
         Transaction tx = new TransactionBuilder(TransactionType.Delegate, map).build(networkID, sender);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -112,9 +106,9 @@ public class DelegateTransactionTest extends AbstractTransactionTest {
 
         AccountID id = new AccountID(sender.getPublicKey());
         HashMap<String, Object> map = new HashMap<>();
-        map.put(id.toString(), ValidationModeProperty.MAX_WEIGHT + 1);
+        map.put(id.toString(), ValidationModeProperty.MAX_WEIGHT + 1L);
         Transaction tx = new TransactionBuilder(TransactionType.Delegate, map).build(networkID, sender);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -124,16 +118,16 @@ public class DelegateTransactionTest extends AbstractTransactionTest {
 
         AccountID id = new AccountID(sender.getPublicKey());
         HashMap<String, Object> map = new HashMap<>();
-        map.put(id.toString(), ValidationModeProperty.MIN_WEIGHT - 1);
+        map.put(id.toString(), ValidationModeProperty.MIN_WEIGHT - 1L);
         Transaction tx = new TransactionBuilder(TransactionType.Delegate, map).build(networkID, sender);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
     public void enable_mfa() throws Exception {
         AccountID id = new AccountID(sender.getPublicKey());
         Transaction tx = DelegateBuilder.createNew(id, 50).build(networkID, sender);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -143,7 +137,7 @@ public class DelegateTransactionTest extends AbstractTransactionTest {
 
         AccountID id = new AccountID(sender.getPublicKey());
         Transaction tx = DelegateBuilder.createNew(id, 40).build(networkID, sender);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -158,7 +152,7 @@ public class DelegateTransactionTest extends AbstractTransactionTest {
 
         AccountID id = new AccountID(sender.getPublicKey());
         Transaction tx = DelegateBuilder.createNew(id, 0).build(networkID, sender);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -170,7 +164,7 @@ public class DelegateTransactionTest extends AbstractTransactionTest {
 
         AccountID id = new AccountID(delegate_1.getPublicKey());
         Transaction tx = DelegateBuilder.createNew(id, 50).build(networkID, sender);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -180,7 +174,7 @@ public class DelegateTransactionTest extends AbstractTransactionTest {
         expectedException.expectMessage(Resources.DELEGATE_ACCOUNT_NOT_FOUND);
 
         Transaction tx = DelegateBuilder.createNew(id, 50).build(networkID, sender);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -190,14 +184,14 @@ public class DelegateTransactionTest extends AbstractTransactionTest {
 
         AccountID id = new AccountID(delegate_1.getPublicKey());
         Transaction tx = DelegateBuilder.createNew(id, 20).build(networkID, sender);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
     public void add_delegate() throws Exception {
         AccountID id = new AccountID(delegate_1.getPublicKey());
         Transaction tx = DelegateBuilder.createNew(id, 40).build(networkID, sender);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -210,7 +204,7 @@ public class DelegateTransactionTest extends AbstractTransactionTest {
 
         AccountID id = new AccountID(delegate_1.getPublicKey());
         Transaction tx = DelegateBuilder.createNew(id).build(networkID, sender);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -225,7 +219,7 @@ public class DelegateTransactionTest extends AbstractTransactionTest {
 
         AccountID id = new AccountID(delegate_1.getPublicKey());
         Transaction tx = DelegateBuilder.createNew(id, 40).build(networkID, sender);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -244,7 +238,7 @@ public class DelegateTransactionTest extends AbstractTransactionTest {
 
         AccountID id = new AccountID(delegate_1.getPublicKey());
         Transaction tx = DelegateBuilder.createNew(id, 40).build(networkID, sender);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -265,7 +259,7 @@ public class DelegateTransactionTest extends AbstractTransactionTest {
         AccountProperties.setProperty(senderAccount, validationMode);
 
         Transaction tx = DelegateBuilder.createNew(id, 40).build(networkID, sender);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -281,7 +275,7 @@ public class DelegateTransactionTest extends AbstractTransactionTest {
 
         AccountID id = new AccountID(sender.getPublicKey());
         Transaction tx = DelegateBuilder.createNew(id, 40).build(networkID, sender);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -299,7 +293,7 @@ public class DelegateTransactionTest extends AbstractTransactionTest {
         AccountProperties.setProperty(senderAccount, validationMode);
 
         Transaction tx = DelegateBuilder.createNew(id, 40).build(networkID, sender);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -315,7 +309,7 @@ public class DelegateTransactionTest extends AbstractTransactionTest {
         AccountProperties.setProperty(senderAccount, validationMode);
 
         Transaction tx = DelegateBuilder.createNew(id, 50).build(networkID, sender);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -330,7 +324,7 @@ public class DelegateTransactionTest extends AbstractTransactionTest {
         ledger.putAccount(delegateAccount2);
 
         Transaction tx = DelegateBuilder.createNew(id, 0).build(networkID, sender);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -342,7 +336,7 @@ public class DelegateTransactionTest extends AbstractTransactionTest {
         AccountID id = new AccountID(delegate_1.getPublicKey());
         Transaction tx = DelegateBuilder.createNew(id, 0).addNested(innerTx).build(networkID, sender);
 
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -358,7 +352,7 @@ public class DelegateTransactionTest extends AbstractTransactionTest {
         AccountProperties.setProperty(delegateAccount1, votePollsProperty);
 
         Transaction tx = DelegateBuilder.createNew(delegateAccount1.getID(), 40).build(networkID, sender);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -372,6 +366,50 @@ public class DelegateTransactionTest extends AbstractTransactionTest {
         AccountProperties.setProperty(delegateAccount1, votePollsProperty);
 
         Transaction tx = DelegateBuilder.createNew(delegateAccount1.getID(), 40).build(networkID, sender);
-        validate(tx);
+        validate(parser, tx);
+    }
+
+    @Test
+    public void delegate_error_null() throws Exception {
+        expectedException.expect(ValidateException.class);
+        expectedException.expectMessage(Resources.WEIGHT_INVALID_FORMAT);
+
+        Transaction tx = DelegateBuilder.createNew(delegateAccount1.getID(), 40).build(networkID, sender);
+
+        tx.getData().put(delegateAccount1.getID().toString(), null);
+        validate(parser, tx);
+    }
+
+    @Test
+    public void delegate_error_string() throws Exception {
+        expectedException.expect(ValidateException.class);
+        expectedException.expectMessage(Resources.WEIGHT_INVALID_FORMAT);
+
+        Transaction tx = DelegateBuilder.createNew(delegateAccount1.getID(), 40).build(networkID, sender);
+
+        tx.getData().put(delegateAccount1.getID().toString(), "10");
+        validate(parser, tx);
+    }
+
+    @Test
+    public void delegate_error_decimal() throws Exception {
+        expectedException.expect(ValidateException.class);
+        expectedException.expectMessage(Resources.WEIGHT_INVALID_FORMAT);
+
+        Transaction tx = DelegateBuilder.createNew(delegateAccount1.getID(), 40).build(networkID, sender);
+
+        tx.getData().put(delegateAccount1.getID().toString(), 10.001);
+        validate(parser, tx);
+    }
+
+    @Test
+    public void delegate_error_over() throws Exception {
+        expectedException.expect(ValidateException.class);
+        expectedException.expectMessage(Resources.WEIGHT_OUT_OF_RANGE);
+
+        Transaction tx = DelegateBuilder.createNew(delegateAccount1.getID(), 40).build(networkID, sender);
+
+        tx.getData().put(delegateAccount1.getID().toString(), 50 + 0xFFFFFFFFL);
+        validate(parser, tx);
     }
 }

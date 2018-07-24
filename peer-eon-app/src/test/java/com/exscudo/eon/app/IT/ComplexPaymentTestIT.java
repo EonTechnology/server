@@ -2,15 +2,19 @@ package com.exscudo.eon.app.IT;
 
 import com.exscudo.TestSigner;
 import com.exscudo.eon.app.api.bot.AccountBotService;
-import com.exscudo.eon.app.cfg.PeerStarter;
 import com.exscudo.peer.core.Constant;
-import com.exscudo.peer.core.IFork;
 import com.exscudo.peer.core.common.TimeProvider;
 import com.exscudo.peer.core.crypto.ISigner;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.identifier.AccountID;
+import com.exscudo.peer.eon.midleware.parsers.ColoredCoinPaymentParser;
+import com.exscudo.peer.eon.midleware.parsers.ColoredCoinRegistrationParserV2;
+import com.exscudo.peer.eon.midleware.parsers.ComplexPaymentParserV1;
+import com.exscudo.peer.eon.midleware.parsers.PaymentParser;
+import com.exscudo.peer.eon.midleware.parsers.RegistrationParser;
 import com.exscudo.peer.tx.ColoredCoinID;
+import com.exscudo.peer.tx.TransactionType;
 import com.exscudo.peer.tx.midleware.builders.ColoredCoinRegistrationBuilder;
 import com.exscudo.peer.tx.midleware.builders.ColoredPaymentBuilder;
 import com.exscudo.peer.tx.midleware.builders.ComplexPaymentBuilder;
@@ -27,15 +31,34 @@ public class ComplexPaymentTestIT {
     private static final String NEW_ACCOUNT = "2233445566778899aabbccddeeff00112233445566778899aabbccddeeff0000";
     private TimeProvider timeProvider;
     private PeerContext ctx;
+    private PeerContext ctx2;
 
     @Before
     public void setUp() throws Exception {
         timeProvider = Mockito.mock(TimeProvider.class);
 
-        PeerStarter peerStarter = PeerStarterFactory.create(ACCOUNT_SEED1, timeProvider);
-        IFork fork = Utils.createFork(peerStarter.getStorage());
-        peerStarter.setFork(fork);
-        ctx = new PeerContext(peerStarter);
+        ctx = new PeerContext(PeerStarterFactory.create()
+                                                .route(TransactionType.Payment, new PaymentParser())
+                                                .route(TransactionType.Registration, new RegistrationParser())
+                                                .route(TransactionType.ColoredCoinRegistration,
+                                                       new ColoredCoinRegistrationParserV2())
+                                                .route(TransactionType.ColoredCoinPayment,
+                                                       new ColoredCoinPaymentParser())
+                                                .route(TransactionType.ComplexPayment, new ComplexPaymentParserV1())
+                                                .seed(ACCOUNT_SEED1)
+                                                .build(timeProvider));
+
+        ctx2 = new PeerContext(PeerStarterFactory.create()
+                                                 .route(TransactionType.Payment, new PaymentParser())
+                                                 .route(TransactionType.Registration, new RegistrationParser())
+                                                 .route(TransactionType.ColoredCoinRegistration,
+                                                        new ColoredCoinRegistrationParserV2())
+                                                 .route(TransactionType.ColoredCoinPayment,
+                                                        new ColoredCoinPaymentParser())
+                                                 .route(TransactionType.ComplexPayment, new ComplexPaymentParserV1())
+                                                 .seed(ACCOUNT_SEED1)
+                                                 .build(timeProvider));
+        ctx2.setPeerToConnect(ctx);
     }
 
     @Test
@@ -167,5 +190,10 @@ public class ComplexPaymentTestIT {
 
         }
         Assert.assertNull(ctx.backlogExplorerService.get(tx5.getID()));
+
+        ctx2.fullBlockSync();
+        Assert.assertEquals("Blockchain synchronized",
+                            ctx.blockExplorerService.getLastBlock().getID(),
+                            ctx2.blockExplorerService.getLastBlock().getID());
     }
 }

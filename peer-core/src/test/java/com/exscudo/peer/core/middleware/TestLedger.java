@@ -6,11 +6,10 @@ import java.util.Map;
 
 import com.exscudo.peer.core.data.Account;
 import com.exscudo.peer.core.data.identifier.AccountID;
-import com.exscudo.peer.core.ledger.AbstractLedger;
 import com.exscudo.peer.core.ledger.ILedger;
 
 // ATTENTION: side effects
-class TestLedger extends AbstractLedger {
+class TestLedger implements ILedger {
     private Map<AccountID, Account> accounts = new HashMap<>();
 
     @Override

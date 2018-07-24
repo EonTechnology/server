@@ -5,6 +5,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+## 0.13.0 - 2018-07-25 - TestNet3 fork 5
+### Added
+- Auto-emission mode for colored coins.
+- Transaction type "530 - ColoredCoinRemove" - removing a colored coins.
+
+### Changed
+- End date of the fork.
+- Uses of the complex transaction is extended.
+- Transaction type "520 - ColoredCoinSupply" - money supply management without possible removal.
+
 ## 0.12.3 - 2018-06-27 - MainNet fork 4 / TestNet3 fork 4
 ### Changed
 - End date of the fork.

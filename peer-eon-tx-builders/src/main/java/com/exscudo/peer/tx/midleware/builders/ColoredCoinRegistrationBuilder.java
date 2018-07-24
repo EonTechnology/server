@@ -16,4 +16,8 @@ public class ColoredCoinRegistrationBuilder extends TransactionBuilder<ColoredCo
     public static ColoredCoinRegistrationBuilder createNew(long emission, int decimalPoint) {
         return new ColoredCoinRegistrationBuilder().withParam("emission", emission).withParam("decimal", decimalPoint);
     }
+
+    public static ColoredCoinRegistrationBuilder createNew(int decimalPoint) {
+        return new ColoredCoinRegistrationBuilder().withParam("emission", "auto").withParam("decimal", decimalPoint);
+    }
 }

@@ -11,7 +11,6 @@ import com.exscudo.peer.core.crypto.ISigner;
 import com.exscudo.peer.core.data.Account;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.identifier.AccountID;
-import com.exscudo.peer.core.middleware.ITransactionParser;
 import com.exscudo.peer.eon.ledger.AccountProperties;
 import com.exscudo.peer.eon.ledger.state.BalanceProperty;
 import com.exscudo.peer.eon.ledger.state.RegistrationDataProperty;
@@ -33,10 +32,8 @@ public class PaymentTransactionTest extends AbstractTransactionTest {
     private ISigner recipientSigner = new Signer("00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff");
     private Account recipient;
 
-    @Override
-    protected ITransactionParser getParser() {
-        return parser;
-    }
+    private ISigner payerSigner = new Signer("2233445566778899aabbccddeeff00112233445566778899aabbccddeeff0011");
+    private Account payer;
 
     @Before
     @Override
@@ -49,8 +46,12 @@ public class PaymentTransactionTest extends AbstractTransactionTest {
         recipient = Mockito.spy(new TestAccount(new AccountID(recipientSigner.getPublicKey())));
         AccountProperties.setProperty(recipient, new RegistrationDataProperty(recipientSigner.getPublicKey()));
 
+        payer = Mockito.spy(new TestAccount(new AccountID(payerSigner.getPublicKey())));
+        AccountProperties.setProperty(payer, new RegistrationDataProperty(payerSigner.getPublicKey()));
+
         ledger.putAccount(sender);
         ledger.putAccount(recipient);
+        ledger.putAccount(payer);
     }
 
     @Test
@@ -64,7 +65,7 @@ public class PaymentTransactionTest extends AbstractTransactionTest {
                                        .forFee(1L)
                                        .validity(timeProvider.get(), 3600)
                                        .build(networkID, senderSigner);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -79,7 +80,7 @@ public class PaymentTransactionTest extends AbstractTransactionTest {
                                                                         .forFee(1L)
                                                                         .validity(timeProvider.get(), 3600)
                                                                         .build(networkID, senderSigner);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -94,7 +95,7 @@ public class PaymentTransactionTest extends AbstractTransactionTest {
                                                                         .forFee(1L)
                                                                         .validity(timeProvider.get(), 3600)
                                                                         .build(networkID, senderSigner);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -109,7 +110,7 @@ public class PaymentTransactionTest extends AbstractTransactionTest {
                                                                         .forFee(1L)
                                                                         .validity(timeProvider.get(), 3600)
                                                                         .build(networkID, senderSigner);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -123,7 +124,7 @@ public class PaymentTransactionTest extends AbstractTransactionTest {
                                        .forFee(1L)
                                        .validity(timeProvider.get(), 3600)
                                        .build(networkID, senderSigner);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -136,7 +137,7 @@ public class PaymentTransactionTest extends AbstractTransactionTest {
                                            .forFee(1L)
                                            .validity(timeProvider.get(), 3600)
                                            .build(networkID, senderSigner));
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -150,7 +151,7 @@ public class PaymentTransactionTest extends AbstractTransactionTest {
                                        .forFee(5L)
                                        .validity(timeProvider.get(), 3600)
                                        .build(networkID, senderSigner);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -165,6 +166,84 @@ public class PaymentTransactionTest extends AbstractTransactionTest {
                                        .addNested(innerTx)
                                        .build(networkID, senderSigner);
 
-        validate(tx);
+        validate(parser, tx);
+    }
+
+    @Test
+    public void payment_payer_succes() throws Exception {
+
+        AccountProperties.setProperty(sender, new BalanceProperty(100L));
+        AccountProperties.setProperty(payer, new BalanceProperty(10L));
+
+        Transaction tx = PaymentBuilder.createNew(100L, recipient.getID())
+                                       .forFee(10L)
+                                       .payedBy(payer.getID())
+                                       .validity(timeProvider.get(), 3600)
+                                       .build(networkID, senderSigner);
+        validate(parser, tx);
+    }
+
+    @Test
+    public void payment_invalid_payer() throws Exception {
+        expectedException.expect(ValidateException.class);
+        expectedException.expectMessage(Resources.PAYER_ACCOUNT_NOT_FOUND);
+
+        when(ledger.getAccount(eq(payer.getID()))).thenReturn(null);
+
+        Transaction tx = PaymentBuilder.createNew(100L, recipient.getID())
+                                       .forFee(1L)
+                                       .payedBy(payer.getID())
+                                       .validity(timeProvider.get(), 3600)
+                                       .build(networkID, senderSigner);
+        validate(parser, tx);
+    }
+
+    @Test
+    public void payment_invalid_payer_balance() throws Exception {
+        expectedException.expect(ValidateException.class);
+        expectedException.expectMessage(Resources.NOT_ENOUGH_FEE);
+
+        AccountProperties.setProperty(sender, new BalanceProperty(100L));
+        AccountProperties.setProperty(payer, new BalanceProperty(9L));
+
+        Transaction tx = PaymentBuilder.createNew(100L, recipient.getID())
+                                       .forFee(10L)
+                                       .payedBy(payer.getID())
+                                       .validity(timeProvider.get(), 3600)
+                                       .build(networkID, senderSigner);
+        validate(parser, tx);
+    }
+
+    @Test
+    public void amount_error_null() throws Exception {
+        expectedException.expect(ValidateException.class);
+        expectedException.expectMessage(Resources.AMOUNT_INVALID_FORMAT);
+
+        Transaction tx = PaymentBuilder.createNew(9999L, recipient.getID()).build(networkID, senderSigner);
+
+        tx.getData().put("amount", null);
+        validate(parser, tx);
+    }
+
+    @Test
+    public void amount_error_string() throws Exception {
+        expectedException.expect(ValidateException.class);
+        expectedException.expectMessage(Resources.AMOUNT_INVALID_FORMAT);
+
+        Transaction tx = PaymentBuilder.createNew(9999L, recipient.getID()).build(networkID, senderSigner);
+
+        tx.getData().put("amount", "100");
+        validate(parser, tx);
+    }
+
+    @Test
+    public void amount_error_decimal() throws Exception {
+        expectedException.expect(ValidateException.class);
+        expectedException.expectMessage(Resources.AMOUNT_INVALID_FORMAT);
+
+        Transaction tx = PaymentBuilder.createNew(9999L, recipient.getID()).build(networkID, senderSigner);
+
+        tx.getData().put("amount", 100.001);
+        validate(parser, tx);
     }
 }

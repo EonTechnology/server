@@ -11,6 +11,7 @@ import com.exscudo.peer.core.blockchain.services.TransactionService;
 import com.exscudo.peer.core.common.exceptions.RemotePeerException;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.identifier.AccountID;
+import com.exscudo.peer.core.data.identifier.TransactionID;
 
 /**
  * Account history service
@@ -78,5 +79,24 @@ public class TransactionHistoryBotService {
      */
     public List<BlockHeader> getSignedBlock(String id) throws RemotePeerException, IOException {
         return BlockHeader.fromBlockList(blockService.getByAccountId(new AccountID(id)));
+    }
+
+    /**
+     * Get header of last block
+     *
+     * @return header of last block
+     */
+    public BlockHeader getLastBlock() {
+        return BlockHeader.fromBlock(blockService.getLastBlock());
+    }
+
+    /**
+     * Get header of block by transaction ID
+     *
+     * @param transactionId transaction ID
+     * @return header of block
+     */
+    public BlockHeader getBlockWithTransaction(String transactionId) {
+        return BlockHeader.fromBlock(blockService.getBlockWithTransaction(new TransactionID(transactionId)));
     }
 }

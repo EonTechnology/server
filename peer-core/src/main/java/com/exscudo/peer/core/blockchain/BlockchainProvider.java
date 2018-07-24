@@ -9,6 +9,7 @@ import java.util.concurrent.Callable;
 import com.exscudo.peer.core.Constant;
 import com.exscudo.peer.core.api.Difficulty;
 import com.exscudo.peer.core.blockchain.events.BlockchainEventManager;
+import com.exscudo.peer.core.blockchain.storage.DbAccTransaction;
 import com.exscudo.peer.core.blockchain.storage.DbBlock;
 import com.exscudo.peer.core.blockchain.storage.DbTransaction;
 import com.exscudo.peer.core.blockchain.storage.converters.DTOConverter;
@@ -38,9 +39,11 @@ public class BlockchainProvider implements IBlockchainProvider {
 
     private Dao<DbBlock, Long> daoBlocks;
     private Dao<DbTransaction, Long> daoTransactions;
+    private Dao<DbAccTransaction, Long> daoAccTransactions;
 
     private QueryBuilder<DbBlock, Long> getBuilder = null;
     private UpdateBuilder<DbTransaction, Long> txUpdateBuilder = null;
+    private UpdateBuilder<DbAccTransaction, Long> txAccUpdateBuilder = null;
     private UpdateBuilder<DbBlock, Long> blockUpdateBuilder = null;
     private QueryBuilder<DbBlock, Long> getByHBuilder = null;
     private QueryBuilder<DbBlock, Long> getHBuilder = null;
@@ -51,6 +54,8 @@ public class BlockchainProvider implements IBlockchainProvider {
     private ArgumentHolder vTag = new ThreadLocalSelectArg();
     private ArgumentHolder vBlockID = new ThreadLocalSelectArg();
     private ArgumentHolder vTxTag = new ThreadLocalSelectArg();
+    private ArgumentHolder vAccBlockID = new ThreadLocalSelectArg();
+    private ArgumentHolder vAccTag = new ThreadLocalSelectArg();
     private ArgumentHolder vHeight = new ThreadLocalSelectArg();
     private ArgumentHolder vHeightBegin = new ThreadLocalSelectArg();
     private ArgumentHolder vHeightEnd = new ThreadLocalSelectArg();
@@ -69,8 +74,7 @@ public class BlockchainProvider implements IBlockchainProvider {
 
             daoBlocks = DaoManager.createDao(storage.getConnectionSource(), DbBlock.class);
             daoTransactions = DaoManager.createDao(storage.getConnectionSource(), DbTransaction.class);
-
-            initialize();
+            daoAccTransactions = DaoManager.createDao(storage.getConnectionSource(), DbAccTransaction.class);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -79,6 +83,27 @@ public class BlockchainProvider implements IBlockchainProvider {
     public void initialize() throws SQLException {
         Storage.Metadata metadata = storage.metadata();
         lastBlock = getBlock(metadata.getLastBlockID());
+    }
+
+    // TODO: metadata as second parameter
+    public void initialize(Blockchain blockchain, BlockID genesisBlockID, int historyHeight) {
+
+        Block newHead = blockchain.getLastBlock();
+        Block milestone = blockchain.getMilestoneBlock();
+        storage.callInTransaction(new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+
+                attachTo(milestone, newHead);
+
+                storage.metadata().setLastBlockID(newHead.getID());
+                storage.metadata().setGenesisBlock(genesisBlockID);
+                storage.metadata().setHistoryFromHeight(historyHeight);
+
+                lastBlock = newHead;
+                return null;
+            }
+        });
     }
 
     @Override
@@ -289,6 +314,10 @@ public class BlockchainProvider implements IBlockchainProvider {
             txUpdateBuilder = daoTransactions.updateBuilder();
             txUpdateBuilder.where().eq("block_id", vBlockID);
             txUpdateBuilder.updateColumnValue("tag", vTxTag);
+
+            txAccUpdateBuilder = daoAccTransactions.updateBuilder();
+            txAccUpdateBuilder.where().eq("block_id", vAccBlockID);
+            txAccUpdateBuilder.updateColumnValue("tag", vAccTag);
         }
 
         vTag.setValue(tag);
@@ -298,6 +327,10 @@ public class BlockchainProvider implements IBlockchainProvider {
         vTxTag.setValue(tag);
         vBlockID.setValue(blockID);
         txUpdateBuilder.update();
+
+        vAccTag.setValue(tag);
+        vAccBlockID.setValue(blockID);
+        txAccUpdateBuilder.update();
     }
 
     private BlockID intersect(Block aBlock, Block bBlock) throws SQLException {
@@ -386,5 +419,25 @@ public class BlockchainProvider implements IBlockchainProvider {
         } catch (SQLException e) {
             throw new DataAccessException(e);
         }
+    }
+
+    private void attachTo(Block milestone, Block newHead) throws SQLException {
+        BlockID currentBlockID = newHead.getID();
+        BlockID milestoneBlockID = milestone.getID();
+        while (true) {
+            attachBlock(currentBlockID);
+
+            if (currentBlockID.equals(milestoneBlockID)) {
+                break;
+            }
+            currentBlockID = getPreviousBlockId(currentBlockID);
+            if (currentBlockID == null) {
+                throw new IllegalStateException();
+            }
+        }
+    }
+
+    public Blockchain createBlockchain() {
+        return new Blockchain(storage, null);
     }
 }

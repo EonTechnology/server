@@ -26,6 +26,10 @@
                 <entry key="time">
                     <bean factory-bean="botServiceFactory" factory-method="getTimeBotService"/>
                 </entry>
+                <!-- Properties Service -->
+                <entry key="properties">
+                    <bean factory-bean="botServiceFactory" factory-method="getPropertiesBotService"/>
+                </entry>
                 <!-- Colored Coin Service -->
                 <entry key="colored">
                     <bean factory-bean="botServiceFactory" factory-method="getColoredCoinBotService"/>

@@ -53,6 +53,10 @@ public class StorageTransactionMapper {
             }
             map.put(Constants.NESTED_TRANSACTIONS, nestedTxMap);
         }
+        if (transaction.getPayer() != null) {
+            map.put(Constants.PAYER, transaction.getPayer().toString());
+        }
+
         return map;
     }
 
@@ -78,13 +82,22 @@ public class StorageTransactionMapper {
 
         int version = Integer.parseInt(map.get(Constants.VERSION).toString());
 
+        AccountID payer = null;
+        if (map.containsKey(Constants.PAYER)) {
+            payer = new AccountID(map.get(Constants.PAYER).toString());
+        }
+
         Map<String, Object> attachment = null;
         Object obj = map.get(Constants.ATTACHMENT);
         if (obj != null && obj instanceof Map) {
             attachment = new HashMap<>();
             for (Object k : ((Map<?, ?>) obj).keySet()) {
                 Object v = ((Map<?, ?>) obj).get(k);
-                attachment.put(k.toString(), v);
+                if (v instanceof Number) {
+                    attachment.put(k.toString(), ((Number) v).longValue());
+                } else {
+                    attachment.put(k.toString(), v.toString());
+                }
             }
         }
 
@@ -128,6 +141,7 @@ public class StorageTransactionMapper {
         tx.setSignature(signature);
         tx.setNote(note);
         tx.setNestedTransactions(nestedTransactions);
+        tx.setPayer(payer);
         return tx;
     }
 }

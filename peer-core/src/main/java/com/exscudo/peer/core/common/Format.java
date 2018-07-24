@@ -2,6 +2,8 @@ package com.exscudo.peer.core.common;
 
 import java.math.BigInteger;
 
+import com.exscudo.peer.core.common.exceptions.ValidateException;
+
 public class Format {
     /**
      * 0x10000000000000000 = 0xFFFFFFFFFFFFFFFF + 1

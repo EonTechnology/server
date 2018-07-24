@@ -8,6 +8,7 @@ import com.exscudo.peer.core.common.exceptions.ValidateException;
 import com.exscudo.peer.core.crypto.ISigner;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.identifier.AccountID;
+import com.exscudo.peer.core.data.identifier.TransactionID;
 import com.exscudo.peer.core.middleware.AbstractValidationRuleTest;
 import com.exscudo.peer.core.middleware.IValidationRule;
 import com.exscudo.peer.core.middleware.TestAccount;
@@ -39,17 +40,24 @@ public class NestedTransactionsValidationRuleTest extends AbstractValidationRule
         ledger.putAccount(new TestAccount(new AccountID(signer1.getPublicKey())));
         ledger.putAccount(new TestAccount(new AccountID(signer2.getPublicKey())));
 
-        Mockito.when(fork.getTransactionTypes(ArgumentMatchers.anyInt())).thenReturn(new HashSet<Integer>() {{
-            add(1);
-        }});
-        Mockito.when(fork.getConfirmingAccounts(ArgumentMatchers.any(), ArgumentMatchers.anyInt()))
+        Mockito.when(accountHelper.getConfirmingAccounts(ArgumentMatchers.any(), ArgumentMatchers.anyInt()))
                .then(new Answer<Object>() {
                    @Override
                    public Object answer(InvocationOnMock invocation) throws Throwable {
                        return null;
                    }
                });
-        rule = new NestedTransactionsValidationRule(fork, timeProvider);
+        rule = new NestedTransactionsValidationRule(new HashSet<Integer>() {{
+            add(1);
+        }}, timeProvider, accountHelper);
+    }
+
+    @Test
+    public void one_nested() throws Exception {
+        Transaction tx = Builder.newTransaction(timeProvider)
+                                .addNested(Builder.newTransaction(timestamp - 1).forFee(0L).build(networkID, signer1))
+                                .build(networkID, signer);
+        validate(tx);
     }
 
     @Test
@@ -60,6 +68,8 @@ public class NestedTransactionsValidationRuleTest extends AbstractValidationRule
         Transaction tx = Builder.newTransaction(timeProvider)
                                 .addNested(Builder.newTransaction(timestamp - 1).build(networkID, signer1))
                                 .build(networkID, signer);
+
+        tx.getNestedTransactions().clear();
         validate(tx);
     }
 
@@ -127,6 +137,77 @@ public class NestedTransactionsValidationRuleTest extends AbstractValidationRule
     @Test
     public void success_without_nested_transaction() throws Exception {
         Transaction tx = Builder.newTransaction(timeProvider).build(networkID, signer);
+        validate(tx);
+    }
+
+    @Test
+    public void add_payer() throws Exception {
+        Transaction tx = Builder.newTransaction(timeProvider)
+                                .addNested(Builder.newTransaction(timestamp - 1)
+                                                  .forFee(0L)
+                                                  .payedBy(new AccountID(signer.getPublicKey()))
+                                                  .build(networkID, signer1))
+                                .addNested(Builder.newTransaction(timestamp).forFee(0L).build(networkID, signer))
+                                .build(networkID, signer);
+        validate(tx);
+    }
+
+    @Test
+    public void illegal_payer() throws Exception {
+        expectedException.expect(ValidateException.class);
+        expectedException.expectMessage("Invalid nested transaction. Invalid payer.");
+
+        Transaction tx = Builder.newTransaction(timeProvider)
+                                .addNested(Builder.newTransaction(timestamp - 1)
+                                                  .forFee(0L)
+                                                  .payedBy(new AccountID(signer2.getPublicKey()))
+                                                  .build(networkID, signer1))
+                                .addNested(Builder.newTransaction(timestamp).forFee(0L).build(networkID, signer))
+                                .build(networkID, signer);
+        validate(tx);
+    }
+
+    @Test
+    public void illegal_payer_confirmations() throws Exception {
+        AccountID id = new AccountID(signer.getPublicKey());
+
+        expectedException.expect(ValidateException.class);
+        expectedException.expectMessage("Invalid nested transaction. Account '" + id + "' can not sign transaction.");
+
+        Transaction tx = Builder.newTransaction(timeProvider)
+                                .addNested(Builder.newTransaction(timestamp - 1)
+                                                  .forFee(0L)
+                                                  .payedBy(id)
+                                                  .build(networkID, signer1, new ISigner[] {signer}))
+                                .addNested(Builder.newTransaction(timestamp).forFee(0L).build(networkID, signer))
+                                .build(networkID, signer);
+        validate(tx);
+    }
+
+    @Test
+    public void nested_transaction_reference_ok() throws Exception {
+        Transaction nestedTx1 = Builder.newTransaction(timestamp - 1).forFee(0L).build(networkID, signer1);
+        Transaction nestedTx2 =
+                Builder.newTransaction(timestamp - 1).forFee(0L).refBy(nestedTx1.getID()).build(networkID, signer2);
+
+        Transaction tx =
+                Builder.newTransaction(timestamp).addNested(nestedTx1).addNested(nestedTx2).build(networkID, signer);
+        validate(tx);
+    }
+
+    @Test
+    public void nested_transaction_reference_fail() throws Exception {
+        expectedException.expect(ValidateException.class);
+        expectedException.expectMessage("Invalid nested transaction. Invalid reference.");
+
+        Transaction nestedTx1 = Builder.newTransaction(timestamp - 1).forFee(0L).build(networkID, signer1);
+        Transaction nestedTx2 = Builder.newTransaction(timestamp - 1)
+                                       .forFee(0L)
+                                       .refBy(new TransactionID(123L))
+                                       .build(networkID, signer2);
+
+        Transaction tx =
+                Builder.newTransaction(timestamp).addNested(nestedTx1).addNested(nestedTx2).build(networkID, signer);
         validate(tx);
     }
 }

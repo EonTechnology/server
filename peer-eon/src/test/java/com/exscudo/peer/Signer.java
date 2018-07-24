@@ -42,7 +42,7 @@ public class Signer implements ISigner {
         }
     }
 
-    private byte[] sign(byte[] message) {
+    public byte[] sign(byte[] message) {
         try {
             MessageDigest sha512 = MessageDigest.getInstance("SHA-512");
             sha512.update(publicKey);

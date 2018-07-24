@@ -3,6 +3,7 @@ package com.exscudo.peer.core.data;
 import java.util.Map;
 
 import com.exscudo.peer.core.common.Format;
+import com.exscudo.peer.core.data.identifier.AccountID;
 import com.exscudo.peer.core.data.identifier.TransactionID;
 
 /**
@@ -22,6 +23,7 @@ public class Transaction extends SignedMessage {
     private Map<String, Object> confirmations;
     private String note;
     private Map<String, Transaction> nestedTransactions;
+    private AccountID payer;
 
     private int length = 0;
 
@@ -258,5 +260,23 @@ public class Transaction extends SignedMessage {
     @Override
     public TransactionID getID() {
         return (TransactionID) super.getID();
+    }
+
+    /**
+     * Returns the transaction payer
+     *
+     * @return
+     */
+    public AccountID getPayer() {
+        return payer;
+    }
+
+    /**
+     * Sets the transaction payer
+     *
+     * @param payer
+     */
+    public void setPayer(AccountID payer) {
+        this.payer = payer;
     }
 }

@@ -5,7 +5,7 @@
     {
       "number": 1,
       "date_begin": "2018-01-01T12:00:00.00Z",
-      "added_tx_type_TYPO_ERROR": [
+      "parser_TYPO_ERROR": [
         "Registration",
         "Payment",
         "Deposit"

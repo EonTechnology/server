@@ -4,6 +4,8 @@ import com.exscudo.peer.core.common.TimeProvider;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.identifier.AccountID;
+import com.exscudo.peer.eon.midleware.parsers.PaymentParser;
+import com.exscudo.peer.tx.TransactionType;
 import com.exscudo.peer.tx.midleware.builders.PaymentBuilder;
 import org.junit.Assert;
 import org.junit.Before;
@@ -27,8 +29,15 @@ public class BacklogTestIT {
     @Before
     public void setUp() throws Exception {
         mockTimeProvider = Mockito.mock(TimeProvider.class);
-        ctx1 = new PeerContext(PeerStarterFactory.create(GENERATOR, mockTimeProvider));
-        ctx2 = new PeerContext(PeerStarterFactory.create(GENERATOR2, mockTimeProvider));
+
+        ctx1 = new PeerContext(PeerStarterFactory.create()
+                                                 .route(TransactionType.Payment, new PaymentParser())
+                                                 .seed(GENERATOR)
+                                                 .build(mockTimeProvider));
+        ctx2 = new PeerContext(PeerStarterFactory.create()
+                                                 .route(TransactionType.Payment, new PaymentParser())
+                                                 .seed(GENERATOR2)
+                                                 .build(mockTimeProvider));
 
         ctx1.syncBlockPeerService = Mockito.spy(ctx1.syncBlockPeerService);
         ctx2.syncBlockPeerService = Mockito.spy(ctx2.syncBlockPeerService);

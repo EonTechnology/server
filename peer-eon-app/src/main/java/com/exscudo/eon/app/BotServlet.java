@@ -10,6 +10,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.exscudo.jsonrpc.JrpcService;
+import com.exscudo.jsonrpc.RequestContextHolder;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.servlet.FrameworkServlet;
 
@@ -37,7 +38,6 @@ public class BotServlet extends FrameworkServlet {
     public void doService(HttpServletRequest request,
                           HttpServletResponse response) throws ServletException, IOException {
 
-        service.setRemoteHost("Client");
         InputStream inputStream = request.getInputStream();
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         byte[] buffer = new byte[65536];
@@ -48,7 +48,10 @@ public class BotServlet extends FrameworkServlet {
         }
         inputStream.close();
 
+        RequestContextHolder.setRemoteHost("Client");
         String responseBody = service.doRequest(byteArrayOutputStream.toString("UTF-8"));
+        RequestContextHolder.resetRemoteHost();
+
         byte[] responseBytes = responseBody.getBytes("UTF-8");
 
         response.setContentType("application/json; charset=UTF-8");

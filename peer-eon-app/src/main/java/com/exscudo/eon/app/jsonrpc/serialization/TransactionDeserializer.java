@@ -3,7 +3,7 @@ package com.exscudo.eon.app.jsonrpc.serialization;
 import java.io.IOException;
 import java.util.Map;
 
-import com.exscudo.eon.app.utils.mapper.TransaportTransactionMapper;
+import com.exscudo.eon.app.utils.mapper.TransportTransactionMapper;
 import com.exscudo.peer.core.data.Transaction;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -29,7 +29,7 @@ public class TransactionDeserializer extends StdDeserializer<Transaction> {
 
             Map<String, Object> map = p.readValueAs(new TypeReference<Map<String, Object>>() {
             });
-            return TransaportTransactionMapper.convert(map);
+            return TransportTransactionMapper.convert(map);
         } catch (IllegalArgumentException ignored) {
         }
 

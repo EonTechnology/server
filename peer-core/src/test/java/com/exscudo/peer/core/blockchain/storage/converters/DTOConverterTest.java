@@ -73,6 +73,31 @@ public class DTOConverterTest {
         assetEquals(a, b);
     }
 
+    @Test
+    public void transaction_contains_payer() throws Exception {
+        Transaction a = Builder.newTransaction(timestamp)
+                               .payedBy(new AccountID(signer2.getPublicKey()))
+                               .build(networkID, signer, new ISigner[] {signer1, signer2});
+        Transaction b = DTOConverter.convert(DTOConverter.convert(a));
+        assetEquals(a, b);
+    }
+
+    @Test
+    public void transaction_contains_nested_transaction_payed() throws Exception {
+
+        Transaction a = Builder.newTransaction(timestamp)
+                               .attach(null)
+                               .addNested(Builder.newTransaction(timestamp)
+                                                 .payedBy(new AccountID(signer2.getPublicKey()))
+                                                 .build(networkID, signer1))
+                               .addNested(Builder.newTransaction(timestamp)
+                                                 .payedBy(new AccountID(signer1.getPublicKey()))
+                                                 .build(networkID, signer2))
+                               .build(networkID, signer);
+        Transaction b = DTOConverter.convert(DTOConverter.convert(a));
+        assetEquals(a, b);
+    }
+
     private void assetEquals(Transaction a, Transaction b) {
 
         Assert.assertEquals(a.getType(), b.getType());
@@ -93,6 +118,7 @@ public class DTOConverterTest {
         Assert.assertEquals(a.getVersion(), b.getVersion());
         Assert.assertEquals(a.getConfirmations(), b.getConfirmations());
         Assert.assertEquals(a.hasNestedTransactions(), b.hasNestedTransactions());
+        Assert.assertEquals(a.getPayer(), b.getPayer());
         if (a.hasNestedTransactions() || b.hasNestedTransactions()) {
             Set<String> aSet = a.getNestedTransactions().keySet();
             Set<String> bSet = b.getNestedTransactions().keySet();
@@ -118,6 +144,7 @@ public class DTOConverterTest {
                                 .note("note")
                                 .addNested(tx1)
                                 .addNested(tx2)
+                                .payedBy(new AccountID(signer2.getPublicKey()))
                                 .build(networkID, signer, new ISigner[] {signer1, signer2});
 
         DbTransaction dbTx = DTOConverter.convert(tx);
@@ -132,6 +159,7 @@ public class DTOConverterTest {
         Assert.assertEquals(dbTx.getSignature(), Format.convert(tx.getSignature()));
         Assert.assertEquals(dbTx.getAttachment(), new String(bencode.encode(attachment)));
         Assert.assertEquals(dbTx.getConfirmations(), new String(bencode.encode(tx.getConfirmations())));
+        Assert.assertEquals(dbTx.getPayerID(), tx.getPayer().getValue());
 
         Map<String, Object> map = new HashMap<>();
         map.put(tx1.getID().toString(), StorageTransactionMapper.convert(tx1));

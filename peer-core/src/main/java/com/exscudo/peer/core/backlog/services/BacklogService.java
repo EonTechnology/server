@@ -7,18 +7,24 @@ import java.util.List;
 import java.util.Objects;
 import java.util.TreeSet;
 
+import com.exscudo.peer.core.IFork;
 import com.exscudo.peer.core.backlog.Backlog;
+import com.exscudo.peer.core.common.ITimeProvider;
 import com.exscudo.peer.core.common.exceptions.ValidateException;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.identifier.AccountID;
 import com.exscudo.peer.core.data.identifier.TransactionID;
-import com.exscudo.peer.core.middleware.TransactionParser;
+import com.exscudo.peer.core.middleware.ITransactionParser;
 
 public class BacklogService {
     private final Backlog backlog;
+    private final IFork fork;
+    private final ITimeProvider timeProvider;
 
-    public BacklogService(Backlog backlog) {
+    public BacklogService(Backlog backlog, IFork fork, ITimeProvider timeProvider) {
         this.backlog = backlog;
+        this.fork = fork;
+        this.timeProvider = timeProvider;
     }
 
     /**
@@ -55,6 +61,7 @@ public class BacklogService {
     public List<Transaction> getForAccount(AccountID id) {
         Objects.requireNonNull(id);
 
+        ITransactionParser parser = fork.getParser(timeProvider.get());
         List<Transaction> list = new ArrayList<>();
         for (TransactionID item : backlog) {
 
@@ -68,9 +75,14 @@ public class BacklogService {
                 continue;
             }
 
+            if (id.equals(transaction.getPayer())) {
+                list.add(transaction);
+                continue;
+            }
+
             try {
-                AccountID recipient = TransactionParser.getRecipient(transaction);
-                if (id.equals(recipient)) {
+                Collection<AccountID> recipients = parser.getDependencies(transaction);
+                if (recipients != null && recipients.contains(id)) {
                     list.add(transaction);
                 }
             } catch (ValidateException ignored) {

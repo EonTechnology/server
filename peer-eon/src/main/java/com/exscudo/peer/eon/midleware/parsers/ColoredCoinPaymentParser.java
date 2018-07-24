@@ -1,5 +1,7 @@
 package com.exscudo.peer.eon.midleware.parsers;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 
 import com.exscudo.peer.core.common.exceptions.ValidateException;
@@ -9,6 +11,9 @@ import com.exscudo.peer.core.middleware.ILedgerAction;
 import com.exscudo.peer.core.middleware.ITransactionParser;
 import com.exscudo.peer.eon.midleware.Resources;
 import com.exscudo.peer.eon.midleware.actions.ColoredCoinPaymentAction;
+import com.exscudo.peer.eon.midleware.actions.ColoredCoinSupplyFireAction;
+import com.exscudo.peer.eon.midleware.actions.ColoredCoinSupplyMaxMoneyAction;
+import com.exscudo.peer.eon.midleware.actions.EmptyAction;
 import com.exscudo.peer.eon.midleware.actions.FeePaymentAction;
 import com.exscudo.peer.tx.ColoredCoinID;
 
@@ -22,7 +27,7 @@ public class ColoredCoinPaymentParser implements ITransactionParser {
         }
 
         Map<String, Object> data = transaction.getData();
-        if (data == null || data.size() != 3) {
+        if (data.size() != 3) {
             throw new ValidateException(Resources.ATTACHMENT_UNKNOWN_TYPE);
         }
 
@@ -33,14 +38,13 @@ public class ColoredCoinPaymentParser implements ITransactionParser {
             throw new ValidateException(Resources.COLOR_INVALID_FORMAT);
         }
 
-        long amount;
-        try {
-            amount = Long.parseLong(String.valueOf(data.get("amount")));
-            if (amount <= 0) {
-                throw new ValidateException(Resources.AMOUNT_OUT_OF_RANGE);
-            }
-        } catch (NumberFormatException e) {
+        if (!(data.get("amount") instanceof Long)) {
             throw new ValidateException(Resources.AMOUNT_INVALID_FORMAT);
+        }
+
+        long amount = (long) data.get("amount");
+        if (amount <= 0) {
+            throw new ValidateException(Resources.AMOUNT_OUT_OF_RANGE);
         }
 
         AccountID recipientID;
@@ -50,21 +54,34 @@ public class ColoredCoinPaymentParser implements ITransactionParser {
             throw new ValidateException(Resources.RECIPIENT_INVALID_FORMAT);
         }
 
+        ILedgerAction emissionAction = new EmptyAction();
+        ILedgerAction fireAction = new EmptyAction();
+
+        AccountID issuerAccount = coloredCoinID.getIssierAccount();
+        if (transaction.getSenderID().equals(issuerAccount)) {
+            emissionAction = new ColoredCoinSupplyMaxMoneyAction(issuerAccount);
+            fireAction = new ColoredCoinSupplyFireAction(issuerAccount);
+        } else if (recipientID.equals(issuerAccount)) {
+            fireAction = new ColoredCoinSupplyFireAction(issuerAccount);
+        }
+
         return new ILedgerAction[] {
-                new FeePaymentAction(transaction.getSenderID(), transaction.getFee()),
-                new ColoredCoinPaymentAction(transaction.getSenderID(), amount, coloredCoinID, recipientID)
+                emissionAction,
+                new FeePaymentAction(transaction.getSenderID(), transaction.getPayer(), transaction.getFee()),
+                new ColoredCoinPaymentAction(transaction.getSenderID(), amount, coloredCoinID, recipientID),
+                fireAction
         };
     }
 
     @Override
-    public AccountID getRecipient(Transaction transaction) throws ValidateException {
+    public Collection<AccountID> getDependencies(Transaction transaction) throws ValidateException {
 
         AccountID id;
         try {
-            id = new AccountID(String.valueOf(transaction.getData().get("recipient")));
+            id = new AccountID(transaction.getData().get("recipient").toString());
         } catch (Exception e) {
             throw new ValidateException(Resources.RECIPIENT_INVALID_FORMAT);
         }
-        return id;
+        return Collections.singleton(id);
     }
 }

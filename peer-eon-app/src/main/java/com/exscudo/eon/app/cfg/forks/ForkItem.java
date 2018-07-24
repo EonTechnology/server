@@ -1,14 +1,15 @@
 package com.exscudo.eon.app.cfg.forks;
 
 import java.time.Instant;
-import java.util.HashSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
-import com.exscudo.eon.app.cfg.ITransactionEstimator;
-import com.exscudo.eon.app.utils.TransactionEstimator;
-import com.exscudo.peer.core.Constant;
 import com.exscudo.peer.core.crypto.CryptoProvider;
 import com.exscudo.peer.core.data.Account;
+import com.exscudo.peer.core.middleware.ITransactionParser;
+import com.exscudo.peer.eon.midleware.CompositeTransactionParser;
 
 public class ForkItem implements Item {
 
@@ -16,11 +17,10 @@ public class ForkItem implements Item {
 
     protected long begin;
     protected long end;
-    protected HashSet<Integer> transactionTypes = new HashSet<>();
+    protected Map<Integer, ITransactionParser> transactionTypes = new HashMap<>();
     protected int blockVersion;
-    protected ITransactionEstimator estimator;
     protected CryptoProvider cryptoProvider;
-    protected int maxNoteLength;
+    protected List<String> validationRules;
 
     public ForkItem(int number, String begin) {
 
@@ -28,9 +28,7 @@ public class ForkItem implements Item {
         this.begin = Instant.parse(begin).toEpochMilli();
 
         this.blockVersion = 1;
-        this.maxNoteLength = Constant.TRANSACTION_NOTE_MAX_LENGTH;
         this.cryptoProvider = CryptoProvider.getInstance();
-        this.estimator = new TransactionEstimator(this.cryptoProvider.getFormatter());
     }
 
     @Override
@@ -49,23 +47,13 @@ public class ForkItem implements Item {
     }
 
     @Override
-    public int getMaxNoteLength() {
-        return maxNoteLength;
-    }
-
-    @Override
     public Set<Integer> getTransactionTypes() {
-        return transactionTypes;
+        return transactionTypes.keySet();
     }
 
     @Override
     public int getBlockVersion() {
         return this.blockVersion;
-    }
-
-    @Override
-    public ITransactionEstimator getEstimator() {
-        return estimator;
     }
 
     @Override
@@ -103,11 +91,27 @@ public class ForkItem implements Item {
         this.end = end;
     }
 
-    public void addTxType(int type) {
-        transactionTypes.add(type);
+    @Override
+    public ITransactionParser getParser() {
+        return new CompositeTransactionParser(transactionTypes);
+    }
+
+    public void addTxType(int type, ITransactionParser parser) {
+        if (transactionTypes.containsKey(type)) {
+            throw new IllegalArgumentException("type");
+        }
+        transactionTypes.put(type, parser);
     }
 
     public void removeTxType(int type) {
         transactionTypes.remove(type);
+    }
+
+    public void setValidationRules(List<String> validationRules) {
+        this.validationRules = validationRules;
+    }
+
+    public List<String> getValidationRules() {
+        return this.validationRules;
     }
 }

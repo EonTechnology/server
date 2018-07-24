@@ -1,7 +1,5 @@
 package com.exscudo.peer.tx.midleware.builders;
 
-import java.util.HashMap;
-
 import com.exscudo.peer.core.data.identifier.AccountID;
 import com.exscudo.peer.tx.TransactionType;
 
@@ -13,7 +11,7 @@ import com.exscudo.peer.tx.TransactionType;
 public class PaymentBuilder extends TransactionBuilder<PaymentBuilder> {
 
     private PaymentBuilder() {
-        super(TransactionType.Payment, new HashMap<>());
+        super(TransactionType.Payment);
     }
 
     public static PaymentBuilder createNew(long amount, AccountID recipient) {

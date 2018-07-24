@@ -1,14 +1,17 @@
 package com.exscudo.eon.app.IT;
 
 import com.exscudo.TestSigner;
-import com.exscudo.eon.app.cfg.PeerStarter;
 import com.exscudo.peer.core.Constant;
-import com.exscudo.peer.core.IFork;
 import com.exscudo.peer.core.common.TimeProvider;
 import com.exscudo.peer.core.crypto.ISigner;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.identifier.AccountID;
+import com.exscudo.peer.eon.midleware.parsers.DelegateParser;
+import com.exscudo.peer.eon.midleware.parsers.PaymentParser;
+import com.exscudo.peer.eon.midleware.parsers.PublicationParser;
+import com.exscudo.peer.eon.midleware.parsers.RegistrationParser;
+import com.exscudo.peer.tx.TransactionType;
 import com.exscudo.peer.tx.midleware.builders.DelegateBuilder;
 import com.exscudo.peer.tx.midleware.builders.PaymentBuilder;
 import com.exscudo.peer.tx.midleware.builders.PublicationBuilder;
@@ -39,11 +42,13 @@ public class PublicAccountTestIT {
     public void setUp() throws Exception {
         mockTimeProvider = Mockito.mock(TimeProvider.class);
 
-        PeerStarter peerStarter = PeerStarterFactory.create(GENERATOR, mockTimeProvider);
-        IFork fork = Utils.createFork(peerStarter.getStorage());
-        peerStarter.setFork(fork);
-
-        ctx = new PeerContext(peerStarter);
+        ctx = new PeerContext(PeerStarterFactory.create()
+                                                .route(TransactionType.Payment, new PaymentParser())
+                                                .route(TransactionType.Registration, new RegistrationParser())
+                                                .route(TransactionType.Delegate, new DelegateParser())
+                                                .route(TransactionType.Publication, new PublicationParser())
+                                                .seed(GENERATOR)
+                                                .build(mockTimeProvider));
 
         delegate_1 = new TestSigner(DELEGATE_1);
         delegate_2 = new TestSigner(DELEGATE_2);

@@ -16,7 +16,9 @@ import com.exscudo.peer.core.blockchain.IBlockchainProvider;
 import com.exscudo.peer.core.blockchain.events.BlockchainEvent;
 import com.exscudo.peer.core.blockchain.events.IBlockchainEventListener;
 import com.exscudo.peer.core.blockchain.events.UpdatedBlockchainEvent;
+import com.exscudo.peer.core.common.IAccountHelper;
 import com.exscudo.peer.core.common.ITimeProvider;
+import com.exscudo.peer.core.common.ITransactionEstimator;
 import com.exscudo.peer.core.common.ImmutableTimeProvider;
 import com.exscudo.peer.core.common.Loggers;
 import com.exscudo.peer.core.common.TransactionComparator;
@@ -33,9 +35,10 @@ import com.exscudo.peer.core.importer.tasks.GenerateBlockTask;
 import com.exscudo.peer.core.ledger.ILedger;
 import com.exscudo.peer.core.ledger.LedgerProvider;
 import com.exscudo.peer.core.middleware.ILedgerAction;
+import com.exscudo.peer.core.middleware.ITransactionParser;
 import com.exscudo.peer.core.middleware.LedgerActionContext;
-import com.exscudo.peer.core.middleware.TransactionParser;
 import com.exscudo.peer.core.middleware.TransactionValidator;
+import com.exscudo.peer.core.middleware.TransactionValidatorFabric;
 import com.exscudo.peer.core.middleware.ValidationResult;
 
 /**
@@ -48,6 +51,9 @@ public class BlockGenerator implements IPeerEventListener, IBlockchainEventListe
     private final IBlockchainProvider blockchain;
     private final IFork fork;
     private final LedgerProvider ledgerProvider;
+    private final TransactionValidatorFabric transactionValidatorFabric;
+    private final ITransactionEstimator estimator;
+    private final IAccountHelper accountHelper;
     private boolean useFastGeneration = false;
     private ISigner signer;
 
@@ -55,12 +61,18 @@ public class BlockGenerator implements IPeerEventListener, IBlockchainEventListe
                           ISigner signer,
                           IBacklog backlog,
                           IBlockchainProvider blockchain,
-                          LedgerProvider ledgerProvider) {
+                          LedgerProvider ledgerProvider,
+                          TransactionValidatorFabric transactionValidatorFabric,
+                          ITransactionEstimator estimator,
+                          IAccountHelper accountHelper) {
         this.backlog = backlog;
         this.blockchain = blockchain;
         this.signer = signer;
         this.fork = fork;
         this.ledgerProvider = ledgerProvider;
+        this.transactionValidatorFabric = transactionValidatorFabric;
+        this.estimator = estimator;
+        this.accountHelper = accountHelper;
     }
 
     public boolean isInitialized() {
@@ -108,7 +120,7 @@ public class BlockGenerator implements IPeerEventListener, IBlockchainEventListe
             for (Transaction tx : parallelBlock.getTransactions()) {
 
                 if (!tx.isFuture(currentTimestamp) && !tx.isExpired(currentTimestamp)) {
-                    int difficulty = fork.getDifficulty(tx, currentTimestamp);
+                    int difficulty = estimator.estimate(tx);
                     tx.setLength(difficulty);
                     map.put(tx.getID(), tx);
                 }
@@ -116,21 +128,21 @@ public class BlockGenerator implements IPeerEventListener, IBlockchainEventListe
             parallelBlock = blockchain.getBlockByHeight(parallelBlock.getHeight() + 1);
         }
 
-        return createBlock(previousBlock, map.values().toArray(new Transaction[0]), fork);
+        return createBlock(previousBlock, map.values().toArray(new Transaction[0]));
     }
 
-    private Block createBlock(Block previousBlock, Transaction[] transactions, IFork fork) {
+    private Block createBlock(Block previousBlock, Transaction[] transactions) {
 
         int timestamp = previousBlock.getTimestamp() + Constant.BLOCK_PERIOD;
         AccountID senderID = new AccountID(getSigner().getPublicKey());
         int height = previousBlock.getHeight() + 1;
 
         ILedger ledger = ledgerProvider.getLedger(previousBlock);
-        ledger = fork.covert(ledger, timestamp);
+        ledger = fork.convert(ledger, timestamp);
         Account generator = ledger.getAccount(senderID);
 
         // validate generator
-        if (!fork.validateGenerator(generator, timestamp)) {
+        if (!accountHelper.validateGenerator(generator, timestamp)) {
             Loggers.warning(GenerateBlockTask.class, "Invalid generator");
             return null;
         }
@@ -150,10 +162,11 @@ public class BlockGenerator implements IPeerEventListener, IBlockchainEventListe
         Generation generation = new Generation(targetBlock.getGenerationSignature());
         byte[] generationSignature = getSigner().sign(generation, fork.getGenesisBlockID());
 
-        LedgerActionContext ctx = new LedgerActionContext(timestamp, fork);
+        LedgerActionContext ctx = new LedgerActionContext(timestamp);
 
         ITimeProvider blockTimeProvider = new ImmutableTimeProvider(timestamp);
-        TransactionValidator transactionValidator = TransactionValidator.getAllValidators(fork, blockTimeProvider);
+        TransactionValidator transactionValidator = transactionValidatorFabric.getAllValidators(blockTimeProvider);
+        ITransactionParser parser = fork.getParser(timestamp);
 
         Arrays.sort(transactions, new TransactionComparator());
         int payloadLength = 0;
@@ -173,7 +186,7 @@ public class BlockGenerator implements IPeerEventListener, IBlockchainEventListe
                     throw r.cause;
                 }
 
-                ILedgerAction[] actions = TransactionParser.parse(tx);
+                ILedgerAction[] actions = parser.parse(tx);
 
                 for (ILedgerAction action : actions) {
                     newLedger = action.run(newLedger, ctx);
@@ -197,7 +210,7 @@ public class BlockGenerator implements IPeerEventListener, IBlockchainEventListe
 
         if (totalFee != 0) {
             Account creator = ledger.getAccount(senderID);
-            creator = fork.reward(creator, totalFee, timestamp);
+            creator = accountHelper.reward(creator, totalFee, timestamp);
             ledger = ledger.putAccount(creator);
         }
 
@@ -212,7 +225,7 @@ public class BlockGenerator implements IPeerEventListener, IBlockchainEventListe
         newBlock.setSnapshot(ledger.getHash());
         newBlock.setSignature(getSigner().sign(newBlock, fork.getGenesisBlockID()));
 
-        BigInteger diff = fork.getDifficultyAddition(newBlock, generator, timestamp);
+        BigInteger diff = accountHelper.getDifficultyAddition(newBlock, generator, timestamp);
         BigInteger cumulativeDifficulty = previousBlock.getCumulativeDifficulty().add(diff);
         newBlock.setCumulativeDifficulty(cumulativeDifficulty);
 

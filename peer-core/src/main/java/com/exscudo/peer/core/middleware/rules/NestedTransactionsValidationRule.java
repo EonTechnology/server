@@ -1,10 +1,12 @@
 package com.exscudo.peer.core.middleware.rules;
 
 import java.util.Map;
+import java.util.Set;
 
-import com.exscudo.peer.core.IFork;
+import com.exscudo.peer.core.common.IAccountHelper;
 import com.exscudo.peer.core.common.ITimeProvider;
 import com.exscudo.peer.core.data.Transaction;
+import com.exscudo.peer.core.data.identifier.AccountID;
 import com.exscudo.peer.core.data.identifier.TransactionID;
 import com.exscudo.peer.core.ledger.ILedger;
 import com.exscudo.peer.core.middleware.IValidationRule;
@@ -12,13 +14,11 @@ import com.exscudo.peer.core.middleware.TransactionValidator;
 import com.exscudo.peer.core.middleware.ValidationResult;
 
 public class NestedTransactionsValidationRule implements IValidationRule {
-    private final IFork fork;
-    private final ITimeProvider timeProvider;
     private final TransactionValidator transactionValidator;
 
-    public NestedTransactionsValidationRule(IFork fork, ITimeProvider timeProvider) {
-        this.fork = fork;
-        this.timeProvider = timeProvider;
+    public NestedTransactionsValidationRule(Set<Integer> allowedTypes,
+                                            ITimeProvider timeProvider,
+                                            IAccountHelper accountHelper) {
 
         this.transactionValidator = new TransactionValidator(new IValidationRule[] {
                 new NestedTransaction_FeeValidationRule(),
@@ -26,11 +26,14 @@ public class NestedTransactionsValidationRule implements IValidationRule {
                 new LengthValidationRule(),
                 new DeadlineValidationRule(),
                 new VersionValidationRule(),
-                new NoteValidationRule(fork, timeProvider),
-                new TypeValidationRule(fork, timeProvider),
+                new NoteValidationRule(),
+                new TypeValidationRule(allowedTypes),
                 new ExpiredTimestampValidationRule(timeProvider),
-                new ConfirmationsValidationRule(fork, timeProvider),
-                new SignatureValidationRule(fork, timeProvider)
+                new ConfirmationsSetValidationRule(timeProvider, accountHelper) {{
+                    setAllowPayer(false);
+                }},
+                new ConfirmationsValidationRule(timeProvider, accountHelper),
+                new SignatureValidationRule(timeProvider, accountHelper)
         });
     }
 
@@ -41,7 +44,7 @@ public class NestedTransactionsValidationRule implements IValidationRule {
             return ValidationResult.success;
         }
 
-        if (transaction.getNestedTransactions().size() < 2) {
+        if (transaction.getNestedTransactions().size() == 0) {
             return ValidationResult.error("Illegal usage.");
         }
 
@@ -56,6 +59,16 @@ public class NestedTransactionsValidationRule implements IValidationRule {
 
             if (nestedTx.getTimestamp() > transaction.getTimestamp()) {
                 return ValidationResult.error("Invalid nested transaction. Invalid timestamp.");
+            }
+
+            AccountID payerID = nestedTx.getPayer();
+            if (payerID != null && !payerID.equals(transaction.getSenderID())) {
+                return ValidationResult.error("Invalid nested transaction. Invalid payer.");
+            }
+
+            if (nestedTx.getReference() != null &&
+                    !transaction.getNestedTransactions().containsKey(nestedTx.getReference().toString())) {
+                return ValidationResult.error("Invalid nested transaction. Invalid reference.");
             }
 
             ValidationResult r = transactionValidator.validate(nestedTx, ledger);

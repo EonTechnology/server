@@ -1,79 +1,70 @@
 package com.exscudo.peer.core.ledger.tree;
 
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Stack;
-import java.util.concurrent.ConcurrentHashMap;
 
-public class StateTree<TValue> implements ITreeNodeCollection {
-    private final ITreeNodeCollection nodeCollection;
-    private final IValueConverter<TValue> valueConverter;
-    private final Map<String, TreeNode> writeAheadMap = new ConcurrentHashMap<>();
+public class StateTree<T> implements Iterable<T> {
+    final TreeNode rootNode;
+    private final ITreeNodeConverter<T> valueConverter;
+    private final ITreeNodeCollection nodes;
 
-    public StateTree(ITreeNodeCollection nodeCollection, IValueConverter<TValue> valueConverter) {
-        this.nodeCollection = nodeCollection;
+    public StateTree(ITreeNodeConverter<T> valueConverter, ITreeNodeCollection nodes, TreeNode rootNode) {
         this.valueConverter = valueConverter;
+        this.nodes = nodes;
+        this.rootNode = rootNode;
     }
 
-    @Override
-    public TreeNode get(TreeNodeID id) {
-        if (this.writeAheadMap.containsKey(id.getKey())) {
-            return this.writeAheadMap.get(id.getKey());
+    public static <V> StateTree<V> createNew(StateTree<V> state, Iterator<V> values) {
+
+        ITreeNodeConverter<V> converter = state.valueConverter;
+        BufferedTreeNodeCollection treeNodeCollection = new BufferedTreeNodeCollection(state.nodes);
+
+        TreeNode rootNode = state.rootNode;
+        while (values.hasNext()) {
+            TreeNode newLeaf = converter.convert(values.next());
+            rootNode = addLeaf(treeNodeCollection, rootNode, newLeaf);
         }
-        return nodeCollection.get(id);
+
+        treeNodeCollection.flushBranch(rootNode);
+        return new StateTree<>(state.valueConverter, state.nodes, rootNode);
     }
 
-    @Override
-    public void add(TreeNode node) {
-//        TreeNode n = get(node.getID());
-//        if (n != null) {
-//            return;
-//        }
-        this.writeAheadMap.put(node.getID().getKey(), node);
+    public static <V> StateTree<V> createNew(StateTree<V> state, V value) {
+
+        TreeNode newRoot = addLeaf(state.nodes, state.rootNode, state.valueConverter.convert(value));
+        return new StateTree<V>(state.valueConverter, state.nodes, newRoot);
     }
 
-    public State<TValue> getState(String name) {
-        TreeNodeID id = new TreeNodeID(name);
-        TreeNode root = get(id);
-        return new StateTree.State<TValue>(valueConverter, this, root);
-    }
+    private static TreeNode addLeaf(ITreeNodeCollection nodes, TreeNode rootNode, TreeNode newLeaf) {
 
-    public State<TValue> newState(State<TValue> state, long id, TValue value, int timestamp) {
-
-        TreeNode newLeaf = new TreeNode(TreeNode.LEAF, timestamp, id, 0, null, null, valueConverter.convert(value));
-        return newState(state, newLeaf);
-    }
-
-    private State<TValue> newState(State<TValue> state, TreeNode newNode) {
-
-        if (newNode.getType() != TreeNode.LEAF) {
+        if (newLeaf.getType() != TreeNode.LEAF) {
             throw new UnsupportedOperationException("Invalid type of the node.");
         }
-        add(newNode);
+        nodes.add(newLeaf);
 
         TreeNode newRoot;
-        if (state == null) {
-            newRoot = newNode;
+        if (rootNode == null) {
+            newRoot = newLeaf;
         } else {
-            newRoot = createNewRoot(state.rootNode, newNode);
+            newRoot = createNewRoot(nodes, rootNode, newLeaf);
         }
 
-        return new State<>(valueConverter, this, newRoot);
+        return newRoot;
     }
 
-    private TreeNode createNewRoot(TreeNode rootNode, TreeNode leaf) {
+    private static TreeNode createNewRoot(ITreeNodeCollection nodes, TreeNode rootNode, TreeNode newNode) {
 
-        if (rootNode.getType() == TreeNode.LEAF && rootNode.getMask() == leaf.getMask()) {
-            return leaf;
+        if (rootNode.getType() == TreeNode.LEAF && rootNode.getMask() == newNode.getMask()) {
+            return newNode;
         }
-        if (rootNode.getType() == TreeNode.ROOT && TreeNode.isChild(rootNode, leaf)) {
+        if (rootNode.getType() == TreeNode.ROOT && TreeNode.isChild(rootNode, newNode)) {
 
-            TreeNode left = get(rootNode.getLeftNodeID());
-            TreeNode right = get(rootNode.getRightNodeID());
+            TreeNode left = nodes.get(rootNode.getLeftNodeID());
+            TreeNode right = nodes.get(rootNode.getRightNodeID());
 
             int nextMaskLength = rootNode.getMaskLength() + 1;
-            boolean isLeftBranch = TreeNode.hasIntersection(left, leaf, nextMaskLength);
-            boolean isRightBranch = TreeNode.hasIntersection(right, leaf, nextMaskLength);
+            boolean isLeftBranch = TreeNode.hasIntersection(left, newNode, nextMaskLength);
+            boolean isRightBranch = TreeNode.hasIntersection(right, newNode, nextMaskLength);
             if (isLeftBranch == isRightBranch) {
                 throw new IllegalStateException("panic");
             }
@@ -81,197 +72,113 @@ public class StateTree<TValue> implements ITreeNodeCollection {
             TreeNode newLeft = left;
             TreeNode newRight = right;
             if (isLeftBranch) {
-                newLeft = createNewRoot(left, leaf);
+                newLeft = createNewRoot(nodes, left, newNode);
             }
             if (isRightBranch) {
-                newRight = createNewRoot(right, leaf);
+                newRight = createNewRoot(nodes, right, newNode);
             }
 
-            TreeNode newRoot = TreeNode.union(newLeft, newRight, leaf.getTimestamp());
-            add(newRoot);
+            TreeNode newRoot = TreeNode.union(newLeft, newRight, newNode.getTimestamp());
+            nodes.add(newRoot);
             return newRoot;
         }
 
-        TreeNode unionNode = TreeNode.union(leaf, rootNode, leaf.getTimestamp());
-        add(unionNode);
+        TreeNode unionNode = TreeNode.union(newNode, rootNode, newNode.getTimestamp());
+        nodes.add(unionNode);
         return unionNode;
     }
 
-    public void saveState(State<TValue> state) {
-        AnalyzeIterator iterator = new AnalyzeIterator(state.rootNode);
-        while (iterator.hasNext()) {
-            nodeCollection.add(iterator.next());
+    public String getName() {
+        if (rootNode == null) {
+            return null;
         }
+        return rootNode.getID().getKey();
     }
 
-    public static class State<T> implements Iterable<T> {
-        final TreeNode rootNode;
-        private final IValueConverter<T> valueConverter;
-        private final ITreeNodeCollection nodes;
+    public T get(long id) {
+        if (rootNode == null) {
+            return null;
+        }
+        TreeNode node = getNode(rootNode, id);
+        if (node == null) {
+            return null;
+        }
+        return valueConverter.convert(node);
+    }
 
-        private State(IValueConverter<T> valueConverter, ITreeNodeCollection nodes, TreeNode rootNode) {
+    private TreeNode getNode(TreeNode node, long path) {
+
+        if (node.getType() == TreeNode.LEAF) {
+            if (node.getMask() == path) {
+                return node;
+            }
+            return null;
+        }
+
+        if (!TreeNode.hasIntersection(node, path)) {
+            return null;
+        }
+
+        TreeNode lNode = nodes.get(node.getLeftNodeID());
+        TreeNode item = getNode(lNode, path);
+        if (item != null) {
+            return item;
+        }
+
+        TreeNode rNode = nodes.get(node.getRightNodeID());
+        return getNode(rNode, path);
+    }
+
+    @Override
+    public Iterator<T> iterator() {
+        return new TreeNodeIterator<>(nodes, rootNode, valueConverter);
+    }
+
+    public static class TreeNodeIterator<V> implements Iterator<V> {
+        private final ITreeNodeConverter<V> valueConverter;
+        private final ITreeNodeCollection nodes;
+        private final Stack<TreeNode> stack = new Stack<>();
+        private TreeNode next;
+
+        TreeNodeIterator(ITreeNodeCollection nodes, TreeNode rootNode, ITreeNodeConverter<V> valueConverter) {
             this.valueConverter = valueConverter;
             this.nodes = nodes;
-            this.rootNode = rootNode;
+
+            this.next = walkDown(rootNode);
         }
 
-        public String getName() {
-            if (rootNode == null) {
-                return null;
-            }
-            return rootNode.getID().getKey();
-        }
-
-        public T get(long id) {
-            if (rootNode == null) {
-                return null;
-            }
-            TreeNode node = getNode(rootNode, id);
-            if (node == null) {
-                return null;
-            }
-            return valueConverter.convert(node.getValues());
-        }
-
-        private TreeNode getNode(TreeNode node, long path) {
-
-            if (node.getType() == TreeNode.LEAF) {
-                if (node.getMask() == path) {
-                    return node;
-                }
-                return null;
-            }
-
-            if (!TreeNode.hasIntersection(node, path)) {
-                return null;
-            }
-
-            TreeNode lNode = nodes.get(node.getLeftNodeID());
-            TreeNode item = getNode(lNode, path);
-            if (item != null) {
-                return item;
-            }
-
-            TreeNode rNode = nodes.get(node.getRightNodeID());
-            return getNode(rNode, path);
-        }
-
-        @Override
-        public Iterator<T> iterator() {
-            return new TreeNodeIterator<>(nodes, rootNode, valueConverter);
-        }
-
-        public Iterator<T> iterator(long id) {
-            TreeNodeIterator<T> iterator = new TreeNodeIterator<>(nodes, rootNode, valueConverter, id);
-            return iterator;
-        }
-
-        public static class TreeNodeIterator<V> implements Iterator<V> {
-            private final IValueConverter<V> valueConverter;
-            private final ITreeNodeCollection nodes;
-            private final Stack<TreeNode> stack = new Stack<>();
-            private TreeNode next;
-
-            TreeNodeIterator(ITreeNodeCollection nodes, TreeNode rootNode, IValueConverter<V> valueConverter) {
-                this.valueConverter = valueConverter;
-                this.nodes = nodes;
-
-                this.next = walkDown(rootNode);
-            }
-
-            TreeNodeIterator(ITreeNodeCollection nodes,
-                             TreeNode rootNode,
-                             IValueConverter<V> valueConverter,
-                             long startPoint) {
-                this.valueConverter = valueConverter;
-                this.nodes = nodes;
-
-                this.next = walkDown(rootNode, startPoint);
-            }
-
-            private TreeNode walkDown(TreeNode node, long startPoint) {
-                TreeNode c = node;
-
-                while (c != null && c.getType() == TreeNode.ROOT) {
-
-                    stack.push(c);
-                    c = nodes.get(c.getLeftNodeID());
-                    if (!TreeNode.hasIntersection(c, startPoint)) {
-                        c = stack.pop();
-                        c = nodes.get(c.getRightNodeID());
-                    }
-                }
-                // the left and right leaf always exist so method returns null only if it is passed
-                return c;
-            }
-
-            private TreeNode walkDown(TreeNode node) {
-                TreeNode c = node;
-                while (c != null && c.getType() == TreeNode.ROOT) {
-                    stack.push(c);
-                    c = nodes.get(c.getLeftNodeID());
-                }
-                // the left and right leaf always exist so method returns null only if it is passed
-                return c;
-            }
-
-            @Override
-            public boolean hasNext() {
-                return (next != null);
-            }
-
-            @Override
-            public V next() {
-                if (next == null) {
-                    return null;
-                }
-                V value = valueConverter.convert(next.getValues());
-                if (stack.size() == 0) {
-                    next = null;
-                } else {
-
-                    TreeNode p = stack.pop();
-                    TreeNode r = nodes.get(p.getRightNodeID());
-
-                    next = walkDown(r);
-                }
-                return value;
-            }
-        }
-    }
-
-    private class AnalyzeIterator implements Iterator<TreeNode> {
-        private final Stack<TreeNode> stack = new Stack<>();
-
-        private AnalyzeIterator(TreeNode parent) {
-            walkDown(parent);
-        }
-
-        private void walkDown(TreeNode parent) {
-            TreeNode c = parent;
-            while (c != null) {
+        private TreeNode walkDown(TreeNode node) {
+            TreeNode c = node;
+            while (c != null && c.getType() == TreeNode.ROOT) {
                 stack.push(c);
-                TreeNodeID id = c.getLeftNodeID();
-                c = (id == null) ? null : writeAheadMap.get(id.getKey());
+                c = nodes.get(c.getLeftNodeID());
             }
+            // the left and right leaf always exist so method returns null only if it is passed
+            return c;
         }
 
         @Override
         public boolean hasNext() {
-            return !stack.empty();
+            return (next != null);
         }
 
         @Override
-        public TreeNode next() {
-
-            TreeNode next = stack.pop();
-            if (next.getRightNodeID() != null) {
-                TreeNode r = writeAheadMap.get(next.getRightNodeID().getKey());
-                if (r != null) {
-                    walkDown(r);
-                }
+        public V next() {
+            if (next == null) {
+                return null;
             }
-            return next;
+            V value = valueConverter.convert(next);
+            if (stack.size() == 0) {
+                next = null;
+            } else {
+
+                TreeNode p = stack.pop();
+                TreeNode r = nodes.get(p.getRightNodeID());
+
+                next = walkDown(r);
+            }
+            return value;
         }
     }
 }
+

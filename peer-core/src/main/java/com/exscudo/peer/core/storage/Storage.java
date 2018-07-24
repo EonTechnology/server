@@ -13,11 +13,9 @@ import com.exscudo.peer.core.ledger.storage.DbNodeCache;
 import com.exscudo.peer.core.storage.migrate.StatementUtils;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
-import com.j256.ormlite.db.SqliteDatabaseType;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.field.SqlType;
 import com.j256.ormlite.jdbc.DataSourceConnectionSource;
-import com.j256.ormlite.jdbc.JdbcSingleConnectionSource;
 import com.j256.ormlite.misc.TransactionManager;
 import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.stmt.ThreadLocalSelectArg;
@@ -113,7 +111,7 @@ public class Storage {
         run(new IStorageAction() {
 
             @Override
-            public void run(Connection connection, Metadata metadata) throws SQLException, IOException {
+            public void run(Connection connection) throws SQLException, IOException {
                 try (Statement statement = connection.createStatement()) {
                     statement.executeUpdate("PRAGMA optimize;");
                 }
@@ -126,7 +124,7 @@ public class Storage {
         run(new IStorageAction() {
 
             @Override
-            public void run(Connection connection, Metadata metadata) throws SQLException, IOException {
+            public void run(Connection connection) throws SQLException, IOException {
                 try (Statement statement = connection.createStatement()) {
                     for (String script : scripts) {
                         StatementUtils.runSqlScript(statement, script);
@@ -142,15 +140,7 @@ public class Storage {
 
             connection.setAutoCommit(false);
             try {
-
-                try (JdbcSingleConnectionSource connectionSource = new JdbcSingleConnectionSource(connection.getMetaData()
-                                                                                                            .getURL(),
-                                                                                                  new SqliteDatabaseType(),
-                                                                                                  connection)) {
-                    connectionSource.initialize();
-                    final Metadata metadata = new Metadata(connectionSource);
-                    action.run(connection, metadata);
-                }
+                action.run(connection);
                 connection.commit();
             } catch (Throwable t) {
                 try {
@@ -236,6 +226,14 @@ public class Storage {
         public BlockID getGenesisBlockID() {
             try {
                 return new BlockID(Long.parseLong(getProperty("GENESIS_BLOCK_ID"), 10));
+            } catch (Exception e) {
+                throw new DataAccessException(e);
+            }
+        }
+
+        public void setGenesisBlock(BlockID genesisBlock) {
+            try {
+                setProperty("GENESIS_BLOCK_ID", Long.toString(genesisBlock.getValue()));
             } catch (Exception e) {
                 throw new DataAccessException(e);
             }

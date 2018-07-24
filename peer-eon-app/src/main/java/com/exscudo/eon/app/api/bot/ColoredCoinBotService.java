@@ -6,10 +6,10 @@ import com.exscudo.peer.core.blockchain.IBlockchainProvider;
 import com.exscudo.peer.core.common.exceptions.RemotePeerException;
 import com.exscudo.peer.core.data.Account;
 import com.exscudo.peer.core.data.identifier.AccountID;
-import com.exscudo.peer.core.env.ExecutionContext;
 import com.exscudo.peer.core.ledger.ILedger;
 import com.exscudo.peer.core.ledger.LedgerProvider;
 import com.exscudo.peer.eon.ledger.AccountProperties;
+import com.exscudo.peer.eon.ledger.state.ColoredCoinEmitMode;
 import com.exscudo.peer.eon.ledger.state.ColoredCoinProperty;
 import com.exscudo.peer.tx.ColoredCoinID;
 
@@ -18,14 +18,10 @@ import com.exscudo.peer.tx.ColoredCoinID;
  */
 public class ColoredCoinBotService {
 
-    private final ExecutionContext context;
     private final IBlockchainProvider blockchain;
     private final LedgerProvider ledgerProvider;
 
-    public ColoredCoinBotService(ExecutionContext context,
-                                 LedgerProvider ledgerProvider,
-                                 IBlockchainProvider blockchain) {
-        this.context = context;
+    public ColoredCoinBotService(LedgerProvider ledgerProvider, IBlockchainProvider blockchain) {
         this.blockchain = blockchain;
         this.ledgerProvider = ledgerProvider;
     }
@@ -54,9 +50,10 @@ public class ColoredCoinBotService {
         }
 
         info.state = State.OK;
-        info.decimal = coloredCoin.getDecimalPoint();
+        info.decimal = coloredCoin.getAttributes().decimalPoint;
+        info.timestamp = coloredCoin.getAttributes().timestamp;
         info.supply = coloredCoin.getMoneySupply();
-        info.timestamp = coloredCoin.getTimestamp();
+        info.auto = (coloredCoin.getEmitMode() == ColoredCoinEmitMode.AUTO);
 
         return info;
     }
@@ -97,6 +94,7 @@ public class ColoredCoinBotService {
     public static class Info {
         public State state;
         public Long supply;
+        public Boolean auto;
         public Integer decimal;
         public Integer timestamp;
     }

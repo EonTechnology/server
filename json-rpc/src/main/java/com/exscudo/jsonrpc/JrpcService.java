@@ -2,10 +2,7 @@ package com.exscudo.jsonrpc;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Locale;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -18,6 +15,7 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
 /**
@@ -28,17 +26,14 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 public class JrpcService {
 
     private final ObjectMapper objectMapper;
-    private final ThreadLocal<String> remoteHost = new ThreadLocal<>();
-    private final Map<String, Method> methods = new HashMap<String, Method>();
-    private final Map<String, Object> innerServices;
-    private Class loggerClazz = JrpcService.class;
+    private final IInnerService innerService;
 
-    public JrpcService(Map<String, Object> innerServices) {
-        this(innerServices, null);
+    public JrpcService(IInnerService innerService) {
+        this(innerService, null);
     }
 
-    public JrpcService(Map<String, Object> innerServices, Module module) {
-        this.innerServices = innerServices;
+    public JrpcService(IInnerService innerService, Module module) {
+        this.innerService = innerService;
 
         objectMapper = new ObjectMapper();
         objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
@@ -53,26 +48,16 @@ public class JrpcService {
         if (module != null) {
             objectMapper.registerModule(module);
         }
-
-        loggerClazz = this.getClass();
-    }
-
-    public String getRemoteHost() {
-        return remoteHost.get();
-    }
-
-    public void setRemoteHost(String peer) {
-        remoteHost.set(peer);
     }
 
     public String doRequest(String requestBody) throws IOException {
 
-        Class logFromClazz = this.loggerClazz;
+        Class logFromClazz = JrpcService.class;
 
         JsonRpcResponse response = new JsonRpcResponse();
 
         String version = null;
-        String id = null;
+        JsonNode id = null;
         String methodName = null;
         JsonNode paramsNode = null;
 
@@ -98,10 +83,7 @@ public class JrpcService {
                          * An identifier established by the Client that MUST contain a String, Number,
                          * or NULL value if included
                          */
-                        JsonNode value = field.getValue();
-                        if (!value.isNull()) {
-                            id = value.asText();
-                        }
+                        id = field.getValue();
                         break;
                     case "method":
                         /*
@@ -130,76 +112,56 @@ public class JrpcService {
 
             if (String.valueOf(version).equals("2.0")) {
 
-                String[] split = methodName.split("\\.");
-                Object innerService = innerServices.get(split[0]);
-                if (innerService != null) {
+                InnerServiceMethod method = innerService.getMethod(methodName);
 
-                    logFromClazz = innerService.getClass();
+                if (method != null) {
+                    logFromClazz = method.getServiceClass();
 
-                    Method method = null;
-                    if (methods.containsKey(methodName)) {
-                        method = methods.get(methodName);
-                    }
-                    if (method == null) {
-                        method = getMethod(innerService, split[1]);
-                        methods.put(methodName, method);
-                    }
+                    try {
 
-                    if (method != null) {
-                        try {
+                        Class<?>[] parameterTypes = method.getParameterTypes();
+                        Object[] args = new Object[parameterTypes.length];
+                        if (parameterTypes.length > 0) {
 
-                            Class<?>[] parameterTypes = method.getParameterTypes();
-                            Object[] args = new Object[parameterTypes.length];
-                            if (parameterTypes.length > 0) {
-
-                                if (paramsNode.isArray()) {
-                                    int i = 0;
-                                    for (JsonNode itemNode : paramsNode) {
-                                        Object obj = objectMapper.treeToValue(itemNode, parameterTypes[i]);
-                                        args[i] = obj;
-                                        if (++i > args.length) {
-                                            break;
-                                        }
+                            if (paramsNode.isArray()) {
+                                int i = 0;
+                                for (JsonNode itemNode : paramsNode) {
+                                    Object obj = objectMapper.treeToValue(itemNode, parameterTypes[i]);
+                                    args[i] = obj;
+                                    if (++i > args.length) {
+                                        break;
                                     }
-                                } else {
-                                    Object obj = objectMapper.treeToValue(paramsNode, parameterTypes[0]);
-                                    args[0] = obj;
-                                }
-                            }
-
-                            if (innerService instanceof JsonBaseService) {
-                                JsonBaseService service = (JsonBaseService) innerService;
-                                service.setRemoteHost(remoteHost.get());
-                            }
-
-                            Object retObj = method.invoke(innerService, args);
-                            if (method.getReturnType().equals(void.class)) {
-                                response.setResult();
-                            } else {
-                                response.setResult(retObj);
-                            }
-                            response.setId(id);
-                        } catch (InvocationTargetException e) {
-
-                            Throwable target = e.getTargetException();
-                            if (target instanceof IllegalArgumentException) {
-                                if (target.getCause() != null) {
-                                    response.setError(new JsonRpcResponse.Error(JsonRpcResponse.INVALID_PARAMS,
-                                                                                target.getCause().getMessage()));
-                                } else {
-                                    response.setError(new JsonRpcResponse.Error(JsonRpcResponse.INVALID_PARAMS,
-                                                                                target.getMessage()));
                                 }
                             } else {
-                                response.setError(new JsonRpcResponse.Error(JsonRpcResponse.SERVER_ERROR,
+                                Object obj = objectMapper.treeToValue(paramsNode, parameterTypes[0]);
+                                args[0] = obj;
+                            }
+                        }
+
+                        Object retObj = method.invoke(args);
+                        if (method.getReturnType().equals(void.class)) {
+                            response.setResult();
+                        } else {
+                            response.setResult(retObj);
+                        }
+                        response.setId(id);
+                    } catch (InvocationTargetException e) {
+
+                        Throwable target = e.getTargetException();
+                        if (target instanceof IllegalArgumentException) {
+                            if (target.getCause() != null) {
+                                response.setError(new JsonRpcResponse.Error(JsonRpcResponse.INVALID_PARAMS,
+                                                                            target.getCause().getMessage()));
+                            } else {
+                                response.setError(new JsonRpcResponse.Error(JsonRpcResponse.INVALID_PARAMS,
                                                                             target.getMessage()));
                             }
-                        } catch (Exception e) {
-                            response.setError(new JsonRpcResponse.Error(JsonRpcResponse.SERVER_ERROR, e.getMessage()));
+                        } else {
+                            response.setError(new JsonRpcResponse.Error(JsonRpcResponse.SERVER_ERROR,
+                                                                        target.getMessage()));
                         }
-                    } else {
-                        response.setError(new JsonRpcResponse.Error(JsonRpcResponse.METHOD_NOT_FOUND,
-                                                                    "The method '" + methodName + "' does not exist."));
+                    } catch (Exception e) {
+                        response.setError(new JsonRpcResponse.Error(JsonRpcResponse.SERVER_ERROR, e.getMessage()));
                     }
                 } else {
                     response.setError(new JsonRpcResponse.Error(JsonRpcResponse.METHOD_NOT_FOUND,
@@ -220,7 +182,7 @@ public class JrpcService {
 
             long timeRun = System.nanoTime() - startTime;
 
-            String remotePeer = getRemoteHost();
+            String remotePeer = RequestContextHolder.getRemoteHost();
 
             Loggers.debug(logFromClazz, "Timing:  {}ms - {} >> {}", timeRun / 1000000.0, methodName, remotePeer);
 
@@ -233,39 +195,7 @@ public class JrpcService {
         return responseBody;
     }
 
-    private Method getMethod(Object innerService, String methodName) {
-
-        Method[] ms = innerService.getClass().getMethods();
-
-        for (Method m : ms) {
-            if (m.getName().equals(methodName)) {
-                return m;
-            }
-        }
-
-        if (methodName.contains("_")) {
-
-            String[] nameSet = methodName.split("_");
-            StringBuilder name = new StringBuilder(nameSet[0]);
-            for (int i = 1; i < nameSet.length; i++) {
-                String item = nameSet[i];
-                if (item.length() > 0) {
-                    name.append(item.substring(0, 1).toUpperCase(Locale.ENGLISH));
-                    name.append(item.substring(1));
-                }
-            }
-
-            return getMethod(innerService, name.toString());
-        }
-
-        return null;
-    }
-
-    public void setLoggerClazz(Class loggerClazz) {
-        this.loggerClazz = loggerClazz;
-    }
-
-    static class JsonRpcResponse {
+    private static class JsonRpcResponse {
 
         /* An error occurred on the server while parsing the JSON text. */
         static final int PARSE_ERROR = -32700;
@@ -289,7 +219,7 @@ public class JrpcService {
          * the Request Object. If there was an error in detecting the id in the Request
          * object (e.g. Parse error/Invalid Request), it MUST be Null.
          */
-        private String id;
+        private JsonNode id;
         /*
          * This member is REQUIRED on success. This member MUST NOT exist if there was
          * an error invoking the method.
@@ -309,11 +239,11 @@ public class JrpcService {
             this.jsonrpc = jsonrpc;
         }
 
-        public String getId() {
+        public JsonNode getId() {
             return id;
         }
 
-        public void setId(String id) {
+        public void setId(JsonNode id) {
             this.id = id;
         }
 
@@ -403,11 +333,25 @@ public class JrpcService {
             gen.writeStringField("jsonrpc", value.getJsonrpc());
             if (value.getError() != null) {
                 gen.writeObjectField("error", value.getError());
-                gen.writeStringField("id", null);
             } else {
-                gen.writeStringField("id", value.getId());
                 gen.writeObjectField("result", value.getResult());
             }
+
+            JsonNode idNode = value.getId();
+            if (idNode == null || idNode.isNull()) {
+                gen.writeNullField("id");
+            } else {
+
+                JsonNodeType valueType = idNode.getNodeType();
+                if (valueType == JsonNodeType.NUMBER) {
+                    gen.writeNumberField("id", idNode.asLong());
+                } else if (valueType == JsonNodeType.STRING) {
+                    gen.writeStringField("id", idNode.asText());
+                } else {
+                    gen.writeNullField("id");
+                }
+            }
+
             gen.writeEndObject();
         }
     }

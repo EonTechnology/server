@@ -10,7 +10,6 @@ import com.exscudo.peer.core.crypto.ISigner;
 import com.exscudo.peer.core.data.Account;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.identifier.AccountID;
-import com.exscudo.peer.core.middleware.ITransactionParser;
 import com.exscudo.peer.eon.ledger.AccountProperties;
 import com.exscudo.peer.eon.ledger.state.BalanceProperty;
 import com.exscudo.peer.eon.ledger.state.GeneratingBalanceProperty;
@@ -30,11 +29,6 @@ public class DepositTransactionTest extends AbstractTransactionTest {
     private ISigner senderSigner = new Signer("112233445566778899aabbccddeeff00112233445566778899aabbccddeeff00");
     private Account sender;
 
-    @Override
-    protected ITransactionParser getParser() {
-        return parser;
-    }
-
     @Before
     @Override
     public void setUp() throws Exception {
@@ -52,7 +46,7 @@ public class DepositTransactionTest extends AbstractTransactionTest {
         expectedException.expectMessage(Resources.ATTACHMENT_UNKNOWN_TYPE);
 
         Transaction tx = new TransactionBuilder(TransactionType.Deposit).build(networkID, senderSigner);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -61,7 +55,7 @@ public class DepositTransactionTest extends AbstractTransactionTest {
         expectedException.expectMessage(Resources.AMOUNT_INVALID_FORMAT);
 
         Transaction tx = DepositBuilder.createNew(999L).withParam("amount", "test").build(networkID, senderSigner);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -71,13 +65,13 @@ public class DepositTransactionTest extends AbstractTransactionTest {
 
         Transaction tx = DepositBuilder.createNew(1L).build(networkID, senderSigner);
         when(ledger.getAccount(eq(tx.getSenderID()))).thenReturn(null);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
     public void deposit_refill_with_low_balance_is_error() throws Exception {
         expectedException.expect(ValidateException.class);
-        expectedException.expectMessage(Resources.NOT_ENOUGH_FUNDS);
+        expectedException.expectMessage(Resources.NOT_ENOUGH_FEE);
 
         long depositAmount = 999L;
         Transaction tx = DepositBuilder.createNew(depositAmount).build(networkID, senderSigner);
@@ -85,7 +79,7 @@ public class DepositTransactionTest extends AbstractTransactionTest {
         AccountProperties.setProperty(sender, new BalanceProperty(depositAmount + tx.getFee() - 1L));
         AccountProperties.setProperty(sender, new GeneratingBalanceProperty(0L, 0));
 
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -95,20 +89,20 @@ public class DepositTransactionTest extends AbstractTransactionTest {
         AccountProperties.setProperty(sender, new BalanceProperty(0L));
         AccountProperties.setProperty(sender, new GeneratingBalanceProperty(100L + tx.getFee(), 0));
 
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
     public void deposit_fee_from_low_deposit() throws Exception {
         expectedException.expect(ValidateException.class);
-        expectedException.expectMessage(Resources.NOT_ENOUGH_FUNDS);
+        expectedException.expectMessage(Resources.NOT_ENOUGH_FEE);
 
         Transaction tx = DepositBuilder.createNew(0L).forFee(10L).build(networkID, senderSigner);
 
         AccountProperties.setProperty(sender, new BalanceProperty(0L));
         AccountProperties.setProperty(sender, new GeneratingBalanceProperty(5L, 0));
 
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -119,7 +113,7 @@ public class DepositTransactionTest extends AbstractTransactionTest {
 
         AccountProperties.setProperty(sender, new BalanceProperty(refillAmount + tx.getFee()));
 
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -134,7 +128,7 @@ public class DepositTransactionTest extends AbstractTransactionTest {
         AccountProperties.setProperty(sender, new BalanceProperty(refillAmount + tx.getFee()));
         AccountProperties.setProperty(sender, new GeneratingBalanceProperty(refillAmount, 0));
 
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -148,7 +142,7 @@ public class DepositTransactionTest extends AbstractTransactionTest {
         AccountProperties.setProperty(sender, new BalanceProperty(refillAmount + tx.getFee()));
         AccountProperties.setProperty(sender, new GeneratingBalanceProperty(depositAmount, 0));
 
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -158,7 +152,7 @@ public class DepositTransactionTest extends AbstractTransactionTest {
         AccountProperties.setProperty(sender, new BalanceProperty(tx.getFee()));
         AccountProperties.setProperty(sender, new GeneratingBalanceProperty(100L, 0));
 
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -169,7 +163,7 @@ public class DepositTransactionTest extends AbstractTransactionTest {
         Transaction tx = DepositBuilder.createNew(-10L).build(networkID, senderSigner);
         AccountProperties.setProperty(sender, new BalanceProperty(tx.getFee()));
 
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -180,6 +174,39 @@ public class DepositTransactionTest extends AbstractTransactionTest {
         Transaction innerTx = new TransactionBuilder(1).build(networkID, senderSigner);
         Transaction tx = DepositBuilder.createNew(-10L).addNested(innerTx).build(networkID, senderSigner);
 
-        validate(tx);
+        validate(parser, tx);
+    }
+
+    @Test
+    public void amount_error_null() throws Exception {
+        expectedException.expect(ValidateException.class);
+        expectedException.expectMessage(Resources.AMOUNT_INVALID_FORMAT);
+
+        Transaction tx = DepositBuilder.createNew(1000L).build(networkID, senderSigner);
+
+        tx.getData().put("amount", null);
+        validate(parser, tx);
+    }
+
+    @Test
+    public void amount_error_string() throws Exception {
+        expectedException.expect(ValidateException.class);
+        expectedException.expectMessage(Resources.AMOUNT_INVALID_FORMAT);
+
+        Transaction tx = DepositBuilder.createNew(1000L).build(networkID, senderSigner);
+
+        tx.getData().put("amount", "100");
+        validate(parser, tx);
+    }
+
+    @Test
+    public void amount_error_decimal() throws Exception {
+        expectedException.expect(ValidateException.class);
+        expectedException.expectMessage(Resources.AMOUNT_INVALID_FORMAT);
+
+        Transaction tx = DepositBuilder.createNew(1000L).build(networkID, senderSigner);
+
+        tx.getData().put("amount", 100.001);
+        validate(parser, tx);
     }
 }

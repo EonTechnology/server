@@ -27,9 +27,10 @@ public class InstanceConnectTestIT {
 
     @Test
     public void step_1_sync_service() throws Exception {
-        PeerContext ctx_1 = new PeerContext(PeerStarterFactory.create(GENERATOR_1, mockTimeProvider));
-        PeerContext ctx_2 = new PeerContext(PeerStarterFactory.create(GENERATOR_2, mockTimeProvider));
-        PeerContext ctx_3 = new PeerContext(PeerStarterFactory.create(GENERATOR_3, mockTimeProvider));
+
+        PeerContext ctx_1 = new PeerContext(PeerStarterFactory.create().seed(GENERATOR_1).build(mockTimeProvider));
+        PeerContext ctx_2 = new PeerContext(PeerStarterFactory.create().seed(GENERATOR_2).build(mockTimeProvider));
+        PeerContext ctx_3 = new PeerContext(PeerStarterFactory.create().seed(GENERATOR_3).build(mockTimeProvider));
 
         ctx_1.context.addPublicPeer("1");
         ctx_1.context.addPublicPeer("2");
@@ -63,8 +64,9 @@ public class InstanceConnectTestIT {
 
     @Test
     public void step_2_sync_task() throws Exception {
-        PeerContext ctx_1 = new PeerContext(PeerStarterFactory.create(GENERATOR_1, mockTimeProvider));
-        PeerContext ctx_2 = new PeerContext(PeerStarterFactory.create(GENERATOR_2, mockTimeProvider));
+
+        PeerContext ctx_1 = new PeerContext(PeerStarterFactory.create().seed(GENERATOR_1).build(mockTimeProvider));
+        PeerContext ctx_2 = new PeerContext(PeerStarterFactory.create().seed(GENERATOR_2).build(mockTimeProvider));
 
         ctx_2.context.addPublicPeer("1");
         ctx_2.context.addPublicPeer("2");
@@ -80,7 +82,8 @@ public class InstanceConnectTestIT {
 
     @Test
     public void step_3_do_not_connect_itself() throws Exception {
-        PeerContext ctx_1 = new PeerContext(PeerStarterFactory.create(GENERATOR_1, mockTimeProvider));
+
+        PeerContext ctx_1 = new PeerContext(PeerStarterFactory.create().seed(GENERATOR_1).build(mockTimeProvider));
 
         ctx_1.context.addPublicPeer("1");
         ctx_1.context.addPublicPeer("2");
@@ -96,61 +99,64 @@ public class InstanceConnectTestIT {
 
     @Test
     public void step_4_remove_connected() throws Exception {
-        PeerContext ctx = new PeerContext(PeerStarterFactory.create(GENERATOR_1, mockTimeProvider));
 
-        Peer peer = ctx.context.getAnyConnectedPeer();
+        PeerContext ctx_1 = new PeerContext(PeerStarterFactory.create().seed(GENERATOR_1).build(mockTimeProvider));
 
-        ctx.peerRemoveTask.run();
+        Peer peer = ctx_1.context.getAnyConnectedPeer();
 
-        Assert.assertEquals("Connected 0 peers", 0, ctx.context.getConnectedPeerCount());
+        ctx_1.peerRemoveTask.run();
+
+        Assert.assertEquals("Connected 0 peers", 0, ctx_1.context.getConnectedPeerCount());
         Assert.assertTrue("IInstance is disconnected", peer.getPeerInfo().getState() == PeerInfo.STATE_DISCONNECTED);
 
-        ctx.context.connectPeer(peer);
+        ctx_1.context.connectPeer(peer);
 
-        ctx.peerRemoveTask.run();
+        ctx_1.peerRemoveTask.run();
 
-        Assert.assertEquals("Connected 1 peers", 1, ctx.context.getConnectedPeerCount());
+        Assert.assertEquals("Connected 1 peers", 1, ctx_1.context.getConnectedPeerCount());
         Assert.assertTrue("IInstance is connected", peer.getPeerInfo().getState() == PeerInfo.STATE_CONNECTED);
     }
 
     @Test
     public void step_5_remove_blacklisted() throws Exception {
-        PeerContext ctx = new PeerContext(PeerStarterFactory.create(GENERATOR_1, mockTimeProvider));
 
-        Peer peer = ctx.context.getAnyConnectedPeer();
-        ctx.context.blacklistPeer(peer);
+        PeerContext ctx_1 = new PeerContext(PeerStarterFactory.create().seed(GENERATOR_1).build(mockTimeProvider));
 
-        Assert.assertNull("IInstance not connected", ctx.context.getAnyConnectedPeer());
-        Assert.assertNull("IInstance not to connect", ctx.context.getAnyPeerToConnect());
+        Peer peer = ctx_1.context.getAnyConnectedPeer();
+        ctx_1.context.blacklistPeer(peer);
 
-        ctx.peerRemoveTask.run();
+        Assert.assertNull("IInstance not connected", ctx_1.context.getAnyConnectedPeer());
+        Assert.assertNull("IInstance not to connect", ctx_1.context.getAnyPeerToConnect());
 
-        Assert.assertNull("IInstance not connected", ctx.context.getAnyConnectedPeer());
-        Assert.assertNull("IInstance not to connect", ctx.context.getAnyPeerToConnect());
+        ctx_1.peerRemoveTask.run();
 
-        ctx.context.blacklistPeer(peer, System.currentTimeMillis() - ctx.context.getBlacklistingPeriod() - 1);
+        Assert.assertNull("IInstance not connected", ctx_1.context.getAnyConnectedPeer());
+        Assert.assertNull("IInstance not to connect", ctx_1.context.getAnyPeerToConnect());
 
-        Assert.assertNull("IInstance not connected", ctx.context.getAnyConnectedPeer());
-        Assert.assertNull("IInstance not to connect", ctx.context.getAnyPeerToConnect());
+        ctx_1.context.blacklistPeer(peer, System.currentTimeMillis() - ctx_1.context.getBlacklistingPeriod() - 1);
 
-        ctx.peerRemoveTask.run();
+        Assert.assertNull("IInstance not connected", ctx_1.context.getAnyConnectedPeer());
+        Assert.assertNull("IInstance not to connect", ctx_1.context.getAnyPeerToConnect());
 
-        Assert.assertNull("IInstance not connected", ctx.context.getAnyConnectedPeer());
-        Assert.assertNotNull("IInstance to connect", ctx.context.getAnyPeerToConnect());
+        ctx_1.peerRemoveTask.run();
+
+        Assert.assertNull("IInstance not connected", ctx_1.context.getAnyConnectedPeer());
+        Assert.assertNotNull("IInstance to connect", ctx_1.context.getAnyPeerToConnect());
     }
 
     @Test
     public void step_6_remove_old_connected() throws Exception {
-        PeerContext ctx = new PeerContext(PeerStarterFactory.create(GENERATOR_1, mockTimeProvider));
 
-        ctx.context.addPublicPeer("2");
-        Assert.assertEquals("Peer updated", 2, ctx.context.getPeers().getPeersList().length);
+        PeerContext ctx_1 = new PeerContext(PeerStarterFactory.create().seed(GENERATOR_1).build(mockTimeProvider));
 
-        Peer peer = ctx.context.getAnyPeerToConnect();
+        ctx_1.context.addPublicPeer("2");
+        Assert.assertEquals("Peer updated", 2, ctx_1.context.getPeers().getPeersList().length);
+
+        Peer peer = ctx_1.context.getAnyPeerToConnect();
         peer.getPeerInfo().setConnectingTime(1);
 
-        ctx.peerRemoveTask.run();
+        ctx_1.peerRemoveTask.run();
 
-        Assert.assertEquals("Peer list cleared", 1, ctx.context.getPeers().getPeersList().length);
+        Assert.assertEquals("Peer list cleared", 1, ctx_1.context.getPeers().getPeersList().length);
     }
 }

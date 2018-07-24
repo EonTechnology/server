@@ -27,6 +27,7 @@ public class TransactionBuilder<TConcreteBuilder extends TransactionBuilder<?>> 
     private Map<String, Object> data;
     private String note = null;
     private List<Transaction> nestedTransaction;
+    private AccountID payerID = null;
 
     public TransactionBuilder(int type, Map<String, Object> data) {
         this.type = type;
@@ -51,7 +52,11 @@ public class TransactionBuilder<TConcreteBuilder extends TransactionBuilder<?>> 
     }
 
     public TConcreteBuilder withParam(String name, Object value) {
-        this.data.put(name, value);
+        if (value instanceof Number) {
+            this.data.put(name, ((Number) value).longValue());
+        } else {
+            this.data.put(name, value);
+        }
 
         @SuppressWarnings("unchecked")
         TConcreteBuilder cast = (TConcreteBuilder) this;
@@ -95,6 +100,14 @@ public class TransactionBuilder<TConcreteBuilder extends TransactionBuilder<?>> 
         return cast;
     }
 
+    public TConcreteBuilder payedBy(AccountID payerID) {
+        this.payerID = payerID;
+
+        @SuppressWarnings("unchecked")
+        TConcreteBuilder cast = (TConcreteBuilder) this;
+        return cast;
+    }
+
     public Transaction build(BlockID networkID, ISigner signer) throws Exception {
 
         Transaction tx = new Transaction();
@@ -108,6 +121,7 @@ public class TransactionBuilder<TConcreteBuilder extends TransactionBuilder<?>> 
         tx.setReference(reference);
         tx.setData(data);
         tx.setNote(note);
+        tx.setPayer(payerID);
         if (nestedTransaction != null) {
             Map<String, Transaction> map = new HashMap<>();
             for (Transaction nestedTx : nestedTransaction) {

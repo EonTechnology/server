@@ -1,23 +1,17 @@
 package com.exscudo.eon.app.IT;
 
-import java.sql.SQLException;
-import java.time.Instant;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Map;
 
 import com.dampcake.bencode.Bencode;
-import com.exscudo.eon.app.cfg.Fork;
-import com.exscudo.eon.app.cfg.ITransactionEstimator;
-import com.exscudo.eon.app.cfg.forks.Item;
-import com.exscudo.eon.app.utils.TransactionEstimator;
-import com.exscudo.peer.core.Constant;
-import com.exscudo.peer.core.IFork;
-import com.exscudo.peer.core.blockchain.BlockchainProvider;
 import com.exscudo.peer.core.common.Format;
 import com.exscudo.peer.core.common.TransactionComparator;
-import com.exscudo.peer.core.crypto.CryptoProvider;
 import com.exscudo.peer.core.data.Account;
 import com.exscudo.peer.core.data.AccountProperty;
 import com.exscudo.peer.core.data.Block;
@@ -25,35 +19,54 @@ import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.identifier.BlockID;
 import com.exscudo.peer.core.ledger.ILedger;
 import com.exscudo.peer.core.ledger.LedgerProvider;
-import com.exscudo.peer.core.storage.Storage;
-import com.exscudo.peer.tx.TransactionType;
-import com.google.common.collect.Lists;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Assert;
-import org.mockito.Mockito;
 
 public class Utils {
     public static final long MIN_DEPOSIT_SIZE = 500000000L;
+    private static int DB = 1;
 
-    public static Block getLastBlock(Storage storage) throws SQLException {
-        return (new BlockchainProvider(storage, null)).getLastBlock();
+    public static String getDbUrl() {
+        String url = "jdbc:sqlite:file:memTestITDB" + DB + "?mode=memory&cache=shared";
+        DB++;
+        return url;
     }
 
-    public static BlockID getGenesisBlockID(Storage storage) {
-        return storage.metadata().getGenesisBlockID();
+    public static long getGenesisBlockTimestamp() throws IOException {
+
+        URI uri;
+        try {
+            uri = Utils.class.getClassLoader().getResource("./com/exscudo/eon/app/IT/genesis_block.json").toURI();
+        } catch (URISyntaxException e) {
+            throw new IOException(e);
+        }
+        byte[] json = Files.readAllBytes(Paths.get(uri));
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        Map<String, Object> genesisBlock = objectMapper.readValue(json, new TypeReference<Map<String, Object>>() {
+        });
+
+        return Integer.parseInt(genesisBlock.get("timestamp").toString());
     }
 
-    public static IFork createFork(Storage storage, int forkID) throws SQLException {
-        long time = getLastBlock(storage).getTimestamp();
-        String begin = Instant.ofEpochMilli((time - 1) * 1000).toString();
-        String end = Instant.ofEpochMilli((time + 10 * 180 * 1000) * 1000).toString();
+    public static BlockID getGenesisBlockID() throws IOException {
 
-        Fork fork = new Fork(Utils.getGenesisBlockID(storage), new Item[] {new TestItem(forkID, begin)}, end);
-        fork.setMinDepositSize(MIN_DEPOSIT_SIZE);
-        return Mockito.spy(fork);
-    }
+        URI uri;
+        try {
+            uri = Utils.class.getClassLoader().getResource("./com/exscudo/eon/app/IT/genesis_block.json").toURI();
+        } catch (URISyntaxException e) {
+            throw new IOException(e);
+        }
+        byte[] json = Files.readAllBytes(Paths.get(uri));
 
-    public static IFork createFork(Storage storage) throws SQLException {
-        return createFork(storage, 1);
+        ObjectMapper objectMapper = new ObjectMapper();
+        Map<String, Object> genesisBlock = objectMapper.readValue(json, new TypeReference<Map<String, Object>>() {
+        });
+
+        byte[] signature = Format.convert(genesisBlock.get("signature").toString());
+        int timestamp = Integer.parseInt(genesisBlock.get("timestamp").toString());
+        return new BlockID(signature, timestamp);
     }
 
     public static void comparePeer(PeerContext ctx1, PeerContext ctx2) throws Exception {
@@ -112,16 +125,13 @@ public class Utils {
         }
     }
 
-    public String getGenesisBlockAsJSON(Storage storage) throws Exception {
+    public String getGenesisBlockAsJSON(Block lastBlock, LedgerProvider ledgerProvider) throws Exception {
 
         HashMap<String, Object> map = new HashMap<>();
-
-        Block lastBlock = getLastBlock(storage);
 
         map.put("timestamp", lastBlock.getTimestamp());
         map.put("signature", Format.convert(lastBlock.getSignature()));
 
-        LedgerProvider ledgerProvider = new LedgerProvider(storage);
         ILedger ledger = ledgerProvider.getLedger(lastBlock);
 
         HashMap<String, Object> accSet = new HashMap<>();
@@ -136,125 +146,6 @@ public class Utils {
         }
         map.put("accounts", accSet);
 
-        String json = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(map);
-        return json;
-    }
-
-    public static class TestItem implements Item {
-
-        private final int number;
-
-        private long begin;
-        private long end;
-        private Set<Integer> transactionTypes = new HashSet<>();
-        private int blockVersion;
-        private ITransactionEstimator estimator;
-        private CryptoProvider cryptoProvider;
-
-        private int maxNoteLength;
-
-        public TestItem(int number, String begin) {
-
-            this.number = number;
-            this.begin = Instant.parse(begin).toEpochMilli();
-
-            this.blockVersion = 1;
-            this.maxNoteLength = Constant.TRANSACTION_NOTE_MAX_LENGTH;
-
-            this.transactionTypes.addAll(Lists.newArrayList(TransactionType.getTypes()));
-
-            this.cryptoProvider = CryptoProvider.getInstance();
-            this.estimator = new TransactionEstimator(this.cryptoProvider.getFormatter());
-        }
-
-        @Override
-        public boolean isCome(int timestamp) {
-            return timestamp * 1000L > begin;
-        }
-
-        @Override
-        public boolean isPassed(int timestamp) {
-            return timestamp * 1000L > end;
-        }
-
-        @Override
-        public int getNumber() {
-            return number;
-        }
-
-        @Override
-        public int getMaxNoteLength() {
-            return maxNoteLength;
-        }
-
-        public void setMaxNoteLength(int maxNoteLength) {
-            this.maxNoteLength = maxNoteLength;
-        }
-
-        @Override
-        public Set<Integer> getTransactionTypes() {
-            return this.transactionTypes;
-        }
-
-        public void setTransactionTypes(Set<Integer> transactionTypes) {
-            this.transactionTypes = transactionTypes;
-        }
-
-        @Override
-        public int getBlockVersion() {
-            return this.blockVersion;
-        }
-
-        public void setBlockVersion(int blockVersion) {
-            this.blockVersion = blockVersion;
-        }
-
-        @Override
-        public ITransactionEstimator getEstimator() {
-            return estimator;
-        }
-
-        public void setEstimator(ITransactionEstimator estimator) {
-            this.estimator = estimator;
-        }
-
-        @Override
-        public CryptoProvider getCryptoProvider() {
-            return this.cryptoProvider;
-        }
-
-        public void setCryptoProvider(CryptoProvider cryptoProvider) {
-            this.cryptoProvider = cryptoProvider;
-        }
-
-        @Override
-        public Account convert(Account account) {
-            return account;
-        }
-
-        @Override
-        public boolean needConvertAccounts() {
-            return false;
-        }
-
-        @Override
-        public long getBegin() {
-            return begin;
-        }
-
-        @Override
-        public void setBegin(long begin) {
-            this.begin = begin;
-        }
-
-        @Override
-        public long getEnd() {
-            return end;
-        }
-
-        @Override
-        public void setEnd(long end) {
-            this.end = end;
-        }
+        return new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(map);
     }
 }

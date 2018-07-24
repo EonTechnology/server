@@ -1,18 +1,19 @@
 package com.exscudo.peer.core.importer.tasks;
 
 import java.math.BigInteger;
-import java.util.HashMap;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
+import java.util.TreeSet;
 
 import com.exscudo.peer.core.Constant;
 import com.exscudo.peer.core.IFork;
 import com.exscudo.peer.core.api.ISnapshotSynchronizationService;
+import com.exscudo.peer.core.blockchain.Blockchain;
 import com.exscudo.peer.core.blockchain.BlockchainProvider;
-import com.exscudo.peer.core.blockchain.storage.DbBlock;
-import com.exscudo.peer.core.blockchain.storage.DbTransaction;
-import com.exscudo.peer.core.blockchain.storage.converters.DTOConverter;
+import com.exscudo.peer.core.common.IAccountHelper;
 import com.exscudo.peer.core.common.Loggers;
 import com.exscudo.peer.core.common.exceptions.RemotePeerException;
 import com.exscudo.peer.core.data.Account;
@@ -24,11 +25,7 @@ import com.exscudo.peer.core.env.ExecutionContext;
 import com.exscudo.peer.core.env.Peer;
 import com.exscudo.peer.core.ledger.ILedger;
 import com.exscudo.peer.core.ledger.LedgerProvider;
-import com.exscudo.peer.core.ledger.storage.DbNode;
 import com.exscudo.peer.core.storage.Storage;
-import com.j256.ormlite.dao.Dao;
-import com.j256.ormlite.dao.DaoManager;
-import com.j256.ormlite.stmt.DeleteBuilder;
 
 /**
  * Performs the task of initial synchronization from a snapshot.
@@ -43,6 +40,7 @@ public class SyncSnapshotTask implements Runnable {
     private final IFork fork;
     private final BlockchainProvider blockchainProvider;
     private final LedgerProvider ledgerProvider;
+    private final IAccountHelper accountHelper;
     private boolean disabled = false;
     private Block genesis = null;
 
@@ -50,13 +48,15 @@ public class SyncSnapshotTask implements Runnable {
                             ExecutionContext context,
                             IFork fork,
                             BlockchainProvider blockchainProvider,
-                            LedgerProvider ledgerProvider) {
+                            LedgerProvider ledgerProvider,
+                            IAccountHelper accountHelper) {
 
         this.storage = storage;
         this.context = context;
         this.fork = fork;
         this.blockchainProvider = blockchainProvider;
         this.ledgerProvider = ledgerProvider;
+        this.accountHelper = accountHelper;
     }
 
     @Override
@@ -81,10 +81,10 @@ public class SyncSnapshotTask implements Runnable {
             }
 
             ISnapshotSynchronizationService service = peer.getSnapshotSynchronizationService();
-            Block lastBlock = service.getLastBlock();
-            fillHeight(lastBlock);
 
-            int targetHeight = lastBlock.getHeight() - Constant.BLOCK_IN_DAY;
+            Block lastBlock = service.getLastBlock();
+
+            int targetHeight = getHeightByTimestamp(lastBlock.getTimestamp()) - Constant.BLOCK_IN_DAY;
             if (targetHeight <= 0) {
                 Loggers.info(SyncSnapshotTask.class, "Short history, load full blockchain");
                 storage.metadata().setHistoryFromHeight(0);
@@ -93,26 +93,17 @@ public class SyncSnapshotTask implements Runnable {
             }
 
             final Block block = service.getBlockByHeight(targetHeight);
-            fillHeight(block);
-
             if (block == null) {
                 throw new RemotePeerException("Empty history on remote peer");
             }
+            if (targetHeight != getHeightByTimestamp(block.getTimestamp())) {
+                throw new RemotePeerException("Unexpected block");
+            }
+            block.setHeight(targetHeight);
 
             Loggers.info(SyncSnapshotTask.class, "Loaded start block: [{}]{}", block.getHeight(), block.getID());
 
-            storage.callInTransaction(new Callable<Void>() {
-                @Override
-                public Void call() throws Exception {
-                    Dao<DbNode, ?> dao = DaoManager.createDao(storage.getConnectionSource(), DbNode.class);
-                    DeleteBuilder<DbNode, ?> builder = dao.deleteBuilder();
-                    builder.where().gt("timestamp", block.getTimestamp());
-                    builder.delete();
-
-                    return null;
-                }
-            });
-
+            ledgerProvider.truncate(block.getTimestamp());
             ILedger ledger = ledgerProvider.getLedger(null, block.getTimestamp() + Constant.BLOCK_PERIOD);
 
             Account[] accounts = service.getAccounts(block.getID().toString());
@@ -167,7 +158,7 @@ public class SyncSnapshotTask implements Runnable {
 
             Loggers.info(SyncSnapshotTask.class, "Loading block heads for day...");
             // Load history for day before
-            HashMap<BlockID, Block> blockSet = new HashMap<>();
+            Map<BlockID, Block> blockSet = new LinkedHashMap<>();
 
             int h = targetHeight - Constant.DIFFICULTY_DELAY;
             h = Math.max(h, 0);
@@ -177,13 +168,14 @@ public class SyncSnapshotTask implements Runnable {
                 Block[] head = service.getBlocksHeadFrom(h + 1);
 
                 for (Block b : head) {
-                    fillHeight(b);
 
-                    if (b.getHeight() < targetHeight) {
+                    int height = getHeightByTimestamp(b.getTimestamp());
+                    if (height < targetHeight) {
+                        b.setHeight(height);
                         blockSet.put(b.getID(), b);
                     }
 
-                    h = Math.max(h, b.getHeight());
+                    h = Math.max(h, height);
                 }
             }
 
@@ -194,7 +186,7 @@ public class SyncSnapshotTask implements Runnable {
 
             Account generator = ledger.getAccount(block.getSenderID());
 
-            if (!fork.verifySignature(block, block.getSignature(), generator, block.getTimestamp())) {
+            if (!accountHelper.verifySignature(block, block.getSignature(), generator, block.getTimestamp())) {
                 throw new RemotePeerException("Bad block signature");
             }
 
@@ -202,41 +194,26 @@ public class SyncSnapshotTask implements Runnable {
                 for (Transaction tx : block.getTransactions()) {
                     Account account = ledger.getAccount(tx.getSenderID());
 
-                    if (!fork.verifySignature(tx, tx.getSignature(), account, block.getTimestamp())) {
+                    if (!accountHelper.verifySignature(tx, tx.getSignature(), account, block.getTimestamp())) {
                         throw new RemotePeerException("Bad transaction signature");
                     }
                 }
             }
 
             Loggers.info(SyncSnapshotTask.class, "Saving...");
-            // Save in DB
-            Dao<DbBlock, Long> daoBlocks = DaoManager.createDao(storage.getConnectionSource(), DbBlock.class);
-            Dao<DbTransaction, Long> daoTransactions =
-                    DaoManager.createDao(storage.getConnectionSource(), DbTransaction.class);
 
-            storage.callInTransaction(new Callable<Void>() {
+            Blockchain blockchain = blockchainProvider.createBlockchain();
+            Set<Block> set = new TreeSet<>(new Comparator<Block>() {
                 @Override
-                public Void call() throws Exception {
-
-                    for (Block b : blockSet.values()) {
-                        daoBlocks.create(DTOConverter.convert(b));
-                        if (b.getTransactions() != null) {
-                            for (Transaction transaction : b.getTransactions()) {
-                                daoTransactions.create(DTOConverter.convert(transaction));
-                            }
-                        }
-                    }
-
-                    daoBlocks.updateBuilder().updateColumnValue("tag", 1).update();
-                    daoTransactions.updateBuilder().updateColumnValue("tag", 1).update();
-
-                    storage.metadata().setLastBlockID(block.getID());
-                    storage.metadata().setHistoryFromHeight(block.getHeight());
-                    blockchainProvider.initialize();
-
-                    return null;
+                public int compare(Block o1, Block o2) {
+                    return Integer.compare(o1.getHeight(), o2.getHeight());
                 }
             });
+            set.addAll(blockSet.values());
+            for (Block b : set) {
+                blockchain.addBlock(b);
+            }
+            blockchainProvider.initialize(blockchain, storage.metadata().getGenesisBlockID(), block.getHeight());
 
             Loggers.info(SyncSnapshotTask.class, "Snapshot downloaded!");
             disabled = true;
@@ -252,12 +229,10 @@ public class SyncSnapshotTask implements Runnable {
         }
     }
 
-    private void fillHeight(Block block) {
+    private int getHeightByTimestamp(int timestamp) {
         if (genesis == null) {
             genesis = blockchainProvider.getBlock(fork.getGenesisBlockID());
         }
-
-        int height = (block.getTimestamp() - genesis.getTimestamp()) / Constant.BLOCK_PERIOD;
-        block.setHeight(height);
+        return (timestamp - genesis.getTimestamp()) / Constant.BLOCK_PERIOD;
     }
 }

@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.exscudo.jsonrpc.JrpcService;
+import com.exscudo.jsonrpc.RequestContextHolder;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.servlet.FrameworkServlet;
 
@@ -39,7 +40,6 @@ public class PeerServlet extends FrameworkServlet {
         if (remoteHost == null || remoteHost.length() == 0) {
             remoteHost = request.getRemoteHost();
         }
-        service.setRemoteHost(remoteHost);
 
         InputStream inputStream = request.getInputStream();
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
@@ -51,7 +51,10 @@ public class PeerServlet extends FrameworkServlet {
         }
         inputStream.close();
 
+        RequestContextHolder.setRemoteHost(remoteHost);
         String responseBody = service.doRequest(byteArrayOutputStream.toString("UTF-8"));
+        RequestContextHolder.resetRemoteHost();
+
         byte[] responseBytes = responseBody.getBytes("UTF-8");
 
         response.setContentType("application/json; charset=UTF-8");

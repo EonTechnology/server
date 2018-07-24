@@ -2,7 +2,7 @@ package com.exscudo.eon.app.jsonrpc.serialization;
 
 import java.io.IOException;
 
-import com.exscudo.eon.app.utils.mapper.TransaportTransactionMapper;
+import com.exscudo.eon.app.utils.mapper.TransportTransactionMapper;
 import com.exscudo.peer.core.data.Transaction;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
@@ -22,6 +22,6 @@ public class TransactionSerializer extends StdSerializer<Transaction> {
 
     @Override
     public void serialize(Transaction value, JsonGenerator gen, SerializerProvider provider) throws IOException {
-        gen.writeObject(TransaportTransactionMapper.convert(value));
+        gen.writeObject(TransportTransactionMapper.convert(value));
     }
 }

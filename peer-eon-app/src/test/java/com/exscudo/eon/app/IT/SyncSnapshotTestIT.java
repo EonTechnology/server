@@ -1,12 +1,18 @@
 package com.exscudo.eon.app.IT;
 
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.Random;
 
-import com.exscudo.eon.app.cfg.PeerStarter;
 import com.exscudo.peer.core.Constant;
+import com.exscudo.peer.core.common.Loggers;
 import com.exscudo.peer.core.common.TimeProvider;
+import com.exscudo.peer.core.data.Account;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Transaction;
+import com.exscudo.peer.core.ledger.ILedger;
+import com.exscudo.peer.eon.midleware.parsers.RegistrationParser;
+import com.exscudo.peer.tx.TransactionType;
 import com.exscudo.peer.tx.midleware.builders.RegistrationBuilder;
 import org.junit.Assert;
 import org.junit.Before;
@@ -31,11 +37,16 @@ public class SyncSnapshotTestIT {
     public void setUp() throws Exception {
         mockTimeProvider = Mockito.mock(TimeProvider.class);
 
-        PeerStarter peerStarter1 = PeerStarterFactory.create(GENERATOR, mockTimeProvider, true);
-        ctx1 = new PeerContext(peerStarter1);
+        ctx1 = new PeerContext(PeerStarterFactory.create()
+                                                 .route(TransactionType.Registration, new RegistrationParser())
+                                                 .seed(GENERATOR)
+                                                 .build(mockTimeProvider));
 
-        PeerStarter peerStarter2 = PeerStarterFactory.create(GENERATOR2, mockTimeProvider, false);
-        ctx2 = new PeerContext(peerStarter2);
+        ctx2 = new PeerContext(PeerStarterFactory.create()
+                                                 .route(TransactionType.Registration, new RegistrationParser())
+                                                 .seed(GENERATOR2)
+                                                 .disableFullSync()
+                                                 .build(mockTimeProvider));
 
         ctx1.syncBlockPeerService = Mockito.spy(ctx1.syncBlockPeerService);
         ctx2.syncBlockPeerService = Mockito.spy(ctx2.syncBlockPeerService);
@@ -99,7 +110,45 @@ public class SyncSnapshotTestIT {
     }
 
     @Test
-    public void step_4_sync_not_empty_block() throws Exception {
+    public void step_4_partial_selection() throws Exception {
+
+        ILedger ledger = ctx1.ledgerProvider.getLedger(ctx1.blockchain.getLastBlock());
+
+        int accCount = 0;
+        for (Account ignored : ledger) {
+            accCount++;
+        }
+
+        Assert.assertEquals("Account count in test genesis block", 10, accCount);
+
+        for (int i = 0; i < accCount - 1; i++) {
+
+            Iterator<Account> iterator = ledger.iterator();
+
+            Account acc = iterator.next();
+            for (int k = 0; k < i; k++) {
+                acc = iterator.next();
+            }
+
+            Iterator<Account> iterator2 =
+                    Arrays.asList(ctx1.syncSnapshotService.getNextAccounts(ctx1.blockchain.getLastBlock()
+                                                                                          .getID()
+                                                                                          .toString(),
+                                                                           acc.getID().toString())).iterator();
+
+            Account acc2 = iterator2.next();
+            Loggers.info(getClass(), acc.getID().getValue() + " - " + acc2.getID().getValue());
+
+            while (iterator.hasNext() && iterator2.hasNext()) {
+                acc = iterator.next();
+                acc2 = iterator2.next();
+                Loggers.info(getClass(), acc.getID().getValue() + " - " + acc2.getID().getValue());
+            }
+        }
+    }
+
+    @Test
+    public void step_5_sync_not_empty_block() throws Exception {
 
         Random random = new Random();
 

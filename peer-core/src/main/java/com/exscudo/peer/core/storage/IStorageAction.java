@@ -5,5 +5,5 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 public interface IStorageAction {
-    void run(Connection connection, Storage.Metadata metadata) throws SQLException, IOException;
+    void run(Connection connection) throws SQLException, IOException;
 }

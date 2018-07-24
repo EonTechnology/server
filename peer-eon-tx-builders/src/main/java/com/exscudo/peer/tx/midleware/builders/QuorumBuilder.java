@@ -1,7 +1,5 @@
 package com.exscudo.peer.tx.midleware.builders;
 
-import java.util.HashMap;
-
 import com.exscudo.peer.tx.TransactionType;
 
 /**
@@ -11,7 +9,7 @@ import com.exscudo.peer.tx.TransactionType;
 public class QuorumBuilder extends TransactionBuilder<QuorumBuilder> {
 
     private QuorumBuilder() {
-        super(TransactionType.Quorum, new HashMap<>());
+        super(TransactionType.Quorum);
     }
 
     public static QuorumBuilder createNew(int quorum) {

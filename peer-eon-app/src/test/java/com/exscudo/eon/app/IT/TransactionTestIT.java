@@ -2,13 +2,15 @@ package com.exscudo.eon.app.IT;
 
 import com.exscudo.TestSigner;
 import com.exscudo.eon.app.api.bot.AccountBotService;
-import com.exscudo.eon.app.cfg.PeerStarter;
-import com.exscudo.peer.core.IFork;
 import com.exscudo.peer.core.common.TimeProvider;
 import com.exscudo.peer.core.crypto.ISigner;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.identifier.AccountID;
+import com.exscudo.peer.eon.midleware.parsers.DepositParser;
+import com.exscudo.peer.eon.midleware.parsers.PaymentParser;
+import com.exscudo.peer.eon.midleware.parsers.RegistrationParser;
+import com.exscudo.peer.tx.TransactionType;
 import com.exscudo.peer.tx.midleware.builders.DepositBuilder;
 import com.exscudo.peer.tx.midleware.builders.PaymentBuilder;
 import com.exscudo.peer.tx.midleware.builders.RegistrationBuilder;
@@ -35,8 +37,21 @@ public class TransactionTestIT {
 
     @Test
     public void step_1_doubleSending() throws Exception {
-        PeerContext ctx = new PeerContext(PeerStarterFactory.create(GENERATOR, mockTimeProvider));
-        PeerContext ctx2 = new PeerContext(PeerStarterFactory.create(GENERATOR2, mockTimeProvider));
+
+        PeerContext ctx = new PeerContext(PeerStarterFactory.create()
+                                                            .route(TransactionType.Payment, new PaymentParser())
+                                                            .route(TransactionType.Registration,
+                                                                   new RegistrationParser())
+                                                            .seed(GENERATOR)
+                                                            .build(mockTimeProvider));
+
+        PeerContext ctx2 = new PeerContext(PeerStarterFactory.create()
+                                                             .route(TransactionType.Payment, new PaymentParser())
+                                                             .route(TransactionType.Registration,
+                                                                    new RegistrationParser())
+                                                             .seed(GENERATOR2)
+                                                             .build(mockTimeProvider));
+
         ISigner signer = new TestSigner(GENERATOR_NEW);
 
         Block lastBlock = ctx.blockExplorerService.getLastBlock();
@@ -119,7 +134,15 @@ public class TransactionTestIT {
     @Test
     public void step_2_balances_checker() throws Exception {
         // Init peer and etc...
-        PeerContext ctx = new PeerContext(PeerStarterFactory.create(GENERATOR, mockTimeProvider));
+
+        PeerContext ctx = new PeerContext(PeerStarterFactory.create()
+                                                            .route(TransactionType.Payment, new PaymentParser())
+                                                            .route(TransactionType.Deposit, new DepositParser())
+                                                            .route(TransactionType.Registration,
+                                                                   new RegistrationParser())
+                                                            .seed(GENERATOR)
+                                                            .build(mockTimeProvider));
+
         ISigner signer = new TestSigner(GENERATOR2);
         ISigner signerNew = new TestSigner(GENERATOR_NEW);
 
@@ -236,7 +259,13 @@ public class TransactionTestIT {
     @Test
     public void step_3_transaction_duplicate() throws Exception {
 
-        PeerContext ctx = new PeerContext(PeerStarterFactory.create(GENERATOR, mockTimeProvider));
+        PeerContext ctx = new PeerContext(PeerStarterFactory.create()
+                                                            .route(TransactionType.Payment, new PaymentParser())
+                                                            .route(TransactionType.Registration,
+                                                                   new RegistrationParser())
+                                                            .seed(GENERATOR)
+                                                            .build(mockTimeProvider));
+
         ISigner signerNew = new TestSigner(GENERATOR_NEW);
 
         Block lastBlock = ctx.blockExplorerService.getLastBlock();
@@ -278,7 +307,13 @@ public class TransactionTestIT {
     @Test
     public void step_4_double_spending() throws Exception {
 
-        PeerContext ctx = new PeerContext(PeerStarterFactory.create(GENERATOR, mockTimeProvider));
+        PeerContext ctx = new PeerContext(PeerStarterFactory.create()
+                                                            .route(TransactionType.Payment, new PaymentParser())
+                                                            .route(TransactionType.Registration,
+                                                                   new RegistrationParser())
+                                                            .seed(GENERATOR)
+                                                            .build(mockTimeProvider));
+
         ISigner signerNew = new TestSigner(GENERATOR_NEW);
 
         Block lastBlock = ctx.blockExplorerService.getLastBlock();
@@ -331,11 +366,11 @@ public class TransactionTestIT {
     @Test
     public void step_5_check_note() throws Exception {
 
-        PeerStarter peerStarter = PeerStarterFactory.create(GENERATOR, mockTimeProvider);
-        IFork fork = Utils.createFork(peerStarter.getStorage(), 2);
-        peerStarter.setFork(fork);
-
-        PeerContext ctx = new PeerContext(peerStarter);
+        PeerContext ctx = new PeerContext(PeerStarterFactory.create()
+                                                            .route(TransactionType.Registration,
+                                                                   new RegistrationParser())
+                                                            .seed(GENERATOR)
+                                                            .build(mockTimeProvider));
 
         String alphabet = "0123456789 abcdefghijklmnoprstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ #@*-_";
         ISigner signerNew = new TestSigner(GENERATOR_NEW);

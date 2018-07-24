@@ -1,5 +1,7 @@
 package com.exscudo.peer.eon.midleware.parsers;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 
 import com.exscudo.peer.core.common.exceptions.ValidateException;
@@ -21,18 +23,17 @@ public class PaymentParser implements ITransactionParser {
         }
 
         Map<String, Object> data = transaction.getData();
-        if (data == null || data.size() != 2) {
+        if (data.size() != 2) {
             throw new ValidateException(Resources.ATTACHMENT_UNKNOWN_TYPE);
         }
 
-        long amount;
-        try {
-            amount = Long.parseLong(String.valueOf(data.get("amount")));
-            if (amount <= 0) {
-                throw new ValidateException(Resources.AMOUNT_OUT_OF_RANGE);
-            }
-        } catch (NumberFormatException e) {
+        if (!(data.get("amount") instanceof Long)) {
             throw new ValidateException(Resources.AMOUNT_INVALID_FORMAT);
+        }
+
+        long amount = (long) data.get("amount");
+        if (amount <= 0) {
+            throw new ValidateException(Resources.AMOUNT_OUT_OF_RANGE);
         }
 
         AccountID recipientID;
@@ -43,20 +44,20 @@ public class PaymentParser implements ITransactionParser {
         }
 
         return new ILedgerAction[] {
-                new FeePaymentAction(transaction.getSenderID(), transaction.getFee()),
+                new FeePaymentAction(transaction.getSenderID(), transaction.getPayer(), transaction.getFee()),
                 new PaymentAction(transaction.getSenderID(), amount, recipientID)
         };
     }
 
     @Override
-    public AccountID getRecipient(Transaction transaction) throws ValidateException {
+    public Collection<AccountID> getDependencies(Transaction transaction) throws ValidateException {
 
         AccountID recipientID;
         try {
-            recipientID = new AccountID(String.valueOf(transaction.getData().get("recipient")));
-        } catch (IllegalArgumentException e) {
+            recipientID = new AccountID(transaction.getData().get("recipient").toString());
+        } catch (Exception e) {
             throw new ValidateException(Resources.RECIPIENT_INVALID_FORMAT);
         }
-        return recipientID;
+        return Collections.singleton(recipientID);
     }
 }

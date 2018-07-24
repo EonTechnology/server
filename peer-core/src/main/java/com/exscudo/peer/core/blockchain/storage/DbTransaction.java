@@ -40,9 +40,6 @@ public class DbTransaction {
     @DatabaseField(columnName = "confirmations")
     private String confirmations;
 
-    @DatabaseField(columnName = "recipient_id", canBeNull = false)
-    private long recipientID;
-
     @DatabaseField(columnName = "block_id", canBeNull = false, uniqueIndexName = "transactions_id_block_id_idx")
     private long blockID;
 
@@ -57,6 +54,9 @@ public class DbTransaction {
 
     @DatabaseField(columnName = "nested_transactions")
     private String nestedTransactions;
+
+    @DatabaseField(columnName = "payer_id", canBeNull = false)
+    private long payerID;
 
     public DbTransaction() {
 
@@ -151,24 +151,6 @@ public class DbTransaction {
     }
 
     /**
-     * Returns the recipient account ID
-     *
-     * @return
-     */
-    public long getRecipientID() {
-        return recipientID;
-    }
-
-    /**
-     * Sets the recipient account ID.
-     *
-     * @param recipientID
-     */
-    public void setRecipientID(long recipientID) {
-        this.recipientID = recipientID;
-    }
-
-    /**
      * Returns the block height.
      *
      * @return
@@ -226,5 +208,13 @@ public class DbTransaction {
 
     public void setNestedTransactions(String nestedTransactions) {
         this.nestedTransactions = nestedTransactions;
+    }
+
+    public long getPayerID() {
+        return payerID;
+    }
+
+    public void setPayerID(long payerID) {
+        this.payerID = payerID;
     }
 }

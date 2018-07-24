@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.exscudo.peer.core.Constant;
-import com.exscudo.peer.core.IFork;
+import com.exscudo.peer.core.common.IAccountHelper;
 import com.exscudo.peer.core.common.ITimeProvider;
 import com.exscudo.peer.core.data.Account;
 import com.exscudo.peer.core.data.Transaction;
@@ -15,12 +15,12 @@ import com.exscudo.peer.core.middleware.IValidationRule;
 import com.exscudo.peer.core.middleware.ValidationResult;
 
 public class ConfirmationsValidationRule implements IValidationRule {
-    private final IFork fork;
     private final ITimeProvider timeProvider;
+    private final IAccountHelper accountHelper;
 
-    public ConfirmationsValidationRule(IFork fork, ITimeProvider timeProvider) {
-        this.fork = fork;
+    public ConfirmationsValidationRule(ITimeProvider timeProvider, IAccountHelper accountHelper) {
         this.timeProvider = timeProvider;
+        this.accountHelper = accountHelper;
     }
 
     @Override
@@ -31,12 +31,14 @@ public class ConfirmationsValidationRule implements IValidationRule {
             return ValidationResult.error("Unknown sender.");
         }
 
-        Set<AccountID> accounts = fork.getConfirmingAccounts(sender, timeProvider.get());
+        Set<AccountID> accounts = accountHelper.getConfirmingAccounts(sender, timeProvider.get());
+
         if (accounts != null) {
 
             // check signatures
             Map<AccountID, Account> set = new HashMap<>();
             set.put(tx.getSenderID(), sender);
+
             if (tx.getConfirmations() != null) {
 
                 if (tx.getConfirmations().size() > Constant.TRANSACTION_CONFIRMATIONS_MAX_SIZE) {
@@ -52,10 +54,6 @@ public class ConfirmationsValidationRule implements IValidationRule {
                         return ValidationResult.error("Invalid format.");
                     }
 
-                    if (!accounts.contains(id)) {
-                        return ValidationResult.error("Account '" + id.toString() + "' can not sign transaction.");
-                    }
-
                     Account account = ledger.getAccount(id);
                     if (account == null) {
                         return ValidationResult.error("Unknown account " + id.toString());
@@ -65,12 +63,8 @@ public class ConfirmationsValidationRule implements IValidationRule {
                 }
             }
 
-            if (!fork.validConfirmation(tx, set, timeProvider.get())) {
+            if (!accountHelper.validConfirmation(tx, set, timeProvider.get())) {
                 return ValidationResult.error("The quorum is not exist.");
-            }
-        } else {
-            if (tx.getConfirmations() != null) {
-                return ValidationResult.error("Invalid use of the confirmation field.");
             }
         }
 

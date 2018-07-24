@@ -17,23 +17,28 @@ import com.exscudo.peer.core.ledger.LedgerProvider;
 import com.exscudo.peer.core.storage.Storage;
 import com.exscudo.peer.tx.TransactionType;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 public class PeerStarterTest {
     private static final String connectURI = "jdbc:sqlite:file:memInitializerJsonTest?mode=memory&cache=shared";
     private static final String genesisJson = "eon_network/dev/genesis_block.json";
+    private static final String genesisForks = "eon_network/dev/forks.json";
+
+    @Rule
+    public ExpectedException expectedException = ExpectedException.none();
 
     @Test
     public void testBlockIds() throws Exception {
-        PeerStarter peerStarter = create(connectURI, genesisJson, true);
+        PeerStarter peerStarter = create(connectURI, genesisJson, genesisForks, true);
+
         Storage storage = peerStarter.getStorage();
-
-        BlockchainProvider blockchainProvider = new BlockchainProvider(storage, null);
-
         Storage.Metadata metadata = storage.metadata();
         BlockID lastBlockId = metadata.getLastBlockID();
         BlockID genesisBlockId = metadata.getGenesisBlockID();
 
+        BlockchainProvider blockchainProvider = peerStarter.getBlockchainProvider();
         assertEquals(blockchainProvider.getLastBlock().getID().getValue(), lastBlockId.getValue());
         assertNotNull(blockchainProvider.getBlock(genesisBlockId));
     }
@@ -41,13 +46,12 @@ public class PeerStarterTest {
     @Test
     public void testBlockSnapshot() throws Exception {
 
-        PeerStarter peerStarter = create(connectURI, genesisJson, true);
+        PeerStarter peerStarter = create(connectURI, genesisJson, genesisForks, true);
 
-        Storage storage = peerStarter.getStorage();
-
-        BlockchainProvider blockchainProvider = new BlockchainProvider(storage, null);
+        BlockchainProvider blockchainProvider = peerStarter.getBlockchainProvider();
         Block lastBlock = blockchainProvider.getLastBlock();
-        LedgerProvider ledgerProvider = new LedgerProvider(storage);
+
+        LedgerProvider ledgerProvider = peerStarter.getLedgerProvider();
         ILedger ledger = ledgerProvider.getLedger(lastBlock);
 
         assertEquals(lastBlock.getSnapshot(), ledger.getHash());
@@ -59,8 +63,8 @@ public class PeerStarterTest {
 
         try {
 
-            PeerStarter ps1 = create(connectURI, genesisJson, true);
-            PeerStarter ps2 = create(connectURI, genesisJson, false);
+            PeerStarter ps1 = create(connectURI, genesisJson, genesisForks, true);
+            PeerStarter ps2 = create(connectURI, genesisJson, genesisForks, false);
 
             assertTrue("Snapshot mode switched", true);
         } catch (Exception ex) {
@@ -74,8 +78,8 @@ public class PeerStarterTest {
 
         try {
 
-            PeerStarter ps1 = create(connectURI, genesisJson, false);
-            PeerStarter ps2 = create(connectURI, genesisJson, true);
+            PeerStarter ps1 = create(connectURI, genesisJson, genesisForks, false);
+            PeerStarter ps2 = create(connectURI, genesisJson, genesisForks, true);
 
             assertTrue("Snapshot mode switched", false);
         } catch (Exception ex) {
@@ -86,15 +90,15 @@ public class PeerStarterTest {
     @Test
     public void mainBlockIds() throws Exception {
         String connectURI = "jdbc:sqlite:file:memInitializerJsonTest4?mode=memory&cache=shared";
-        PeerStarter peerStarter = create(connectURI, "eon_network/main/genesis_block.json", true);
+        PeerStarter peerStarter =
+                create(connectURI, "eon_network/main/genesis_block.json", "eon_network/main/forks.json", true);
+
         Storage storage = peerStarter.getStorage();
-
-        BlockchainProvider blockchainProvider = new BlockchainProvider(storage, null);
-
         Storage.Metadata metadata = storage.metadata();
         BlockID lastBlockId = metadata.getLastBlockID();
         BlockID genesisBlockId = metadata.getGenesisBlockID();
 
+        BlockchainProvider blockchainProvider = peerStarter.getBlockchainProvider();
         assertEquals(blockchainProvider.getLastBlock().getID().getValue(), lastBlockId.getValue());
         assertNotNull(blockchainProvider.getBlock(genesisBlockId));
     }
@@ -102,9 +106,10 @@ public class PeerStarterTest {
     @Test
     public void forksTest_OK() throws Exception {
         String connectURI = "jdbc:sqlite:file:memInitializerJsonTest5?mode=memory&cache=shared";
-        Config config = createConfig(connectURI, "./com/exscudo/eon/app/IT/genesis_block.json", true);
-        config.setForksFile("./com/exscudo/eon/app/IT/forks.json");
-        PeerStarter peerStarter = new PeerStarter(config);
+        PeerStarter peerStarter = create(connectURI,
+                                         "./com/exscudo/eon/app/IT/genesis_block.json",
+                                         "./com/exscudo/eon/app/IT/forks.json",
+                                         true);
 
         IFork fork = peerStarter.getFork();
 
@@ -125,64 +130,97 @@ public class PeerStarterTest {
     }
 
     @Test
-    public void forksTest_err_1() throws Exception {
+    public void forksTest_err_add_cast_exception() throws Exception {
+        expectedException.expect(IOException.class);
 
-        try {
-            String connectURI = "jdbc:sqlite:file:memInitializerJsonTest6?mode=memory&cache=shared";
-            Config config = createConfig(connectURI, "./com/exscudo/eon/app/IT/genesis_block.json", true);
-            config.setForksFile("./com/exscudo/eon/app/IT/forks_err_add.json");
-            PeerStarter peerStarter = new PeerStarter(config);
+        String connectURI = "jdbc:sqlite:file:memInitializerJsonTest6?mode=memory&cache=shared";
+        PeerStarter peerStarter = create(connectURI,
+                                         "./com/exscudo/eon/app/IT/genesis_block.json",
+                                         "com/exscudo/eon/app/IT/forks_err_add_cast_exception.json",
+                                         true);
 
-            peerStarter.getFork();
-
-            Assert.fail();
-        } catch (NullPointerException ex) {
-            Assert.assertEquals("Unknown type: PaymentTTT", ex.getMessage());
-        }
+        peerStarter.getFork();
     }
 
     @Test
-    public void forksTest_err_2() throws Exception {
+    public void forksTest_err_re_adding_parser() throws Exception {
+        expectedException.expect(IOException.class);
 
-        try {
-            String connectURI = "jdbc:sqlite:file:memInitializerJsonTest7?mode=memory&cache=shared";
-            Config config = createConfig(connectURI, "./com/exscudo/eon/app/IT/genesis_block.json", true);
-            config.setForksFile("./com/exscudo/eon/app/IT/forks_err_del.json");
-            PeerStarter peerStarter = new PeerStarter(config);
+        String connectURI = "jdbc:sqlite:file:memInitializerJsonTest7?mode=memory&cache=shared";
+        PeerStarter peerStarter = create(connectURI,
+                                         "./com/exscudo/eon/app/IT/genesis_block.json",
+                                         "./com/exscudo/eon/app/IT/forks_err_add_re_adding.json",
+                                         true);
 
-            peerStarter.getFork();
-
-            Assert.fail();
-        } catch (NullPointerException ex) {
-            Assert.assertEquals("Unknown type: PaymentTTT", ex.getMessage());
-        }
+        peerStarter.getFork();
     }
 
     @Test
-    public void forksTest_err_3() throws Exception {
+    public void forksTest_err_unknown_parser() throws Exception {
+        expectedException.expect(IOException.class);
 
-        try {
-            String connectURI = "jdbc:sqlite:file:memInitializerJsonTest8?mode=memory&cache=shared";
-            Config config = createConfig(connectURI, "./com/exscudo/eon/app/IT/genesis_block.json", true);
-            config.setForksFile("./com/exscudo/eon/app/IT/forks_err_format.json");
-            PeerStarter peerStarter = new PeerStarter(config);
+        String connectURI = "jdbc:sqlite:file:memInitializerJsonTest7?mode=memory&cache=shared";
+        PeerStarter peerStarter = create(connectURI,
+                                         "./com/exscudo/eon/app/IT/genesis_block.json",
+                                         "./com/exscudo/eon/app/IT/forks_err_add_unknown_parser.json",
+                                         true);
 
-            peerStarter.getFork();
+        peerStarter.getFork();
+    }
 
-            Assert.fail();
-        } catch (IOException ex) {
-            Assert.assertEquals("Invalid forks-file format", ex.getMessage());
-        }
+    @Test
+    public void forksTest_err_add_unknown_type_parser() throws Exception {
+        expectedException.expect(NullPointerException.class);
+        expectedException.expectMessage("Unknown type: PaymentTTT");
+
+        String connectURI = "jdbc:sqlite:file:memInitializerJsonTest6?mode=memory&cache=shared";
+        PeerStarter peerStarter = create(connectURI,
+                                         "./com/exscudo/eon/app/IT/genesis_block.json",
+                                         "com/exscudo/eon/app/IT/forks_err_add_unknwon_type.json",
+                                         true);
+
+        peerStarter.getFork();
+    }
+
+    @Test
+    public void forksTest_err_del_parser() throws Exception {
+        expectedException.expect(NullPointerException.class);
+        expectedException.expectMessage("Unknown type: PaymentTTT");
+
+        String connectURI = "jdbc:sqlite:file:memInitializerJsonTest8?mode=memory&cache=shared";
+        PeerStarter peerStarter = create(connectURI,
+                                         "./com/exscudo/eon/app/IT/genesis_block.json",
+                                         "./com/exscudo/eon/app/IT/forks_err_del.json",
+                                         true);
+
+        peerStarter.getFork();
+    }
+
+    @Test
+    public void forksTest_err_format() throws Exception {
+        expectedException.expect(IOException.class);
+        expectedException.expectMessage("Invalid forks-file format");
+
+        String connectURI = "jdbc:sqlite:file:memInitializerJsonTest8?mode=memory&cache=shared";
+        PeerStarter peerStarter = create(connectURI,
+                                         "./com/exscudo/eon/app/IT/genesis_block.json",
+                                         "./com/exscudo/eon/app/IT/forks_err_format.json",
+                                         true);
+
+        peerStarter.getFork();
     }
 
     private PeerStarter create(String connectURI,
                                String genesis,
+                               String forks,
                                boolean fullSync) throws SQLException, IOException, ClassNotFoundException {
 
-        return new PeerStarter(createConfig(connectURI, genesis, fullSync));
+        PeerStarter peerStarter = new PeerStarter(createConfig(connectURI, genesis, forks, fullSync));
+        peerStarter.initialize();
+        return peerStarter;
     }
 
-    private Config createConfig(String connectURI, String genesis, boolean fullSync) {
+    private Config createConfig(String connectURI, String genesis, String forks, boolean fullSync) {
         Config config = new Config();
         config.setHost("0");
         config.setBlacklistingPeriod(30000);
@@ -190,6 +228,7 @@ public class PeerStarterTest {
         config.setFullSync(fullSync);
         config.setDbUrl(connectURI);
         config.setGenesisFile(genesis);
+        config.setForksFile(forks);
 
         return config;
     }

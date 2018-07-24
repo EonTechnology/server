@@ -3,27 +3,15 @@ package com.exscudo.peer.core.blockchain;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.Callable;
 
-import com.exscudo.peer.core.Constant;
 import com.exscudo.peer.core.blockchain.storage.DbBlock;
-import com.exscudo.peer.core.blockchain.storage.DbNestedTransaction;
 import com.exscudo.peer.core.blockchain.storage.DbTransaction;
 import com.exscudo.peer.core.blockchain.storage.converters.DTOConverter;
 import com.exscudo.peer.core.common.exceptions.DataAccessException;
-import com.exscudo.peer.core.common.exceptions.ValidateException;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Transaction;
-import com.exscudo.peer.core.data.identifier.AccountID;
-import com.exscudo.peer.core.data.identifier.BaseIdentifier;
 import com.exscudo.peer.core.data.identifier.BlockID;
-import com.exscudo.peer.core.data.identifier.TransactionID;
-import com.exscudo.peer.core.middleware.TransactionParser;
 import com.exscudo.peer.core.storage.Storage;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
@@ -40,27 +28,20 @@ public class Blockchain {
     private Block milestoneBlock;
     private Block headBlock;
 
-    private HashMap<BlockID, Set<TransactionID>> tranCache = new HashMap<>();
     private HashMap<BlockID, BlockID> prevCache = new HashMap<>();
-    private HashMap<BlockID, Set<TransactionID>> nestedTranCache = new HashMap<>();
 
     // region Prepared Statements
 
     private Dao<DbBlock, Long> daoBlocks;
     private Dao<DbTransaction, Long> daoTransactions;
-    private Dao<DbNestedTransaction, Long> daoNestedTransactions;
 
     private QueryBuilder<DbBlock, Long> blockQueryBuilder = null;
     private QueryBuilder<DbBlock, Long> blockByHeightQueryBuilder = null;
     private QueryBuilder<DbBlock, Long> blockExistsQueryBuilder = null;
-    private QueryBuilder<DbTransaction, Long> transactionsQueryBuilder = null;
     private QueryBuilder<DbBlock, Long> prevBlockIdQueryBuilder = null;
-    private QueryBuilder<DbNestedTransaction, Long> nestedTransactionQueryBuilder = null;
 
     private ArgumentHolder vID = new ThreadLocalSelectArg();
     private ArgumentHolder vHeight = new ThreadLocalSelectArg();
-    private ArgumentHolder vTxBlockID = new ThreadLocalSelectArg();
-    private ArgumentHolder vNestedTxBlockID = new ThreadLocalSelectArg();
 
     // endregion
 
@@ -74,7 +55,6 @@ public class Blockchain {
         try {
             daoBlocks = DaoManager.createDao(storage.getConnectionSource(), DbBlock.class);
             daoTransactions = DaoManager.createDao(storage.getConnectionSource(), DbTransaction.class);
-            daoNestedTransactions = DaoManager.createDao(storage.getConnectionSource(), DbNestedTransaction.class);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -95,19 +75,22 @@ public class Blockchain {
             @Override
             public Block call() throws Exception {
                 headBlock = doSave(newBlock);
+                if (milestoneBlock == null) {
+                    milestoneBlock = headBlock;
+                }
                 return headBlock;
             }
         });
     }
 
-    public Block getByHeight(int generationHeight) {
+    public Block getByHeight(int height) {
 
         try {
 
             // Fast search in main blockchain
-            if (generationHeight < milestoneBlock.getHeight()) {
+            if (height < milestoneBlock.getHeight()) {
 
-                DbBlock targetBlock = getBlockByHeight(generationHeight);
+                DbBlock targetBlock = getBlockByHeight(height);
 
                 if (containsBlock(milestoneBlock.getID().getValue())) {
                     return DTOConverter.convert(targetBlock, storage);
@@ -118,13 +101,13 @@ public class Blockchain {
             BlockID currBlockID = headBlock.getPreviousBlock();
             int currHeight = headBlock.getHeight() - 1;
 
-            while (currHeight > generationHeight && currBlockID != null) {
+            while (currHeight > height && currBlockID != null) {
 
-                currBlockID = getPrev(currBlockID);
+                currBlockID = getPrevBlockID(currBlockID);
                 currHeight--;
             }
 
-            if (currBlockID != null && currHeight == generationHeight) {
+            if (currBlockID != null && currHeight == height) {
 
                 DbBlock dbBlock = getBlock(currBlockID.getValue());
                 if (dbBlock != null) {
@@ -133,84 +116,6 @@ public class Blockchain {
             }
 
             return null;
-        } catch (SQLException e) {
-            throw new DataAccessException(e);
-        }
-    }
-
-    public boolean containsTransaction(Transaction transaction) {
-
-        try {
-
-            int currTimestamp = transaction.getTimestamp();
-            TransactionID txID = transaction.getID();
-
-            Set<String> set = new HashSet<>();
-            if (transaction.hasNestedTransactions()) {
-
-                for (Map.Entry<String, Transaction> e : transaction.getNestedTransactions().entrySet()) {
-                    set.add(e.getKey());
-
-                    Transaction tx = e.getValue();
-                    currTimestamp = Math.min(currTimestamp, tx.getTimestamp());
-                }
-            }
-
-            // Simple search in headBlock
-            for (Transaction tx : headBlock.getTransactions()) {
-                if (tx.getID().equals(txID)) {
-                    return true;
-                }
-
-                if (tx.hasNestedTransactions()) {
-
-                    Set<String> aSet = new HashSet<>(tx.getNestedTransactions().keySet());
-                    aSet.retainAll(set);
-                    if (!aSet.isEmpty()) {
-                        return true;
-                    }
-                }
-            }
-
-            // If not exist in headBlock - search in DB
-            BlockID currBlockId = headBlock.getPreviousBlock();
-            int timestamp = headBlock.getTimestamp() - Constant.BLOCK_PERIOD;
-
-            while (timestamp > currTimestamp) {
-
-                Set<TransactionID> idList = tranCache.get(currBlockId);
-
-                if (idList == null) {
-                    idList = getTransactionList(currBlockId);
-                    tranCache.put(currBlockId, idList);
-                }
-
-                if (idList.contains(txID)) {
-                    return true;
-                }
-
-                if (transaction.hasNestedTransactions()) {
-                    Set<TransactionID> nestedIdList = nestedTranCache.get(currBlockId);
-
-                    if (nestedIdList == null) {
-                        nestedIdList = getNestedTransactionList(currBlockId);
-                        nestedTranCache.put(currBlockId, nestedIdList);
-                    }
-
-                    for (String id : set) {
-                        if (nestedIdList.contains(new TransactionID(id))) {
-                            return true;
-                        }
-                    }
-                }
-
-                timestamp -= Constant.BLOCK_PERIOD;
-
-                currBlockId = getPrev(currBlockId);
-                Objects.requireNonNull(currBlockId);
-            }
-
-            return false;
         } catch (SQLException e) {
             throw new DataAccessException(e);
         }
@@ -231,33 +136,12 @@ public class Blockchain {
 
             for (Transaction tx : list) {
 
-                AccountID recipientID;
-                try {
-                    recipientID = TransactionParser.getRecipient(tx);
-                } catch (ValidateException e) {
-                    throw new RuntimeException(e);
-                }
-
                 DbTransaction dbTx = DTOConverter.convert(tx);
                 dbTx.setHeight(newBlock.getHeight());
                 dbTx.setBlockID(newBlock.getID().getValue());
                 dbTx.setTag(0);
-                dbTx.setRecipientID(BaseIdentifier.getValueOrRef(recipientID));
 
                 daoTransactions.create(dbTx);
-
-                if (tx.hasNestedTransactions()) {
-
-                    for (Transaction nestedTx : tx.getNestedTransactions().values()) {
-
-                        DbNestedTransaction dbNestedTx = new DbNestedTransaction();
-                        dbNestedTx.setBlockID(newBlock.getID().getValue());
-                        dbNestedTx.setOwnerID(tx.getID().getValue());
-                        dbNestedTx.setId(nestedTx.getID().getValue());
-
-                        daoNestedTransactions.create(dbNestedTx);
-                    }
-                }
             }
         }
 
@@ -299,47 +183,7 @@ public class Blockchain {
         return (countOf != 0);
     }
 
-    private Set<TransactionID> getTransactionList(BlockID blockID) throws SQLException {
-
-        if (transactionsQueryBuilder == null) {
-            transactionsQueryBuilder = daoTransactions.queryBuilder();
-            transactionsQueryBuilder.where().eq("block_id", vTxBlockID);
-            transactionsQueryBuilder.selectColumns("id");
-        }
-
-        vTxBlockID.setValue(blockID.getValue());
-
-        HashSet<TransactionID> set = new HashSet<>();
-
-        List<DbTransaction> query = transactionsQueryBuilder.query();
-        for (DbTransaction tx : query) {
-            set.add(new TransactionID(tx.getId()));
-        }
-
-        return set;
-    }
-
-    private Set<TransactionID> getNestedTransactionList(BlockID currBlockId) throws SQLException {
-
-        if (nestedTransactionQueryBuilder == null) {
-            nestedTransactionQueryBuilder = daoNestedTransactions.queryBuilder();
-            nestedTransactionQueryBuilder.where().eq("block_id", vNestedTxBlockID);
-            nestedTransactionQueryBuilder.selectColumns("id");
-        }
-
-        vNestedTxBlockID.setValue(currBlockId.getValue());
-
-        HashSet<TransactionID> set = new HashSet<>();
-
-        List<DbNestedTransaction> query = nestedTransactionQueryBuilder.query();
-        for (DbNestedTransaction tx : query) {
-            set.add(new TransactionID(tx.getId()));
-        }
-
-        return set;
-    }
-
-    private BlockID getPrev(BlockID id) throws SQLException {
+    public BlockID getPrevBlockID(BlockID id) throws SQLException {
 
         BlockID prevId = prevCache.get(id);
         if (prevId == null) {
@@ -361,5 +205,9 @@ public class Blockchain {
         }
 
         return prevId;
+    }
+
+    public Block getMilestoneBlock() {
+        return milestoneBlock;
     }
 }
