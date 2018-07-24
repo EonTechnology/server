@@ -92,8 +92,8 @@ public class QuorumTransactionTest extends AbstractTransactionTest {
         expectedException.expectMessage(Resources.TRANSACTION_TYPE_INVALID_FORMAT);
 
         HashMap<String, Object> map = new HashMap<>();
-        map.put("all", 50);
-        map.put("*", 70);
+        map.put("all", 50L);
+        map.put("*", 70L);
 
         Transaction tx = new TransactionBuilder(TransactionType.Quorum, map).build(networkID, sender);
         validate(tx);
@@ -105,7 +105,7 @@ public class QuorumTransactionTest extends AbstractTransactionTest {
         expectedException.expectMessage(Resources.QUORUM_OUT_OF_RANGE);
 
         HashMap<String, Object> map = new HashMap<>();
-        map.put("all", ValidationModeProperty.MAX_QUORUM + 1);
+        map.put("all", ValidationModeProperty.MAX_QUORUM + 1L);
 
         Transaction tx = new TransactionBuilder(TransactionType.Quorum, map).build(networkID, sender);
         validate(tx);
@@ -117,7 +117,7 @@ public class QuorumTransactionTest extends AbstractTransactionTest {
         expectedException.expectMessage(Resources.QUORUM_OUT_OF_RANGE);
 
         HashMap<String, Object> map = new HashMap<>();
-        map.put("all", ValidationModeProperty.MIN_QUORUM - 1);
+        map.put("all", ValidationModeProperty.MIN_QUORUM - 1L);
 
         Transaction tx = new TransactionBuilder(TransactionType.Quorum, map).build(networkID, sender);
         validate(tx);
@@ -138,9 +138,9 @@ public class QuorumTransactionTest extends AbstractTransactionTest {
         expectedException.expectMessage(Resources.TRANSACTION_TYPE_UNKNOWN);
 
         HashMap<String, Object> map = new HashMap<>();
-        map.put("all", 50);
-        map.put(String.valueOf(TransactionType.Payment), 70);
-        map.put(String.valueOf(100500), 30);
+        map.put("all", 50L);
+        map.put(String.valueOf(TransactionType.Payment), 70L);
+        map.put(String.valueOf(100500), 30L);
 
         Transaction tx = new TransactionBuilder(TransactionType.Quorum, map).build(networkID, sender);
         validate(tx);
@@ -152,8 +152,8 @@ public class QuorumTransactionTest extends AbstractTransactionTest {
         expectedException.expectMessage(Resources.QUORUM_ILLEGAL_USAGE);
 
         HashMap<String, Object> map = new HashMap<>();
-        map.put("all", 50);
-        map.put(String.valueOf(TransactionType.Payment), 50);
+        map.put("all", 50L);
+        map.put(String.valueOf(TransactionType.Payment), 50L);
 
         Transaction tx = new TransactionBuilder(TransactionType.Quorum, map).build(networkID, sender);
         validate(tx);
@@ -177,8 +177,8 @@ public class QuorumTransactionTest extends AbstractTransactionTest {
         expectedException.expectMessage(Resources.QUORUM_OUT_OF_RANGE);
 
         HashMap<String, Object> map = new HashMap<>();
-        map.put("all", 50);
-        map.put(String.valueOf(TransactionType.Payment), ValidationModeProperty.MAX_QUORUM + 1);
+        map.put("all", 50L);
+        map.put(String.valueOf(TransactionType.Payment), ValidationModeProperty.MAX_QUORUM + 1L);
 
         Transaction tx = new TransactionBuilder(TransactionType.Quorum, map).build(networkID, sender);
         validate(tx);
@@ -190,8 +190,8 @@ public class QuorumTransactionTest extends AbstractTransactionTest {
         expectedException.expectMessage(Resources.QUORUM_OUT_OF_RANGE);
 
         HashMap<String, Object> map = new HashMap<>();
-        map.put("all", 50);
-        map.put(String.valueOf(TransactionType.Payment), ValidationModeProperty.MIN_QUORUM - 1);
+        map.put("all", 50L);
+        map.put(String.valueOf(TransactionType.Payment), ValidationModeProperty.MIN_QUORUM - 1L);
 
         Transaction tx = new TransactionBuilder(TransactionType.Quorum, map).build(networkID, sender);
         validate(tx);
@@ -203,8 +203,8 @@ public class QuorumTransactionTest extends AbstractTransactionTest {
         expectedException.expectMessage(Resources.QUORUM_FOR_TYPE_CAN_NOT_BE_CHANGED);
 
         HashMap<String, Object> map = new HashMap<>();
-        map.put("all", 50);
-        map.put(String.valueOf(TransactionType.Payment), 90);
+        map.put("all", 50L);
+        map.put(String.valueOf(TransactionType.Payment), 90L);
 
         Transaction tx = new TransactionBuilder(TransactionType.Quorum, map).build(networkID, sender);
         validate(tx);

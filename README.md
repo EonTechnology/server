@@ -1,8 +1,6 @@
 EON peer core source code.
 
-
-Description
------------
+# Description
 
 EON is a decentralized blockchain based-platform that provides an 
 infrastructure for the Exscudo Ecosystem services. The  architecture  of  the  
@@ -15,36 +13,45 @@ operations.
 
 This repository contains the implementation of the peer.
 
+# How to build and run
+## Use Git to clone the required files
 
-How to build and run
---------------------
+```bash
+git clone --branch <name> https://github.com/EonTechnology/server.git
+cd ./server
+```
+The 'master' branch is used for the Main network, the 'test3' - for Test3 network.
+
+## Running node
+
+There are 2 ways to run node - Jetty (embedded server) and Docker. Below you will find two separate descriptions for each way.
+EON_NETWORK environment variable must be specified for select network (dev/test3/main). 
+
+### Jetty
 
 Follows the standard Maven building procedure (see https://maven.apache.org/).
 ```bash
 mvn package
 ```
-
-EON_NETWORK environment variable must be specified for select network (dev/test3/main)
-
 Run embedded server:
 ```bash
 mvn jetty:run
 ```
-
 Run with setting generation account and network:
 ```bash
 EON_NETWORK=... mvn jetty:run -DSECRET_SEED=...
 ```
 
-Or build and run docker-image
+### Docker
+
+Build and run docker-image
 ```bash
 docker build -t eon/peer .
 docker run -d -v $(pwd)/db:/app/db -p 9443:9443 -e EON_NETWORK=... -e SECRET_SEED=... eon/peer
 ```
 
+## Enable database clearing
 
-Enable database clearing
-------------------------
 Clears the database from the side blockchain and unused items in the state tree.
 Disabled by default.
 
@@ -52,8 +59,8 @@ To enable:
 * Jetty: `mvn jetty:run -Dblockchain.clean=true ...`
 * Docker: `docker run ... -e CLEAN_BLOCKCHAIN=true ...`
 
-Truncate history
-----------------
+## Truncate history
+
 A weekly block history is stored. Fast initial synchronization is used.
 Disabled by default.
 
@@ -63,8 +70,7 @@ To enable:
 * Jetty: `mvn jetty:run -Dblockchain.full=false ...`
 * Docker: `docker run ... -e FULL_BLOCKCHAIN=false ...`
 
-Directory Layout
-----------------
+# Directory Layout
 
 **peer-core** - Core of the node without binding to the organization of data storage and the implementation of the transport.
 
@@ -78,8 +84,7 @@ Directory Layout
 
 **json-rpc** - Simple implementation of the JRPC protocol.
 
-License
--------
+# License
 
 Project is issued under GNU LESSER GENERAL PUBLIC LICENSE version 3.0
 

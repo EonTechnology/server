@@ -112,7 +112,7 @@ public class DelegateTransactionTest extends AbstractTransactionTest {
 
         AccountID id = new AccountID(sender.getPublicKey());
         HashMap<String, Object> map = new HashMap<>();
-        map.put(id.toString(), ValidationModeProperty.MAX_WEIGHT + 1);
+        map.put(id.toString(), ValidationModeProperty.MAX_WEIGHT + 1L);
         Transaction tx = new TransactionBuilder(TransactionType.Delegate, map).build(networkID, sender);
         validate(tx);
     }
@@ -124,7 +124,7 @@ public class DelegateTransactionTest extends AbstractTransactionTest {
 
         AccountID id = new AccountID(sender.getPublicKey());
         HashMap<String, Object> map = new HashMap<>();
-        map.put(id.toString(), ValidationModeProperty.MIN_WEIGHT - 1);
+        map.put(id.toString(), ValidationModeProperty.MIN_WEIGHT - 1L);
         Transaction tx = new TransactionBuilder(TransactionType.Delegate, map).build(networkID, sender);
         validate(tx);
     }

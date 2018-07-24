@@ -36,17 +36,16 @@ public class DelegateParser implements ITransactionParser {
                 throw new ValidateException(Resources.ACCOUNT_ID_INVALID_FORMAT);
             }
 
-            int weight;
-            try {
-                weight = Integer.parseInt(String.valueOf(entry.getValue()));
-                if (weight < ValidationModeProperty.MIN_WEIGHT || weight > ValidationModeProperty.MAX_WEIGHT) {
-                    throw new ValidateException(Resources.WEIGHT_OUT_OF_RANGE);
-                }
-            } catch (NumberFormatException e) {
+            if (!(entry.getValue() instanceof Long)) {
                 throw new ValidateException(Resources.WEIGHT_INVALID_FORMAT);
             }
 
-            action.addDelegate(id, weight);
+            long weight = (long) entry.getValue();
+            if (weight < ValidationModeProperty.MIN_WEIGHT || weight > ValidationModeProperty.MAX_WEIGHT) {
+                throw new ValidateException(Resources.WEIGHT_OUT_OF_RANGE);
+            }
+
+            action.addDelegate(id, (int) weight);
         }
 
         return new ILedgerAction[] {

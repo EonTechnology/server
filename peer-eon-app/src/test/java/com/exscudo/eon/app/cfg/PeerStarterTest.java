@@ -21,7 +21,7 @@ import org.junit.Test;
 
 public class PeerStarterTest {
     private static final String connectURI = "jdbc:sqlite:file:memInitializerJsonTest?mode=memory&cache=shared";
-    private static final String genesisJson = "eon_network/dev/genesis_block.json";
+    private static final String genesisJson = "eon_network/main/genesis_block.json";
 
     @Test
     public void testBlockIds() throws Exception {
@@ -81,22 +81,6 @@ public class PeerStarterTest {
         } catch (Exception ex) {
             assertTrue("Snapshot mode cannot be switched", true);
         }
-    }
-
-    @Test
-    public void mainBlockIds() throws Exception {
-        String connectURI = "jdbc:sqlite:file:memInitializerJsonTest4?mode=memory&cache=shared";
-        PeerStarter peerStarter = create(connectURI, "eon_network/main/genesis_block.json", true);
-        Storage storage = peerStarter.getStorage();
-
-        BlockchainProvider blockchainProvider = new BlockchainProvider(storage, null);
-
-        Storage.Metadata metadata = storage.metadata();
-        BlockID lastBlockId = metadata.getLastBlockID();
-        BlockID genesisBlockId = metadata.getGenesisBlockID();
-
-        assertEquals(blockchainProvider.getLastBlock().getID().getValue(), lastBlockId.getValue());
-        assertNotNull(blockchainProvider.getBlock(genesisBlockId));
     }
 
     @Test

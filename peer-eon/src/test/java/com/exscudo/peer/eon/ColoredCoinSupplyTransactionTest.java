@@ -82,7 +82,7 @@ public class ColoredCoinSupplyTransactionTest extends AbstractTransactionTest {
         expectedException.expectMessage(Resources.MONEY_SUPPLY_OUT_OF_RANGE);
 
         HashMap<String, Object> map = new HashMap<>();
-        map.put("supply", -1);
+        map.put("supply", -1L);
         Transaction tx = new TransactionBuilder(TransactionType.ColoredCoinSupply, map).build(networkID, sender);
         validate(tx);
     }

@@ -86,8 +86,8 @@ public class ColoredCoinRegistrationTransactionTest extends AbstractTransactionT
         expectedException.expectMessage(Resources.EMISSION_OUT_OF_RANGE);
 
         HashMap<String, Object> map = new HashMap<>();
-        map.put("emission", -1);
-        map.put("decimal", 2);
+        map.put("emission", -1L);
+        map.put("decimal", 2L);
         Transaction tx = new TransactionBuilder(TransactionType.ColoredCoinRegistration, map).build(networkID, sender);
         validate(tx);
     }

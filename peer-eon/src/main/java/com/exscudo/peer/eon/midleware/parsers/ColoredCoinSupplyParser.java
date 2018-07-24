@@ -26,14 +26,13 @@ public class ColoredCoinSupplyParser implements ITransactionParser {
             throw new ValidateException(Resources.ATTACHMENT_UNKNOWN_TYPE);
         }
 
-        long newMoneySupply;
-        try {
-            newMoneySupply = Long.parseLong(String.valueOf(data.get("supply")));
-            if (newMoneySupply < 0) {
-                throw new ValidateException(Resources.MONEY_SUPPLY_OUT_OF_RANGE);
-            }
-        } catch (NumberFormatException e) {
+        if (!(data.get("supply") instanceof Long)) {
             throw new ValidateException(Resources.MONEY_SUPPLY_INVALID_FORMAT);
+        }
+
+        long newMoneySupply = (long) data.get("supply");
+        if (newMoneySupply < 0) {
+            throw new ValidateException(Resources.MONEY_SUPPLY_OUT_OF_RANGE);
         }
 
         return new ILedgerAction[] {

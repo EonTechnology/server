@@ -51,7 +51,11 @@ public class TransactionBuilder<TConcreteBuilder extends TransactionBuilder<?>> 
     }
 
     public TConcreteBuilder withParam(String name, Object value) {
-        this.data.put(name, value);
+        if (value instanceof Number) {
+            this.data.put(name, ((Number) value).longValue());
+        } else {
+            this.data.put(name, value);
+        }
 
         @SuppressWarnings("unchecked")
         TConcreteBuilder cast = (TConcreteBuilder) this;

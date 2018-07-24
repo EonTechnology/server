@@ -84,7 +84,11 @@ public class StorageTransactionMapper {
             attachment = new HashMap<>();
             for (Object k : ((Map<?, ?>) obj).keySet()) {
                 Object v = ((Map<?, ?>) obj).get(k);
-                attachment.put(k.toString(), v);
+                if (v instanceof Number) {
+                    attachment.put(k.toString(), ((Number) v).longValue());
+                } else {
+                    attachment.put(k.toString(), v.toString());
+                }
             }
         }
 

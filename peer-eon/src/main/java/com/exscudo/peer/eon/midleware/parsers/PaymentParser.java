@@ -25,14 +25,13 @@ public class PaymentParser implements ITransactionParser {
             throw new ValidateException(Resources.ATTACHMENT_UNKNOWN_TYPE);
         }
 
-        long amount;
-        try {
-            amount = Long.parseLong(String.valueOf(data.get("amount")));
-            if (amount <= 0) {
-                throw new ValidateException(Resources.AMOUNT_OUT_OF_RANGE);
-            }
-        } catch (NumberFormatException e) {
+        if (!(data.get("amount") instanceof Long)) {
             throw new ValidateException(Resources.AMOUNT_INVALID_FORMAT);
+        }
+
+        long amount = (long) data.get("amount");
+        if (amount <= 0) {
+            throw new ValidateException(Resources.AMOUNT_OUT_OF_RANGE);
         }
 
         AccountID recipientID;
