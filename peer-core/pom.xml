@@ -5,11 +5,11 @@
     <parent>
         <groupId>com.exscudo</groupId>
         <artifactId>peer-all</artifactId>
-        <version>0.13.0-SNAPSHOT</version>
+        <version>0.13.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>peer-core</artifactId>
-    <version>0.13.0-SNAPSHOT</version>
+    <version>0.13.1-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>peer-core</name>

@@ -46,4 +46,21 @@ public class EmptyPayerValidationRuleTest extends AbstractValidationRuleTest {
         Transaction tx = Builder.newTransaction(timeProvider).build(networkID, sender);
         validate(tx);
     }
+
+    @Test
+    public void payer_nested_error() throws Exception {
+        expectedException.expect(ValidateException.class);
+        expectedException.expectMessage("Forbidden.");
+
+        Transaction tx = Builder.newTransaction(timeProvider)
+                                .payedBy(payerAccount)
+                                .build(networkID, sender, new ISigner[] {payer});
+        validate(Builder.newTransaction(timeProvider).addNested(tx).build(networkID, sender));
+    }
+
+    @Test
+    public void payer_nested_success() throws Exception {
+        Transaction tx = Builder.newTransaction(timeProvider).build(networkID, sender);
+        validate(Builder.newTransaction(timeProvider).addNested(tx).build(networkID, sender));
+    }
 }

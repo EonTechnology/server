@@ -152,20 +152,21 @@ public class ComplexPaymentTestIT {
 
         // try to add another complex transaction with a common nested transaction
 
-        Transaction nestedTx4 = PaymentBuilder.createNew(99L, newAccountID)
+        Transaction nestedTx4 = PaymentBuilder.createNew(1L, accountID)
                                               .validity(timeProvider.get() - 1, 3600)
                                               .forFee(0L)
-                                              .build(ctx.getNetworkID(), ctx.getSigner());
-        Transaction tx5 = ComplexPaymentBuilder.createNew(new Transaction[] {nestedTx4, nestedTx2})
+                                              .refBy(nestedTx1.getID())
+                                              .build(ctx.getNetworkID(), newAccountSigner);
+        Transaction tx5 = ComplexPaymentBuilder.createNew(new Transaction[] {nestedTx1, nestedTx4})
                                                .validity(timeProvider.get(), 3600)
                                                .forFee(30)
                                                .build(ctx.getNetworkID(), newAccountSigner);
         try {
             ctx.transactionBotService.putTransaction(tx5);
-        } catch (Exception ignore) {
-
+            Assert.fail();
+        } catch (Exception ex) {
+            Assert.assertEquals("Invalid sequence. Transaction already exist.", ex.getCause().getMessage());
         }
-        Assert.assertNull(ctx.backlogExplorerService.get(tx5.getID()));
 
         // apply complex payment
 
@@ -186,10 +187,10 @@ public class ComplexPaymentTestIT {
 
         try {
             ctx.transactionBotService.putTransaction(tx5);
-        } catch (Exception ignore) {
-
+            Assert.fail();
+        } catch (Exception ex) {
+            Assert.assertEquals("Invalid sequence. Transaction already exist.", ex.getCause().getMessage());
         }
-        Assert.assertNull(ctx.backlogExplorerService.get(tx5.getID()));
 
         ctx2.fullBlockSync();
         Assert.assertEquals("Blockchain synchronized",

@@ -2,10 +2,10 @@ EON peer core source code.
 
 # Description
 
-EON is a decentralized blockchain based-platform that provides an 
-infrastructure for the Exscudo Ecosystem services. The  architecture  of  the  
-platform  is  built  on  a  simple  core  that realizes a mathematical model and 
-services that provide additional functionality. 
+EON is a decentralized blockchain based-platform that provides an
+infrastructure for the Exscudo Ecosystem services. The architecture of the
+platform is built on a simple core that realizes a mathematical model and
+services that provide additional functionality.
 
 The core forms the decentralized part of the system that consists of a variety 
 of peers and executes the functionality of support on user account and financial 
