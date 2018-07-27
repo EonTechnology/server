@@ -70,7 +70,8 @@ public class TransactionService {
                 getPageBuilderSubQ.orderBy("timestamp", false);
 
                 getPageBuilder = dao.queryBuilder();
-                getPageBuilder.where().in("id", getPageBuilderSubQ);
+                getPageBuilder.where().in("id", getPageBuilderSubQ).and().eq("tag", 1);
+                getPageBuilder.orderBy("timestamp", false);
             }
 
             vAccount.setValue(accountId.getValue());

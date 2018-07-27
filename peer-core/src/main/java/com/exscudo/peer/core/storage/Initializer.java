@@ -12,6 +12,7 @@ import com.exscudo.peer.core.common.Loggers;
 import com.exscudo.peer.core.storage.migrate.DBInitMigrateAction;
 import com.exscudo.peer.core.storage.migrate.DBv2MigrateAction;
 import com.exscudo.peer.core.storage.migrate.DBv3MigrateAction;
+import com.exscudo.peer.core.storage.migrate.DBv4MigrateAction;
 import com.exscudo.peer.core.storage.migrate.IMigrate;
 import com.j256.ormlite.db.SqliteDatabaseType;
 import com.j256.ormlite.jdbc.JdbcSingleConnectionSource;
@@ -45,6 +46,7 @@ public class Initializer implements IInitializer {
         migrates.add(new DBInitMigrateAction(connection));
         migrates.add(new DBv2MigrateAction(connection));
         migrates.add(new DBv3MigrateAction(connection, fork));
+        migrates.add(new DBv4MigrateAction(connection));
 
         try (JdbcSingleConnectionSource connectionSource = new JdbcSingleConnectionSource(connection.getMetaData()
                                                                                                     .getURL(),
