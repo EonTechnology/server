@@ -6,6 +6,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+## 0.13.3 - 2018-08-29 - MainNet fork 6 / TestNet3 fork 6
+### Added
+- Auto-emission mode for colored coins (in MainNet).
+- Transaction type "530 - ColoredCoinRemove" - removing a colored coins (in MainNet).
+- Transaction type "600 - ComplexPayment" - new mechanism of complex transaction (in MainNet).
+
+### Changed
+- End date of the fork.
+- Uses of the complex transaction is extended (in MainNet).
+- Transaction type "520 - ColoredCoinSupply" - money supply management without possible removal (in MainNet).
+
 ## 0.13.2 - 2018-07-26
 ### Changed
 - Fix transaction history.
@@ -23,6 +34,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - End date of the fork.
 - Uses of the complex transaction is extended.
 - Transaction type "520 - ColoredCoinSupply" - money supply management without possible removal.
+
+## 0.12.4 - 2018-07-25 - MainNet fork 5
+### Changed
+- End date of the fork.
+
+### Removed
+- Transaction type "600 - ComplexPayment".
 
 ## 0.12.3 - 2018-06-27 - MainNet fork 4 / TestNet3 fork 4
 ### Changed

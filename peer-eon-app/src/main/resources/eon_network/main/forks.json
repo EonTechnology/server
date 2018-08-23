@@ -1,6 +1,6 @@
 {
   "min_deposit_size": 25000000000,
-  "date_end_all": "2018-08-29T12:00:00.00Z",
+  "date_end_all": "2018-09-26T12:00:00.00Z",
   "forks": [
     {
       "number": 1,
@@ -57,6 +57,30 @@
       "parser": {
         "remove": [
           "ComplexPayment"
+        ]
+      }
+    },
+    {
+      "number": 6,
+      "date_begin": "2018-08-29T12:00:00.00Z",
+      "parser": {
+        "remove": [
+          "ColoredCoinRegistration",
+          "ColoredCoinSupply"
+        ],
+        "add": {
+          "ColoredCoinRegistration": "com.exscudo.peer.eon.midleware.parsers.ColoredCoinRegistrationParserV2",
+          "ColoredCoinSupply": "com.exscudo.peer.eon.midleware.parsers.ColoredCoinSupplyParserV2",
+          "ComplexPayment": "com.exscudo.peer.eon.midleware.parsers.ComplexPaymentParserV2",
+          "ColoredCoinRemove": "com.exscudo.peer.eon.midleware.parsers.ColoredCoinRemoveParser"
+        }
+      },
+      "validator": {
+        "remove" : [
+          "com.exscudo.peer.core.middleware.rules.EmptyPayerValidationRule"
+        ],
+        "add": [
+          "com.exscudo.peer.core.middleware.rules.PayerValidationRule"
         ]
       }
     }
