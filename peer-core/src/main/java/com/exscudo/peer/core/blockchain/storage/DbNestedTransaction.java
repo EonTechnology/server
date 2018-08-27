@@ -17,7 +17,7 @@ public class DbNestedTransaction {
     private long blockID;
 
     @DatabaseField(columnName = "height", canBeNull = false)
-    private int height;
+    private int height = Integer.MIN_VALUE;
 
     public long getId() {
         return id;

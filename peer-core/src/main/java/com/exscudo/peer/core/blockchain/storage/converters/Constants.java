@@ -17,4 +17,5 @@ class Constants {
     static final String CONFIRMATIONS = "confirmations";
     static final String NOTE = "note";
     static final String NESTED_TRANSACTIONS = "nested_transactions";
+    static final String PAYER = "payer_id";
 }

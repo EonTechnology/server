@@ -1,7 +1,5 @@
 package com.exscudo.peer.core.ledger;
 
-import java.util.Iterator;
-
 import com.exscudo.peer.core.data.Account;
 import com.exscudo.peer.core.data.identifier.AccountID;
 
@@ -18,6 +16,4 @@ public interface ILedger extends Iterable<Account> {
     String getHash();
 
     void save();
-
-    Iterator<Account> iterator(AccountID fromAcc);
 }

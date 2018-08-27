@@ -9,6 +9,10 @@ import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.identifier.AccountID;
 import com.exscudo.peer.core.data.identifier.BlockID;
+import com.exscudo.peer.eon.midleware.parsers.DepositParser;
+import com.exscudo.peer.eon.midleware.parsers.PaymentParser;
+import com.exscudo.peer.eon.midleware.parsers.RegistrationParser;
+import com.exscudo.peer.tx.TransactionType;
 import com.exscudo.peer.tx.midleware.builders.DepositBuilder;
 import com.exscudo.peer.tx.midleware.builders.PaymentBuilder;
 import com.exscudo.peer.tx.midleware.builders.RegistrationBuilder;
@@ -37,7 +41,8 @@ public class GenerationTestIT {
     @Test
     public void step_1_generate_block_early() throws Exception {
 
-        PeerContext ctx = new PeerContext(PeerStarterFactory.create(GENERATOR, mockTimeProvider));
+        PeerContext ctx = new PeerContext(PeerStarterFactory.create().seed(GENERATOR).build(mockTimeProvider));
+
         Block lastBlock = ctx.blockExplorerService.getLastBlock();
 
         Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 60);
@@ -52,7 +57,8 @@ public class GenerationTestIT {
     @Test
     public void step_2_generate_block_not_started() throws Exception {
 
-        PeerContext ctx = new PeerContext(PeerStarterFactory.create(GENERATOR, mockTimeProvider));
+        PeerContext ctx = new PeerContext(PeerStarterFactory.create().seed(GENERATOR).build(mockTimeProvider));
+
         Block lastBlock = ctx.blockExplorerService.getLastBlock();
 
         Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 200);
@@ -69,7 +75,8 @@ public class GenerationTestIT {
     @Test
     public void step_3_generate_block() throws Exception {
 
-        PeerContext ctx = new PeerContext(PeerStarterFactory.create(GENERATOR, mockTimeProvider));
+        PeerContext ctx = new PeerContext(PeerStarterFactory.create().seed(GENERATOR).build(mockTimeProvider));
+
         Block lastBlock = ctx.blockExplorerService.getLastBlock();
 
         Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 200);
@@ -90,7 +97,8 @@ public class GenerationTestIT {
     @Test
     public void step_4_generate_2_block() throws Exception {
 
-        PeerContext ctx = new PeerContext(PeerStarterFactory.create(GENERATOR, mockTimeProvider));
+        PeerContext ctx = new PeerContext(PeerStarterFactory.create().seed(GENERATOR).build(mockTimeProvider));
+
         Block lastBlock = ctx.blockExplorerService.getLastBlock();
 
         Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 400);
@@ -110,7 +118,8 @@ public class GenerationTestIT {
     @Test
     public void step_5_SyncBlockService() throws Exception {
 
-        PeerContext ctx = new PeerContext(PeerStarterFactory.create(GENERATOR, mockTimeProvider));
+        PeerContext ctx = new PeerContext(PeerStarterFactory.create().seed(GENERATOR).build(mockTimeProvider));
+
         Block lastBlock = ctx.blockExplorerService.getLastBlock();
 
         Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 400);
@@ -128,14 +137,16 @@ public class GenerationTestIT {
     @Test
     public void step_6_CallSyncBlock() throws Exception {
 
-        PeerContext ctx = new PeerContext(PeerStarterFactory.create(GENERATOR, mockTimeProvider));
+        PeerContext ctx = new PeerContext(PeerStarterFactory.create().seed(GENERATOR).build(mockTimeProvider));
+
         Block lastBlock = ctx.blockExplorerService.getLastBlock();
 
         Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 400);
         ctx.generateBlockForNow();
 
         // Reset DB
-        PeerContext ctx2 = new PeerContext(PeerStarterFactory.create(GENERATOR, mockTimeProvider));
+
+        PeerContext ctx2 = new PeerContext(PeerStarterFactory.create().seed(GENERATOR).build(mockTimeProvider));
 
         Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 400);
 
@@ -156,7 +167,8 @@ public class GenerationTestIT {
     @Test
     public void step_7_generate_by_new_acc() throws Exception {
 
-        PeerContext ctx = new PeerContext(PeerStarterFactory.create(GENERATOR_NEW, mockTimeProvider));
+        PeerContext ctx = new PeerContext(PeerStarterFactory.create().seed(GENERATOR_NEW).build(mockTimeProvider));
+
         Block lastBlock = ctx.blockExplorerService.getLastBlock();
 
         Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 200);
@@ -171,8 +183,22 @@ public class GenerationTestIT {
     @Test
     public void step_8_generate_new_acc() throws Exception {
 
-        PeerContext ctx = new PeerContext(PeerStarterFactory.create(GENERATOR, mockTimeProvider));
-        PeerContext ctxNew = new PeerContext(PeerStarterFactory.create(GENERATOR_NEW, mockTimeProvider));
+        PeerContext ctx = new PeerContext(PeerStarterFactory.create()
+                                                            .route(TransactionType.Payment, new PaymentParser())
+                                                            .route(TransactionType.Registration,
+                                                                   new RegistrationParser())
+                                                            .route(TransactionType.Deposit, new DepositParser())
+                                                            .seed(GENERATOR)
+                                                            .build(mockTimeProvider));
+
+        PeerContext ctxNew = new PeerContext(PeerStarterFactory.create()
+                                                               .route(TransactionType.Payment, new PaymentParser())
+                                                               .route(TransactionType.Registration,
+                                                                      new RegistrationParser())
+                                                               .route(TransactionType.Deposit, new DepositParser())
+                                                               .seed(GENERATOR_NEW)
+                                                               .build(mockTimeProvider));
+
         Block lastBlock = ctx.blockExplorerService.getLastBlock();
 
         Transaction tx = RegistrationBuilder.createNew(ctxNew.getSigner().getPublicKey())
@@ -267,8 +293,10 @@ public class GenerationTestIT {
 
     @Test
     public void step_9_GeneratorReplaceBlock() throws Exception {
-        PeerContext ctx1 = new PeerContext(PeerStarterFactory.create(GENERATOR, mockTimeProvider));
-        PeerContext ctx2 = new PeerContext(PeerStarterFactory.create(GENERATOR2, mockTimeProvider));
+
+        PeerContext ctx1 = new PeerContext(PeerStarterFactory.create().seed(GENERATOR).build(mockTimeProvider));
+
+        PeerContext ctx2 = new PeerContext(PeerStarterFactory.create().seed(GENERATOR2).build(mockTimeProvider));
 
         Block lastBlock = ctx1.blockExplorerService.getLastBlock();
 
@@ -293,8 +321,10 @@ public class GenerationTestIT {
 
         // ctx3 - double of ctx1 state
         // ctx4 - double of ctx2 state
-        PeerContext ctx3 = new PeerContext(PeerStarterFactory.create(GENERATOR, mockTimeProvider));
-        PeerContext ctx4 = new PeerContext(PeerStarterFactory.create(GENERATOR2, mockTimeProvider));
+        PeerContext ctx3 = new PeerContext(PeerStarterFactory.create().seed(GENERATOR).build(mockTimeProvider));
+
+        PeerContext ctx4 = new PeerContext(PeerStarterFactory.create().seed(GENERATOR2).build(mockTimeProvider));
+
         ctx3.generateBlockForNow();
         ctx4.generateBlockForNow();
 
@@ -340,12 +370,20 @@ public class GenerationTestIT {
 
     @Test
     public void step10_generator_should_use_trs_of_parallel_block() throws Exception {
-        PeerContext ctx1 = new PeerContext(PeerStarterFactory.create(GENERATOR2, mockTimeProvider));
-        PeerContext ctx2 = new PeerContext(PeerStarterFactory.create(GENERATOR, mockTimeProvider));
+
+        PeerContext ctx1 = new PeerContext(PeerStarterFactory.create()
+                                                             .route(TransactionType.Payment, new PaymentParser())
+                                                             .seed(GENERATOR2)
+                                                             .build(mockTimeProvider));
+
+        PeerContext ctx2 = new PeerContext(PeerStarterFactory.create()
+                                                             .route(TransactionType.Payment, new PaymentParser())
+                                                             .seed(GENERATOR)
+                                                             .build(mockTimeProvider));
 
         // ctx1 generates block 1
         int netStart = ctx1.blockExplorerService.getLastBlock().getTimestamp();
-        Mockito.when(mockTimeProvider.get()).thenReturn(netStart + 180 * 1 + 1);
+        Mockito.when(mockTimeProvider.get()).thenReturn(netStart + Constant.BLOCK_PERIOD + 1);
         ctx1.generateBlockForNow();
 
         ctx2.setPeerToConnect(ctx1);
@@ -358,7 +396,7 @@ public class GenerationTestIT {
         // put tx1 to ctx2
         AccountID ctx_signer_id = new AccountID(ctx2.getSigner().getPublicKey());
         Transaction tx1 = PaymentBuilder.createNew(10000L, ctx_signer_id)
-                                        .validity(netStart + 180 * 1 + 2, 3600)
+                                        .validity(netStart + Constant.BLOCK_PERIOD + 2, 3600)
                                         .build(ctx1.getNetworkID(), ctx1.getSigner());
         ctx2.transactionBotService.putTransaction(tx1);
 
@@ -376,7 +414,7 @@ public class GenerationTestIT {
 
         // put tx2 to ctx1
         Transaction tx2 = PaymentBuilder.createNew(10000L, ctx_signer_id)
-                                        .validity(netStart + 180 * 1 + 3, 3600)
+                                        .validity(netStart + Constant.BLOCK_PERIOD + 3, 3600)
                                         .build(ctx1.getNetworkID(), ctx1.getSigner());
         ctx1.transactionBotService.putTransaction(tx2);
 
@@ -395,7 +433,13 @@ public class GenerationTestIT {
     @Test
     public void step_11_generate_with_conflicting_transaction_order() throws Exception {
 
-        PeerContext ctx = new PeerContext(PeerStarterFactory.create(GENERATOR, mockTimeProvider));
+        PeerContext ctx = new PeerContext(PeerStarterFactory.create()
+                                                            .route(TransactionType.Payment, new PaymentParser())
+                                                            .route(TransactionType.Registration,
+                                                                   new RegistrationParser())
+                                                            .seed(GENERATOR)
+                                                            .build(mockTimeProvider));
+
         Block lastBlock = ctx.blockExplorerService.getLastBlock();
 
         ISigner newSigner = Signer.createNew(GENERATOR_NEW);

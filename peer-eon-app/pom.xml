@@ -5,19 +5,19 @@
     <parent>
         <groupId>com.exscudo</groupId>
         <artifactId>peer-all</artifactId>
-        <version>0.12.4-SNAPSHOT</version>
+        <version>0.13.3-SNAPSHOT</version>
     </parent>
 
     <artifactId>peer-eon-app</artifactId>
-    <version>0.12.4-SNAPSHOT</version>
+    <version>0.13.3-SNAPSHOT</version>
     <packaging>war</packaging>
 
     <name>peer-eon-app</name>
     <url>http://maven.apache.org</url>
 
     <properties>
-        <org.springframework-version>5.0.5.RELEASE</org.springframework-version>
-        <org.springsecurity-version>5.0.4.RELEASE</org.springsecurity-version>
+        <org.springframework-version>5.0.7.RELEASE</org.springframework-version>
+        <org.springsecurity-version>5.0.6.RELEASE</org.springsecurity-version>
     </properties>
 
     <dependencies>
@@ -27,31 +27,31 @@
         <dependency>
             <groupId>com.exscudo</groupId>
             <artifactId>peer-eon</artifactId>
-            <version>0.12.4-SNAPSHOT</version>
+            <version>0.13.3-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>com.exscudo</groupId>
             <artifactId>peer-eon-tx-builders</artifactId>
-            <version>0.12.4-SNAPSHOT</version>
+            <version>0.13.3-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>com.exscudo</groupId>
             <artifactId>peer-core</artifactId>
-            <version>0.12.4-SNAPSHOT</version>
+            <version>0.13.3-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>com.exscudo</groupId>
             <artifactId>peer-crypto</artifactId>
-            <version>0.12.4-SNAPSHOT</version>
+            <version>0.13.3-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>com.exscudo</groupId>
             <artifactId>json-rpc</artifactId>
-            <version>0.12.4-SNAPSHOT</version>
+            <version>0.13.3-SNAPSHOT</version>
         </dependency>
 
         <!-- Spring -->
@@ -81,7 +81,7 @@
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
-            <version>4.0.0</version>
+            <version>4.0.1</version>
             <scope>provided</scope>
         </dependency>
 
@@ -90,7 +90,7 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.9.4</version>
+            <version>2.9.6</version>
         </dependency>
 
     </dependencies>

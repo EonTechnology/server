@@ -19,6 +19,7 @@ import com.exscudo.peer.core.blockchain.storage.DbBlock;
 import com.exscudo.peer.core.blockchain.storage.DbNestedTransaction;
 import com.exscudo.peer.core.blockchain.storage.DbTransaction;
 import com.exscudo.peer.core.common.ITimeProvider;
+import com.exscudo.peer.core.common.ITransactionEstimator;
 import com.exscudo.peer.core.common.ImmutableTimeProvider;
 import com.exscudo.peer.core.common.TimeProvider;
 import com.exscudo.peer.core.common.exceptions.DataAccessException;
@@ -28,13 +29,13 @@ import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.identifier.AccountID;
 import com.exscudo.peer.core.data.identifier.TransactionID;
-import com.exscudo.peer.core.ledger.AbstractLedger;
 import com.exscudo.peer.core.ledger.ILedger;
 import com.exscudo.peer.core.ledger.LedgerProvider;
 import com.exscudo.peer.core.middleware.ILedgerAction;
+import com.exscudo.peer.core.middleware.ITransactionParser;
 import com.exscudo.peer.core.middleware.LedgerActionContext;
-import com.exscudo.peer.core.middleware.TransactionParser;
 import com.exscudo.peer.core.middleware.TransactionValidator;
+import com.exscudo.peer.core.middleware.TransactionValidatorFabric;
 import com.exscudo.peer.core.middleware.ValidationResult;
 import com.exscudo.peer.core.storage.Storage;
 import com.j256.ormlite.dao.Dao;
@@ -59,8 +60,11 @@ public class Backlog implements IBacklog {
 
     private final IBlockchainProvider blockchain;
     private final LedgerProvider ledgerProvider;
-    private final IFork fork;
     private final TimeProvider timeProvider;
+    private final IFork fork;
+    private final TransactionValidatorFabric transactionValidatorFabric;
+    private final ITransactionEstimator estimator;
+    private final String nestedExistMSG = "Invalid sequence. Transaction already exist.";
 
     private NotImmutableCachedLedger ledger;
     private LedgerActionContext ctx;
@@ -72,25 +76,29 @@ public class Backlog implements IBacklog {
     private ArgumentHolder vID = new ThreadLocalSelectArg();
 
     private QueryBuilder<DbNestedTransaction, Long> nestedTxByBlockQueryBuilder;
-    private ArgumentHolder vIndexes = new ThreadLocalSelectArg();
+    private ThreadLocalIterator vIndexes = new ThreadLocalIterator();
 
     private QueryBuilder<DbBlock, Long> blockQueryBuilder;
 
     // endregion
 
-    public Backlog(BacklogEventManager backlogEventManager,
-                   IFork fork,
+    public Backlog(IFork fork,
+                   BacklogEventManager backlogEventManager,
                    Storage storage,
                    IBlockchainProvider blockchain,
                    LedgerProvider ledgerProvider,
-                   TimeProvider timeProvider) {
+                   TimeProvider timeProvider,
+                   TransactionValidatorFabric transactionValidatorFabric,
+                   ITransactionEstimator estimator) {
 
-        this.backlogEventManager = backlogEventManager;
         this.fork = fork;
+        this.backlogEventManager = backlogEventManager;
         this.storage = storage;
         this.blockchain = blockchain;
         this.ledgerProvider = ledgerProvider;
         this.timeProvider = timeProvider;
+        this.transactionValidatorFabric = transactionValidatorFabric;
+        this.estimator = estimator;
 
         InitContext(blockchain.getLastBlock());
     }
@@ -98,43 +106,43 @@ public class Backlog implements IBacklog {
     @Override
     public synchronized void put(Transaction transaction) throws ValidateException {
 
-        backlogEventManager.raiseUpdating(this, transaction);
-
-        if (backlogContains(transaction)) {
-            backlogEventManager.raiseRejected(this, transaction, RejectionReason.ALREADY_IN_BACKLOG);
-            return;
-        }
-
-        if (blockchainContains(transaction)) {
-            backlogEventManager.raiseRejected(this, transaction, RejectionReason.ALREADY_CONFIRMED);
-            return;
-        }
-
-        int difficulty = fork.getDifficulty(transaction, ctx.getTimestamp());
-        transaction.setLength(difficulty);
-        ValidationResult r = transactionValidator.validate(transaction, ledger);
-        if (r.hasError) {
-            backlogEventManager.raiseRejected(this, transaction, RejectionReason.INVALID);
-            throw r.cause;
-        }
-
-        // ValidateException can throws after ledger changes.
-        NotImmutableCachedLedger newLedger = new NotImmutableCachedLedger(ledger);
-
         try {
-            ILedgerAction[] actions = TransactionParser.parse(transaction);
+            backlogEventManager.raiseUpdating(this, transaction);
+
+            if (backlogContains(transaction)) {
+                backlogEventManager.raiseRejected(this, transaction, RejectionReason.ALREADY_IN_BACKLOG);
+                return;
+            }
+
+            if (blockchainContains(transaction)) {
+                backlogEventManager.raiseRejected(this, transaction, RejectionReason.ALREADY_CONFIRMED);
+                return;
+            }
+
+            int difficulty = estimator.estimate(transaction);
+            transaction.setLength(difficulty);
+            ValidationResult r = transactionValidator.validate(transaction, ledger);
+            if (r.hasError) {
+                throw r.cause;
+            }
+
+            ITransactionParser parser = fork.getParser(ctx.getTimestamp());
+            // ValidateException can throws after ledger changes.
+            NotImmutableCachedLedger newLedger = new NotImmutableCachedLedger(ledger);
+
+            ILedgerAction[] actions = parser.parse(transaction);
             for (ILedgerAction action : actions) {
                 action.run(newLedger, ctx);
             }
-        } catch (ValidateException e) {
+
+            ledger.putAll(newLedger);
+
+            backlogStorage.put(transaction);
+            backlogEventManager.raiseUpdated(this, transaction);
+        } catch (ValidateException ex) {
             backlogEventManager.raiseRejected(this, transaction, RejectionReason.INVALID);
-            throw e;
+            throw ex;
         }
-
-        ledger.putAll(newLedger);
-
-        backlogStorage.put(transaction);
-        backlogEventManager.raiseUpdated(this, transaction);
     }
 
     @Override
@@ -151,7 +159,7 @@ public class Backlog implements IBacklog {
         return backlogStorage.size();
     }
 
-    private boolean backlogContains(Transaction transaction) {
+    private boolean backlogContains(Transaction transaction) throws ValidateException {
 
         TransactionID txID = transaction.getID();
 
@@ -173,7 +181,7 @@ public class Backlog implements IBacklog {
 
                     bSet.retainAll(aSet);
                     if (!bSet.isEmpty()) {
-                        return true;
+                        throw new ValidateException(nestedExistMSG);
                     }
                 }
             }
@@ -182,7 +190,7 @@ public class Backlog implements IBacklog {
         return false;
     }
 
-    private boolean blockchainContains(Transaction transaction) {
+    private boolean blockchainContains(Transaction transaction) throws ValidateException {
 
         try {
 
@@ -201,9 +209,10 @@ public class Backlog implements IBacklog {
             // check nested transaction
             if (transaction.hasNestedTransactions()) {
 
-                LinkedList<Long> indexes = new LinkedList<>();
+                List<Object> list = vIndexes.get();
+                list.clear();
                 for (String key : transaction.getNestedTransactions().keySet()) {
-                    indexes.add((new TransactionID(key)).getValue());
+                    list.add(new TransactionID(key).getValue());
                 }
 
                 if (nestedTxByBlockQueryBuilder == null) {
@@ -212,7 +221,6 @@ public class Backlog implements IBacklog {
                     nestedTxByBlockQueryBuilder = nestedTxDao.queryBuilder();
                     nestedTxByBlockQueryBuilder.selectColumns("block_id").distinct().where().in("id", vIndexes);
                 }
-                vIndexes.setValue(indexes);
 
                 if (blockQueryBuilder == null) {
                     Dao<DbBlock, Long> blockDao = DaoManager.createDao(storage.getConnectionSource(), DbBlock.class);
@@ -223,8 +231,9 @@ public class Backlog implements IBacklog {
                 }
 
                 countOf = blockQueryBuilder.countOf();
+                list.clear();
                 if (countOf != 0) {
-                    return true;
+                    throw new ValidateException(nestedExistMSG);
                 }
             }
 
@@ -251,11 +260,11 @@ public class Backlog implements IBacklog {
         };
 
         ledger = new NotImmutableCachedLedger(ledgerProvider.getLedger(block));
-        ctx = new LedgerActionContext(timestamp, fork);
-        transactionValidator = TransactionValidator.getAllValidators(fork, blockTimeProvider, peerTimeProvider);
+        ctx = new LedgerActionContext(timestamp);
+        transactionValidator = transactionValidatorFabric.getAllValidators(blockTimeProvider, peerTimeProvider);
     }
 
-    private static class NotImmutableCachedLedger extends AbstractLedger {
+    private static class NotImmutableCachedLedger implements ILedger {
 
         Map<AccountID, Account> cache = Collections.synchronizedMap(new HashMap<>());
         private ILedger base;
@@ -297,6 +306,18 @@ public class Backlog implements IBacklog {
         @Override
         public Iterator<Account> iterator() {
             throw new UnsupportedOperationException();
+        }
+    }
+
+    private static class ThreadLocalIterator extends ThreadLocal<List<Object>> implements Iterable {
+        @Override
+        protected List<Object> initialValue() {
+            return new LinkedList<>();
+        }
+
+        @Override
+        public Iterator iterator() {
+            return get().iterator();
         }
     }
 }

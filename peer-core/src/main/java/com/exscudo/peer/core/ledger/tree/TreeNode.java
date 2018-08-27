@@ -20,13 +20,13 @@ public class TreeNode {
 
     private Map<String, Object> data;
 
-    TreeNode(int type,
-             int timestamp,
-             long mask,
-             int maskLength,
-             TreeNodeID leftNodeID,
-             TreeNodeID rightNodeID,
-             Map<String, Object> map) {
+    public TreeNode(int type,
+                    int timestamp,
+                    long mask,
+                    int maskLength,
+                    TreeNodeID leftNodeID,
+                    TreeNodeID rightNodeID,
+                    Map<String, Object> map) {
 
         this.type = type;
         this.timestamp = timestamp;

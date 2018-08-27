@@ -3,7 +3,9 @@ package com.exscudo.peer.eon.midleware.actions;
 import java.util.Arrays;
 
 import com.exscudo.peer.core.Constant;
+import com.exscudo.peer.core.common.Format;
 import com.exscudo.peer.core.common.exceptions.ValidateException;
+import com.exscudo.peer.core.crypto.ISignature;
 import com.exscudo.peer.core.data.Account;
 import com.exscudo.peer.core.data.identifier.AccountID;
 import com.exscudo.peer.core.ledger.ILedger;
@@ -18,10 +20,12 @@ import com.exscudo.peer.eon.midleware.Resources;
 public class PublicationAction implements ILedgerAction {
     private final AccountID accountID;
     private final String seed;
+    private final ISignature signature;
 
-    public PublicationAction(AccountID accountID, String seed) {
+    public PublicationAction(AccountID accountID, String seed, ISignature signature) {
         this.accountID = accountID;
         this.seed = seed;
+        this.signature = signature;
     }
 
     private void ensureValidState(ILedger ledger, LedgerActionContext context) throws ValidateException {
@@ -32,7 +36,7 @@ public class PublicationAction implements ILedgerAction {
 
         byte[] publicKey;
         try {
-            publicKey = context.fork.getPublicKeyBySeed(seed, context.getTimestamp());
+            publicKey = signature.getKeyPair(Format.convert(seed)).publicKey;
         } catch (Exception e) {
             throw new ValidateException(Resources.PUBLIC_ACCOUNT_INVALID_SEED);
         }

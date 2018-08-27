@@ -20,59 +20,59 @@ public class StateTreeTest {
 
     private TreeNodeCollection storage;
     private StateTree<Long> stateTree;
-    private int timestamp;
 
     @Before
     public void setUp() throws Exception {
         storage = new TreeNodeCollection();
-        stateTree = new StateTree<>(storage, new ValueConverter());
-        timestamp = (new TimeProvider()).get();
+
+        int timestamp = (new TimeProvider()).get();
+        stateTree = new StateTree<>(new ValueConverter(timestamp), storage, null);
     }
 
     @Test
     public void createTest() {
 
-        StateTree.State<Long> state = null;
+        StateTree<Long> state = stateTree;
 
         long id = 0b00010000L;
-        state = stateTree.newState(state, id, id, timestamp);
+        state = StateTree.createNew(state, id);
 
         assertNotNull(state.get(id));
         assertTree("L_10000", state);
 
         id = 0b00100000L;
-        state = stateTree.newState(state, id, id, timestamp);
+        state = StateTree.createNew(state, id);
 
         assertNotNull(state.get(id));
         assertTree("T_(L_100000,L_10000)", state);
 
         id = 0b00000001L;
-        state = stateTree.newState(state, id, id, timestamp);
+        state = StateTree.createNew(state, id);
 
         assertNotNull(state.get(id));
         assertTree("T_(T_(L_100000,L_10000),L_1)", state);
 
         id = 0b00000100L;
-        state = stateTree.newState(state, id, id, timestamp);
+        state = StateTree.createNew(state, id);
 
         assertNotNull(state.get(id));
         assertTree("T_(T_(T_(L_100000,L_10000),L_100),L_1)", state);
 
         id = 0b00000010L;
-        state = stateTree.newState(state, id, id, timestamp);
+        state = StateTree.createNew(state, id);
 
         assertNotNull(state.get(id));
         assertTree("T_(T_(T_(T_(L_100000,L_10000),L_100),L_10),L_1)", state);
 
         id = 0b00001001L;
-        state = stateTree.newState(state, id, id, timestamp);
+        state = StateTree.createNew(state, id);
 
         assertNotNull(state.get(id));
         assertTree("T_(T_(T_(T_(L_100000,L_10000),L_100),L_10),T_(L_1,L_1001))", state);
 
         id = 0b00100000L;
         Long value = state.get(id);
-        state = stateTree.newState(state, value, value, timestamp);
+        state = StateTree.createNew(state, value);
 
         assertNotNull(state.get(id));
         assertTree("T_(T_(T_(T_(L_100000,L_10000),L_100),L_10),T_(L_1,L_1001))", state);
@@ -102,7 +102,7 @@ public class StateTreeTest {
         long[] itemSet = new long[] {0b00010000L, 0b00100000L, 0b00000001L, 0b00000100L, 0b00000010L, 0b00001001L};
 
         HashMap<Long, Long> dataSet = new HashMap<>();
-        StateTree.State state = null;
+        StateTree<Long> state = stateTree;
 
         while (dataSet.size() != itemSet.length) {
 
@@ -110,7 +110,7 @@ public class StateTreeTest {
 
             dataSet.put(item, item);
 
-            state = stateTree.newState(state, item, item, timestamp);
+            state = StateTree.createNew(state, item);
         }
 
         assertTree("T_(T_(T_(T_(L_100000,L_10000),L_100),L_10),T_(L_1,L_1001))", state);
@@ -132,7 +132,7 @@ public class StateTreeTest {
         };
 
         HashMap<Long, Long> dataSet = new HashMap<>();
-        StateTree.State state = null;
+        StateTree<Long> state = stateTree;
 
         while (dataSet.size() != itemSet.length) {
 
@@ -140,7 +140,7 @@ public class StateTreeTest {
 
             dataSet.put(item, item);
 
-            state = stateTree.newState(state, item, item, timestamp);
+            state = StateTree.createNew(state, item);
         }
 
         assertTree(
@@ -150,7 +150,7 @@ public class StateTreeTest {
 
     private void randomRunner3(Random r) {
 
-        StateTree.State<Long> state = null;
+        StateTree<Long> state = stateTree;
         HashMap<Long, Long> dataSet = new HashMap<>();
 
         while (dataSet.size() != 1000) {
@@ -159,7 +159,7 @@ public class StateTreeTest {
 
             dataSet.put(id, id);
 
-            state = stateTree.newState(state, id, id, timestamp);
+            state = StateTree.createNew(state, id);
         }
 
         for (long id : dataSet.keySet()) {
@@ -177,7 +177,7 @@ public class StateTreeTest {
         }
     }
 
-    private List<Long> getList(StateTree.State<Long> state) {
+    private List<Long> getList(StateTree<Long> state) {
         ArrayList<Long> list = new ArrayList<>();
         for (Long v : state) {
             list.add(v);
@@ -185,24 +185,29 @@ public class StateTreeTest {
         return list;
     }
 
-    private void assertTree(String value, StateTree.State state) {
-        stateTree.saveState(state);
+    private void assertTree(String value, StateTree state) {
         String t = storage.toString(state.rootNode);
         assertEquals(t, value);
     }
 
-    private static class ValueConverter implements IValueConverter<Long> {
+    private static class ValueConverter implements ITreeNodeConverter<Long> {
+        private final int timestamp;
+
+        private ValueConverter(int timestamp) {
+            this.timestamp = timestamp;
+        }
 
         @Override
-        public Long convert(Map<String, Object> map) {
+        public Long convert(TreeNode treeNode) {
+            Map<String, Object> map = treeNode.getValues();
             return (Long) map.get("id");
         }
 
         @Override
-        public Map<String, Object> convert(Long value) {
+        public TreeNode convert(Long value) {
             HashMap<String, Object> map = new HashMap<>();
             map.put("id", value);
-            return map;
+            return new TreeNode(TreeNode.LEAF, timestamp, value, 0, null, null, map);
         }
     }
 

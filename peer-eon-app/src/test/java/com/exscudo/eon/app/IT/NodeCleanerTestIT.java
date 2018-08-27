@@ -11,6 +11,8 @@ import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.identifier.AccountID;
 import com.exscudo.peer.core.ledger.storage.DbNode;
+import com.exscudo.peer.eon.midleware.parsers.PaymentParser;
+import com.exscudo.peer.tx.TransactionType;
 import com.exscudo.peer.tx.midleware.builders.PaymentBuilder;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
@@ -52,8 +54,15 @@ public class NodeCleanerTestIT {
         mockTimeProvider1 = Mockito.mock(TimeProvider.class);
         mockTimeProvider2 = Mockito.mock(TimeProvider.class);
 
-        ctx1 = new PeerContext(PeerStarterFactory.create(GENERATOR1, mockTimeProvider1));
-        ctx2 = new PeerContext(PeerStarterFactory.create(GENERATOR2, mockTimeProvider2));
+        ctx1 = new PeerContext(PeerStarterFactory.create()
+                                                 .seed(GENERATOR1)
+                                                 .route(TransactionType.Payment, new PaymentParser())
+                                                 .build(mockTimeProvider1));
+
+        ctx2 = new PeerContext(PeerStarterFactory.create()
+                                                 .seed(GENERATOR2)
+                                                 .route(TransactionType.Payment, new PaymentParser())
+                                                 .build(mockTimeProvider2));
 
         ctx1.setPeerToConnect(ctx2);
         ctx2.setPeerToConnect(ctx1);

@@ -28,8 +28,8 @@ public class AddPeerTestIT {
     public void setUp() throws Exception {
         mockTimeProvider = Mockito.mock(TimeProvider.class);
 
-        ctx1 = new PeerContext(PeerStarterFactory.create(GENERATOR, mockTimeProvider));
-        ctx2 = new PeerContext(PeerStarterFactory.create(GENERATOR2, mockTimeProvider));
+        ctx1 = new PeerContext(PeerStarterFactory.create().seed(GENERATOR).build(mockTimeProvider));
+        ctx2 = new PeerContext(PeerStarterFactory.create().seed(GENERATOR2).build(mockTimeProvider));
 
         ctx1.setPeerToConnect(ctx2);
         ctx2.setPeerToConnect(ctx1);

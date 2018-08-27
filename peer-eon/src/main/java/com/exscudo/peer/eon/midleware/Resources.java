@@ -32,12 +32,17 @@ public class Resources {
     public final static String NESTED_TRANSACTION_ILLEGAL_SEQUENCE = "Invalid sequence. Multiple start items.";
     public final static String NESTED_TRANSACTION_UNACCEPTABLE_PARAMS =
             "There are transactions with invalid parameters.";
+    public final static String NESTED_TRANSACTION_PAYER_ERROR = "Invalid sequence. Payer not specified.";
+    public final static String NESTED_TRANSACTION_PAYER_SEQUENCE_ERROR =
+            "Invalid sequence. Referenced transaction with payer.";
 
     // Actions
     public final static String ACCOUNT_ALREADY_EXISTS = "Account has already existed.";
     public final static String SENDER_ACCOUNT_NOT_FOUND = "Unknown sender.";
+    public final static String PAYER_ACCOUNT_NOT_FOUND = "Unknown fee payer.";
     public final static String RECIPIENT_ACCOUNT_NOT_FOUND = "Unknown recipient.";
     public final static String NOT_ENOUGH_FUNDS = "Not enough funds.";
+    public final static String NOT_ENOUGH_FEE = "Not enough funds for fee.";
     public final static String VALUE_ALREADY_SET = "Value has already setted.";
     public static final String TOO_MACH_SIZE = "The number has reached the limit.";
     public final static String COLORED_COIN_ACCOUNT_NOT_FOUND = "Unknown colored coin.";

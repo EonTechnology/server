@@ -8,7 +8,6 @@ import com.exscudo.peer.core.crypto.ISigner;
 import com.exscudo.peer.core.data.Account;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.identifier.AccountID;
-import com.exscudo.peer.core.middleware.ITransactionParser;
 import com.exscudo.peer.eon.ledger.AccountProperties;
 import com.exscudo.peer.eon.ledger.state.BalanceProperty;
 import com.exscudo.peer.eon.ledger.state.RegistrationDataProperty;
@@ -28,11 +27,6 @@ public class RegistrationTransactionTest extends AbstractTransactionTest {
     private ISigner senderSigner = new Signer("112233445566778899aabbccddeeff00112233445566778899aabbccddeeff00");
     private Account sender;
 
-    @Override
-    protected ITransactionParser getParser() {
-        return parser;
-    }
-
     @Before
     @Override
     public void setUp() throws Exception {
@@ -51,7 +45,7 @@ public class RegistrationTransactionTest extends AbstractTransactionTest {
 
         AccountProperties.setProperty(sender, new BalanceProperty(1000L));
         Transaction tx = RegistrationBuilder.createNew(senderSigner.getPublicKey()).build(networkID, senderSigner);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -60,7 +54,7 @@ public class RegistrationTransactionTest extends AbstractTransactionTest {
         expectedException.expectMessage(Resources.ATTACHMENT_UNKNOWN_TYPE);
 
         Transaction tx = new TransactionBuilder(TransactionType.Registration).build(networkID, senderSigner);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -70,7 +64,7 @@ public class RegistrationTransactionTest extends AbstractTransactionTest {
 
         Transaction tx = new TransactionBuilder(TransactionType.Registration).withParam("tx_id", "tx")
                                                                              .build(networkID, senderSigner);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -81,7 +75,7 @@ public class RegistrationTransactionTest extends AbstractTransactionTest {
         Transaction tx = new TransactionBuilder(TransactionType.Registration).withParam(sender.getID().toString(),
                                                                                         Format.convert(new byte[32]))
                                                                              .build(networkID, senderSigner);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -92,7 +86,7 @@ public class RegistrationTransactionTest extends AbstractTransactionTest {
         Transaction tx = new TransactionBuilder(TransactionType.Registration).withParam(sender.getID().toString(),
                                                                                         Format.convert(new byte[31]))
                                                                              .build(networkID, senderSigner);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -104,7 +98,7 @@ public class RegistrationTransactionTest extends AbstractTransactionTest {
                                             .addNested(new TransactionBuilder(1).build(networkID, senderSigner))
                                             .build(networkID, senderSigner);
 
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -115,7 +109,7 @@ public class RegistrationTransactionTest extends AbstractTransactionTest {
         AccountProperties.setProperty(sender, new BalanceProperty(1000L));
         Transaction tx = RegistrationBuilder.createNew(pk).build(networkID, senderSigner);
 
-        validate(tx);
+        validate(parser, tx);
         Assert.assertNotNull(ledger.getAccount(new AccountID(pk)));
     }
 }

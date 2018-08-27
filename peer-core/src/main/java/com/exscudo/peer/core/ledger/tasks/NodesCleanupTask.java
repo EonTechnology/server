@@ -21,7 +21,7 @@ import com.j256.ormlite.stmt.ThreadLocalSelectArg;
 import com.j256.ormlite.stmt.UpdateBuilder;
 
 /**
- * Performs the task of cleaning State Tree.
+ * Performs the task of cleaning StateTree Tree.
  */
 public class NodesCleanupTask implements Runnable {
 

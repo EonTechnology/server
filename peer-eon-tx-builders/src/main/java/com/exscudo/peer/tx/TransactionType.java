@@ -57,8 +57,7 @@ public class TransactionType {
      * withdrawal of a colored coin will be tied to the current account
      * <p>
      * ATTENTION: A reverse transaction is possible only if the entire amount of
-     * colored coins on the account balance (see
-     * {@link TransactionType#ColoredCoinSupply})
+     * colored coins on the account balance.
      */
     public static final int ColoredCoinRegistration = 500;
 
@@ -69,11 +68,16 @@ public class TransactionType {
 
     /**
      * Sets the total number of colored coins.
+     */
+    public static final int ColoredCoinSupply = 520;
+
+    /**
+     * Remove a colored coin.
      * <p>
      * To remove a colored coin, the total amount of money should be set to zero.
      * The entire amount of funds must be on the balance of the sender
      */
-    public static final int ColoredCoinSupply = 520;
+    public static final int ColoredCoinRemove = 530;
 
     /**
      * A sequence of activities that must be performed atomically.

@@ -16,7 +16,10 @@ import com.exscudo.peer.core.api.Difficulty;
 import com.exscudo.peer.core.api.IBlockSynchronizationService;
 import com.exscudo.peer.core.backlog.Backlog;
 import com.exscudo.peer.core.blockchain.BlockchainProvider;
+import com.exscudo.peer.core.blockchain.ITransactionMapper;
 import com.exscudo.peer.core.blockchain.storage.converters.StorageTransactionMapper;
+import com.exscudo.peer.core.common.IAccountHelper;
+import com.exscudo.peer.core.common.ITransactionEstimator;
 import com.exscudo.peer.core.common.Loggers;
 import com.exscudo.peer.core.common.TimeProvider;
 import com.exscudo.peer.core.common.exceptions.LifecycleException;
@@ -32,6 +35,7 @@ import com.exscudo.peer.core.env.Peer;
 import com.exscudo.peer.core.importer.IUnitOfWork;
 import com.exscudo.peer.core.importer.UnitOfWork;
 import com.exscudo.peer.core.ledger.LedgerProvider;
+import com.exscudo.peer.core.middleware.TransactionValidatorFabric;
 import com.exscudo.peer.core.storage.Storage;
 
 /**
@@ -53,6 +57,10 @@ public final class SyncBlockListTask implements Runnable {
     private final IFork fork;
     private final TimeProvider timeProvider;
     private final Backlog backlog;
+    private final TransactionValidatorFabric transactionValidatorFabric;
+    private final ITransactionEstimator estimator;
+    private final IAccountHelper accountHelper;
+    private final ITransactionMapper transactionMapper;
     private LedgerProvider ledgerProvider;
 
     public SyncBlockListTask(IFork fork,
@@ -61,7 +69,11 @@ public final class SyncBlockListTask implements Runnable {
                              ExecutionContext context,
                              BlockchainProvider blockchainProvider,
                              TimeProvider timeProvider,
-                             LedgerProvider ledgerProvider) {
+                             LedgerProvider ledgerProvider,
+                             TransactionValidatorFabric transactionValidatorFabric,
+                             ITransactionEstimator estimator,
+                             IAccountHelper accountHelper,
+                             ITransactionMapper transactionMapper) {
         this.storage = storage;
         this.context = context;
         this.blockchainProvider = blockchainProvider;
@@ -69,6 +81,10 @@ public final class SyncBlockListTask implements Runnable {
         this.backlog = backlog;
         this.timeProvider = timeProvider;
         this.ledgerProvider = ledgerProvider;
+        this.transactionValidatorFabric = transactionValidatorFabric;
+        this.estimator = estimator;
+        this.accountHelper = accountHelper;
+        this.transactionMapper = transactionMapper;
     }
 
     @Override
@@ -111,7 +127,7 @@ public final class SyncBlockListTask implements Runnable {
             if (targetPeer != null) {
 
                 Loggers.info(SyncBlockListTask.class, "Target: " + targetPeer);
-                run(targetPeer);
+                sync(targetPeer);
             }
         } catch (Exception e) {
             Loggers.error(SyncBlockListTask.class, e);
@@ -135,7 +151,7 @@ public final class SyncBlockListTask implements Runnable {
         });
     }
 
-    private void run(Peer peer) throws Exception {
+    private void sync(Peer peer) throws Exception {
 
         Objects.requireNonNull(peer);
 
@@ -425,7 +441,14 @@ public final class SyncBlockListTask implements Runnable {
                       commonBlock.getID());
 
         Block currBlock = commonBlock;
-        IUnitOfWork uow = new UnitOfWork(blockchain, ledgerProvider, fork, commonBlock);
+        IUnitOfWork uow = new UnitOfWork(blockchain,
+                                         ledgerProvider,
+                                         fork,
+                                         commonBlock,
+                                         transactionValidatorFabric,
+                                         estimator,
+                                         accountHelper,
+                                         transactionMapper);
 
         try {
 

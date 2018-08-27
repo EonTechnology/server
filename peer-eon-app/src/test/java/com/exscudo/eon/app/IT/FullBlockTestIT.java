@@ -7,6 +7,8 @@ import com.exscudo.peer.core.crypto.ISigner;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.identifier.AccountID;
+import com.exscudo.peer.eon.midleware.parsers.PaymentParser;
+import com.exscudo.peer.tx.TransactionType;
 import com.exscudo.peer.tx.midleware.builders.PaymentBuilder;
 import org.junit.Assert;
 import org.junit.Before;
@@ -36,7 +38,11 @@ public class FullBlockTestIT {
     @Before
     public void setUp() throws Exception {
         mockTimeProvider = Mockito.mock(TimeProvider.class);
-        ctx = new PeerContext(PeerStarterFactory.create(GENERATOR, mockTimeProvider));
+
+        ctx = new PeerContext(PeerStarterFactory.create()
+                                                .route(TransactionType.Payment, new PaymentParser())
+                                                .seed(GENERATOR)
+                                                .build(mockTimeProvider));
 
         Block lastBlock = ctx.blockExplorerService.getLastBlock();
         Mockito.when(mockTimeProvider.get()).thenReturn(lastBlock.getTimestamp() + 1);

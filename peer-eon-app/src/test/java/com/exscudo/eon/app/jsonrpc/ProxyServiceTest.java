@@ -17,6 +17,7 @@ import java.net.URLStreamHandler;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.exscudo.jsonrpc.CompositeInnerService;
 import com.exscudo.jsonrpc.JrpcService;
 import org.junit.Before;
 import org.junit.Test;
@@ -100,7 +101,7 @@ public class ProxyServiceTest {
         public Buffer() {
             Map<String, Object> map = new HashMap<>();
             map.put("service", new ProxyServiceImpl());
-            service = new JrpcService(map);
+            service = new JrpcService(new CompositeInnerService(map));
         }
 
         public void apply() throws UnsupportedEncodingException, IOException {

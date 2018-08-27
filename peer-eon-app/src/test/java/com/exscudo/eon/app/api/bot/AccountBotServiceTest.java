@@ -23,13 +23,12 @@ import com.exscudo.peer.core.data.Account;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.identifier.AccountID;
 import com.exscudo.peer.core.data.identifier.BlockID;
-import com.exscudo.peer.core.env.ExecutionContext;
-import com.exscudo.peer.core.ledger.AbstractLedger;
 import com.exscudo.peer.core.ledger.ILedger;
 import com.exscudo.peer.core.ledger.LedgerProvider;
 import com.exscudo.peer.eon.ledger.AccountProperties;
 import com.exscudo.peer.eon.ledger.state.BalanceProperty;
 import com.exscudo.peer.eon.ledger.state.ColoredBalanceProperty;
+import com.exscudo.peer.eon.ledger.state.ColoredCoinEmitMode;
 import com.exscudo.peer.eon.ledger.state.ColoredCoinProperty;
 import com.exscudo.peer.eon.ledger.state.GeneratingBalanceProperty;
 import com.exscudo.peer.eon.ledger.state.RegistrationDataProperty;
@@ -54,9 +53,6 @@ public class AccountBotServiceTest {
         ledger = new Ledger();
 
         backlog = new DefaultBacklog();
-
-        ExecutionContext mockStorage = mock(ExecutionContext.class);
-
         service = Mockito.spy(new AccountBotService(backlog,
                                                     mock(LedgerProvider.class),
                                                     mock(IBlockchainProvider.class)));
@@ -171,7 +167,8 @@ public class AccountBotServiceTest {
         account = AccountProperties.setProperty(account, validationMode);
         account = AccountProperties.setProperty(account, new GeneratingBalanceProperty(1000L, 0));
         ColoredCoinProperty coloredCoin = new ColoredCoinProperty();
-        coloredCoin.setDecimalPoint(2);
+        coloredCoin.setEmitMode(ColoredCoinEmitMode.PRESET);
+        coloredCoin.setAttributes(new ColoredCoinProperty.Attributes(2, 0));
         coloredCoin.setMoneySupply(50000L);
         account = AccountProperties.setProperty(account, coloredCoin);
         ledger = ledger.putAccount(account);
@@ -267,7 +264,7 @@ public class AccountBotServiceTest {
         assertNull(info.coloredCoin);
     }
 
-    static class Ledger extends AbstractLedger {
+    static class Ledger implements ILedger {
         private Map<AccountID, Account> accounts = new HashMap<>();
 
         public Ledger() {

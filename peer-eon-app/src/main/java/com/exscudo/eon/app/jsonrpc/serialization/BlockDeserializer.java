@@ -3,7 +3,7 @@ package com.exscudo.eon.app.jsonrpc.serialization;
 import java.io.IOException;
 import java.util.Map;
 
-import com.exscudo.eon.app.utils.mapper.BlockMapper;
+import com.exscudo.eon.app.utils.mapper.TransportBlockMapper;
 import com.exscudo.peer.core.data.Block;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -29,7 +29,7 @@ public class BlockDeserializer extends StdDeserializer<Block> {
 
             Map<String, Object> map = p.readValueAs(new TypeReference<Map<String, Object>>() {
             });
-            return BlockMapper.convert(map);
+            return TransportBlockMapper.convert(map);
         } catch (IllegalArgumentException e) {
             throw new IOException(e);
         }

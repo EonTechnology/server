@@ -7,6 +7,7 @@ import java.util.concurrent.Callable;
 
 import com.exscudo.peer.core.Constant;
 import com.exscudo.peer.core.blockchain.IBlockchainProvider;
+import com.exscudo.peer.core.blockchain.storage.DbAccTransaction;
 import com.exscudo.peer.core.blockchain.storage.DbBlock;
 import com.exscudo.peer.core.blockchain.storage.DbTransaction;
 import com.exscudo.peer.core.common.Loggers;
@@ -33,10 +34,12 @@ public class BlockCleanerTask implements Runnable {
     private QueryBuilder<DbBlock, Long> blocksQueryBuilder = null;
     private DeleteBuilder<DbBlock, Long> blocksDeleteBuilder = null;
     private DeleteBuilder<DbTransaction, Long> transactionsDeleteBuilder = null;
+    private DeleteBuilder<DbAccTransaction, Long> accTransactionsDeleteBuilder = null;
 
     private ArgumentHolder vTimestamp = new ThreadLocalSelectArg();
     private ArgumentHolder vID = new ThreadLocalSelectArg();
     private ArgumentHolder vBlockID = new ThreadLocalSelectArg();
+    private ArgumentHolder vAccBlockID = new ThreadLocalSelectArg();
     private ArgumentHolder vTag = new ThreadLocalSelectArg();
 
     // endregion
@@ -70,6 +73,7 @@ public class BlockCleanerTask implements Runnable {
             public Object call() throws Exception {
                 for (BlockID id : blocksIds) {
                     removeBlock(id.getValue());
+                    removeAccTransactions(id.getValue());
                     removeTransactions(id.getValue());
                 }
                 return null;
@@ -132,6 +136,21 @@ public class BlockCleanerTask implements Runnable {
             blocksQueryBuilder.selectColumns("id");
             blocksQueryBuilder.where().lt("timestamp", vTimestamp).and().eq("tag", vTag).and().gt("height", 0);
         }
+    }
+
+    private void removeAccTransactions(long blockID) throws SQLException {
+
+        if (accTransactionsDeleteBuilder == null) {
+
+            Dao<DbAccTransaction, Long> dao =
+                    DaoManager.createDao(storage.getConnectionSource(), DbAccTransaction.class);
+
+            accTransactionsDeleteBuilder = dao.deleteBuilder();
+            accTransactionsDeleteBuilder.where().eq("block_id", vAccBlockID);
+        }
+
+        vAccBlockID.setValue(blockID);
+        accTransactionsDeleteBuilder.delete();
     }
 
     private void removeTransactions(long blockID) throws SQLException {

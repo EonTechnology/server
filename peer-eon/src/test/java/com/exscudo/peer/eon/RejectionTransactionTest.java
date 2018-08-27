@@ -9,7 +9,6 @@ import com.exscudo.peer.core.crypto.ISigner;
 import com.exscudo.peer.core.data.Account;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.identifier.AccountID;
-import com.exscudo.peer.core.middleware.ITransactionParser;
 import com.exscudo.peer.eon.ledger.AccountProperties;
 import com.exscudo.peer.eon.ledger.state.BalanceProperty;
 import com.exscudo.peer.eon.ledger.state.RegistrationDataProperty;
@@ -31,11 +30,6 @@ public class RejectionTransactionTest extends AbstractTransactionTest {
 
     private RejectionParser parser = new RejectionParser();
     private Account baseAccount;
-
-    @Override
-    protected ITransactionParser getParser() {
-        return parser;
-    }
 
     @Before
     @Override
@@ -78,7 +72,7 @@ public class RejectionTransactionTest extends AbstractTransactionTest {
         when(ledger.getAccount(new AccountID(delegate.getPublicKey()))).thenReturn(null);
 
         Transaction tx = RejectionBuilder.createNew(baseAccount.getID()).build(networkID, delegate);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -88,7 +82,7 @@ public class RejectionTransactionTest extends AbstractTransactionTest {
 
         Transaction tx =
                 RejectionBuilder.createNew(baseAccount.getID()).withParam("param", "value").build(networkID, delegate);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -99,7 +93,7 @@ public class RejectionTransactionTest extends AbstractTransactionTest {
         Transaction tx = RejectionBuilder.createNew(baseAccount.getID())
                                          .withParam("account", "value")
                                          .build(networkID, delegate);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -109,7 +103,7 @@ public class RejectionTransactionTest extends AbstractTransactionTest {
         when(ledger.getAccount(baseAccount.getID())).thenReturn(null);
 
         Transaction tx = RejectionBuilder.createNew(baseAccount.getID()).build(networkID, delegate);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -120,7 +114,7 @@ public class RejectionTransactionTest extends AbstractTransactionTest {
         when(baseAccount.getProperty(PropertyType.MODE)).thenReturn(null);
 
         Transaction tx = RejectionBuilder.createNew(baseAccount.getID()).build(networkID, delegate);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -131,7 +125,7 @@ public class RejectionTransactionTest extends AbstractTransactionTest {
         when(ledger.getAccount(new AccountID(delegate_1.getPublicKey()))).thenReturn(null);
 
         Transaction tx = RejectionBuilder.createNew(baseAccount.getID()).build(networkID, delegate_1);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -140,13 +134,13 @@ public class RejectionTransactionTest extends AbstractTransactionTest {
         expectedException.expectMessage(Resources.ACCOUNT_NOT_IN_VOTE_POLL);
 
         Transaction tx = RejectionBuilder.createNew(baseAccount.getID()).build(networkID, delegate_1);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
     public void reject() throws Exception {
         Transaction tx = RejectionBuilder.createNew(baseAccount.getID()).build(networkID, delegate);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -155,7 +149,7 @@ public class RejectionTransactionTest extends AbstractTransactionTest {
         expectedException.expectMessage(Resources.ACCOUNT_ID_NOT_MATCH_DATA);
 
         Transaction tx = RejectionBuilder.createNew(baseAccount.getID()).build(networkID, base);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -170,7 +164,7 @@ public class RejectionTransactionTest extends AbstractTransactionTest {
         AccountProperties.setProperty(baseAccount, validationMode);
 
         Transaction tx = RejectionBuilder.createNew(baseAccount.getID()).build(networkID, delegate);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -184,7 +178,7 @@ public class RejectionTransactionTest extends AbstractTransactionTest {
         AccountProperties.setProperty(baseAccount, validationMode);
 
         Transaction tx = RejectionBuilder.createNew(baseAccount.getID()).build(networkID, delegate);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -196,6 +190,6 @@ public class RejectionTransactionTest extends AbstractTransactionTest {
                                          .addNested(new TransactionBuilder(1).build(networkID, delegate))
                                          .build(networkID, delegate);
 
-        validate(tx);
+        validate(parser, tx);
     }
 }

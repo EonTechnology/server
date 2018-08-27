@@ -11,7 +11,6 @@ import com.exscudo.peer.core.crypto.ISigner;
 import com.exscudo.peer.core.data.Account;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.identifier.AccountID;
-import com.exscudo.peer.core.middleware.ITransactionParser;
 import com.exscudo.peer.eon.ledger.AccountProperties;
 import com.exscudo.peer.eon.ledger.state.BalanceProperty;
 import com.exscudo.peer.eon.ledger.state.RegistrationDataProperty;
@@ -32,11 +31,6 @@ public class QuorumTransactionTest extends AbstractTransactionTest {
     private ISigner sender = new Signer("00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff");
     private ISigner delegate_1 = new Signer("112233445566778899aabbccddeeff00112233445566778899aabbccddeeff00");
     private Account senderAccount;
-
-    @Override
-    protected ITransactionParser getParser() {
-        return parser;
-    }
 
     @Before
     @Override
@@ -63,8 +57,8 @@ public class QuorumTransactionTest extends AbstractTransactionTest {
     public void attachment_unknown_type() throws Exception {
         expectedException.expect(ValidateException.class);
         expectedException.expectMessage(Resources.ATTACHMENT_UNKNOWN_TYPE);
-        Transaction tx = new TransactionBuilder(TransactionType.Quorum, null).build(networkID, sender);
-        validate(tx);
+        Transaction tx = new TransactionBuilder(TransactionType.Quorum).build(networkID, sender);
+        validate(parser, tx);
     }
 
     @Test
@@ -74,7 +68,7 @@ public class QuorumTransactionTest extends AbstractTransactionTest {
 
         when(ledger.getAccount(new AccountID(sender.getPublicKey()))).thenReturn(null);
         Transaction tx = QuorumBuilder.createNew(70).build(networkID, sender);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -82,8 +76,11 @@ public class QuorumTransactionTest extends AbstractTransactionTest {
         expectedException.expect(ValidateException.class);
         expectedException.expectMessage(Resources.QUORUM_INVALID_FORMAT);
 
-        Transaction tx = new TransactionBuilder(TransactionType.Quorum, new HashMap<>()).build(networkID, sender);
-        validate(tx);
+        HashMap<String, Object> map = new HashMap<>();
+        map.put("*", 70);
+        Transaction tx = new TransactionBuilder(TransactionType.Quorum, map).build(networkID, sender);
+
+        validate(parser, tx);
     }
 
     @Test
@@ -96,7 +93,7 @@ public class QuorumTransactionTest extends AbstractTransactionTest {
         map.put("*", 70L);
 
         Transaction tx = new TransactionBuilder(TransactionType.Quorum, map).build(networkID, sender);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -108,7 +105,7 @@ public class QuorumTransactionTest extends AbstractTransactionTest {
         map.put("all", ValidationModeProperty.MAX_QUORUM + 1L);
 
         Transaction tx = new TransactionBuilder(TransactionType.Quorum, map).build(networkID, sender);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -120,7 +117,7 @@ public class QuorumTransactionTest extends AbstractTransactionTest {
         map.put("all", ValidationModeProperty.MIN_QUORUM - 1L);
 
         Transaction tx = new TransactionBuilder(TransactionType.Quorum, map).build(networkID, sender);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -129,7 +126,7 @@ public class QuorumTransactionTest extends AbstractTransactionTest {
         expectedException.expectMessage(Resources.QUORUM_CAN_NOT_BE_CHANGED);
 
         Transaction tx = QuorumBuilder.createNew(90).build(networkID, sender);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -143,7 +140,7 @@ public class QuorumTransactionTest extends AbstractTransactionTest {
         map.put(String.valueOf(100500), 30L);
 
         Transaction tx = new TransactionBuilder(TransactionType.Quorum, map).build(networkID, sender);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -156,7 +153,7 @@ public class QuorumTransactionTest extends AbstractTransactionTest {
         map.put(String.valueOf(TransactionType.Payment), 50L);
 
         Transaction tx = new TransactionBuilder(TransactionType.Quorum, map).build(networkID, sender);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -165,10 +162,10 @@ public class QuorumTransactionTest extends AbstractTransactionTest {
         expectedException.expectMessage(Resources.QUORUM_INVALID_FORMAT);
 
         HashMap<String, Object> map = new HashMap<>();
-        map.put("all", 50);
+        map.put("all", 50L);
         map.put(String.valueOf(TransactionType.Payment), "value");
         Transaction tx = new TransactionBuilder(TransactionType.Quorum, map).build(networkID, sender);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -181,7 +178,7 @@ public class QuorumTransactionTest extends AbstractTransactionTest {
         map.put(String.valueOf(TransactionType.Payment), ValidationModeProperty.MAX_QUORUM + 1L);
 
         Transaction tx = new TransactionBuilder(TransactionType.Quorum, map).build(networkID, sender);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -194,7 +191,7 @@ public class QuorumTransactionTest extends AbstractTransactionTest {
         map.put(String.valueOf(TransactionType.Payment), ValidationModeProperty.MIN_QUORUM - 1L);
 
         Transaction tx = new TransactionBuilder(TransactionType.Quorum, map).build(networkID, sender);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -207,7 +204,7 @@ public class QuorumTransactionTest extends AbstractTransactionTest {
         map.put(String.valueOf(TransactionType.Payment), 90L);
 
         Transaction tx = new TransactionBuilder(TransactionType.Quorum, map).build(networkID, sender);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -219,7 +216,7 @@ public class QuorumTransactionTest extends AbstractTransactionTest {
                                       .addNested(new TransactionBuilder(1).build(networkID, sender))
                                       .build(networkID, sender);
 
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -232,9 +229,97 @@ public class QuorumTransactionTest extends AbstractTransactionTest {
         ledger.putAccount(account);
 
         Transaction tx = QuorumBuilder.createNew(50).build(networkID, accountSigner);
-        validate(tx);
+        validate(parser, tx);
 
         Account a = ledger.getAccount(account.getID());
         Assert.assertEquals(AccountProperties.getValidationMode(a).getBaseQuorum(), 50);
+    }
+
+    @Test
+    public void quorum_error_null() throws Exception {
+        expectedException.expect(ValidateException.class);
+        expectedException.expectMessage(Resources.QUORUM_INVALID_FORMAT);
+
+        Transaction tx = QuorumBuilder.createNew(50).build(networkID, sender);
+
+        tx.getData().put("all", null);
+        validate(parser, tx);
+    }
+
+    @Test
+    public void quorum_error_string() throws Exception {
+        expectedException.expect(ValidateException.class);
+        expectedException.expectMessage(Resources.QUORUM_INVALID_FORMAT);
+
+        Transaction tx = QuorumBuilder.createNew(50).build(networkID, sender);
+
+        tx.getData().put("all", "10");
+        validate(parser, tx);
+    }
+
+    @Test
+    public void quorum_error_over() throws Exception {
+        expectedException.expect(ValidateException.class);
+        expectedException.expectMessage(Resources.QUORUM_OUT_OF_RANGE);
+
+        Transaction tx = QuorumBuilder.createNew(50).build(networkID, sender);
+
+        tx.getData().put("all", 10 + 0xFFFFFFFFL);
+        validate(parser, tx);
+    }
+
+    @Test
+    public void quorum_error_decimal() throws Exception {
+        expectedException.expect(ValidateException.class);
+        expectedException.expectMessage(Resources.QUORUM_INVALID_FORMAT);
+
+        Transaction tx = QuorumBuilder.createNew(50).build(networkID, sender);
+
+        tx.getData().put("all", 10.001);
+        validate(parser, tx);
+    }
+
+    @Test
+    public void t200_error_null() throws Exception {
+        expectedException.expect(ValidateException.class);
+        expectedException.expectMessage(Resources.QUORUM_INVALID_FORMAT);
+
+        Transaction tx = QuorumBuilder.createNew(50).build(networkID, sender);
+
+        tx.getData().put("200", null);
+        validate(parser, tx);
+    }
+
+    @Test
+    public void t200_error_string() throws Exception {
+        expectedException.expect(ValidateException.class);
+        expectedException.expectMessage(Resources.QUORUM_INVALID_FORMAT);
+
+        Transaction tx = QuorumBuilder.createNew(50).build(networkID, sender);
+
+        tx.getData().put("200", "10");
+        validate(parser, tx);
+    }
+
+    @Test
+    public void t200_error_decimal() throws Exception {
+        expectedException.expect(ValidateException.class);
+        expectedException.expectMessage(Resources.QUORUM_INVALID_FORMAT);
+
+        Transaction tx = QuorumBuilder.createNew(50).build(networkID, sender);
+
+        tx.getData().put("200", 10.001);
+        validate(parser, tx);
+    }
+
+    @Test
+    public void t200_error_over() throws Exception {
+        expectedException.expect(ValidateException.class);
+        expectedException.expectMessage(Resources.QUORUM_OUT_OF_RANGE);
+
+        Transaction tx = QuorumBuilder.createNew(50).build(networkID, sender);
+
+        tx.getData().put("200", 10 + 0xFFFFFFFFL);
+        validate(parser, tx);
     }
 }

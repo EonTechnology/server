@@ -7,7 +7,10 @@ import com.exscudo.peer.core.Constant;
 import com.exscudo.peer.core.IFork;
 import com.exscudo.peer.core.blockchain.Blockchain;
 import com.exscudo.peer.core.blockchain.BlockchainProvider;
+import com.exscudo.peer.core.blockchain.ITransactionMapper;
+import com.exscudo.peer.core.common.IAccountHelper;
 import com.exscudo.peer.core.common.ITimeProvider;
+import com.exscudo.peer.core.common.ITransactionEstimator;
 import com.exscudo.peer.core.common.ImmutableTimeProvider;
 import com.exscudo.peer.core.common.TransactionComparator;
 import com.exscudo.peer.core.common.exceptions.IllegalSignatureException;
@@ -20,9 +23,10 @@ import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.ledger.ILedger;
 import com.exscudo.peer.core.ledger.LedgerProvider;
 import com.exscudo.peer.core.middleware.ILedgerAction;
+import com.exscudo.peer.core.middleware.ITransactionParser;
 import com.exscudo.peer.core.middleware.LedgerActionContext;
-import com.exscudo.peer.core.middleware.TransactionParser;
 import com.exscudo.peer.core.middleware.TransactionValidator;
+import com.exscudo.peer.core.middleware.TransactionValidatorFabric;
 import com.exscudo.peer.core.middleware.ValidationResult;
 
 /**
@@ -35,14 +39,29 @@ public class UnitOfWork implements IUnitOfWork {
 
     private final BlockchainProvider blockchainProvider;
     private final LedgerProvider ledgerProvider;
-    private IFork fork;
+    private final IFork fork;
+    private final TransactionValidatorFabric transactionValidatorFabric;
+    private final ITransactionEstimator estimator;
+    private final IAccountHelper accountHelper;
+    private final ITransactionMapper transactionMapper;
 
     private Blockchain currentBlockchain;
 
-    public UnitOfWork(BlockchainProvider blockchainProvider, LedgerProvider ledgerProvider, IFork fork, Block block) {
+    public UnitOfWork(BlockchainProvider blockchainProvider,
+                      LedgerProvider ledgerProvider,
+                      IFork fork,
+                      Block block,
+                      TransactionValidatorFabric transactionValidatorFabric,
+                      ITransactionEstimator estimator,
+                      IAccountHelper accountHelper,
+                      ITransactionMapper mapper) {
         this.blockchainProvider = blockchainProvider;
         this.ledgerProvider = ledgerProvider;
         this.fork = fork;
+        this.transactionValidatorFabric = transactionValidatorFabric;
+        this.estimator = estimator;
+        this.accountHelper = accountHelper;
+        this.transactionMapper = mapper;
         this.currentBlockchain = blockchainProvider.getBlockchain(block);
     }
 
@@ -60,17 +79,17 @@ public class UnitOfWork implements IUnitOfWork {
         if (version != newBlock.getVersion()) {
             throw new ValidateException("Unsupported block version.");
         }
-        ledger = fork.covert(ledger, newBlock.getTimestamp());
+        ledger = fork.convert(ledger, newBlock.getTimestamp());
 
         ValidationResult r;
 
         // validate generator
         Account generator = ledger.getAccount(newBlock.getSenderID());
-        if (!fork.validateGenerator(generator, newBlock.getTimestamp())) {
+        if (!accountHelper.validateGenerator(generator, newBlock.getTimestamp())) {
             throw new ValidateException("Invalid generator");
         }
 
-        BigInteger diff = fork.getDifficultyAddition(newBlock, generator, newBlock.getTimestamp());
+        BigInteger diff = accountHelper.getDifficultyAddition(newBlock, generator, newBlock.getTimestamp());
         BigInteger cumulativeDifficulty = headBlock.getCumulativeDifficulty().add(diff);
         newBlock.setCumulativeDifficulty(cumulativeDifficulty);
 
@@ -90,6 +109,7 @@ public class UnitOfWork implements IUnitOfWork {
         }
 
         ledgerProvider.addLedger(ledger);
+        transactionMapper.map(newBlock);
         return currentBlockchain.addBlock(newBlock);
     }
 
@@ -141,15 +161,15 @@ public class UnitOfWork implements IUnitOfWork {
             generationBlock = currentBlockchain.getByHeight(generationHeight);
         }
 
-        if (!fork.verifySignature(new Generation(generationBlock.getGenerationSignature()),
-                                  newBlock.getGenerationSignature(),
-                                  generator,
-                                  newBlock.getTimestamp())) {
+        if (!accountHelper.verifySignature(new Generation(generationBlock.getGenerationSignature()),
+                                           newBlock.getGenerationSignature(),
+                                           generator,
+                                           newBlock.getTimestamp())) {
             return ValidationResult.error(new IllegalSignatureException("The field Generation Signature is incorrect."));
         }
 
         // signature
-        if (!fork.verifySignature(newBlock, newBlock.getSignature(), generator, newBlock.getTimestamp())) {
+        if (!accountHelper.verifySignature(newBlock, newBlock.getSignature(), generator, newBlock.getTimestamp())) {
             return ValidationResult.error(new IllegalSignatureException());
         }
 
@@ -183,25 +203,33 @@ public class UnitOfWork implements IUnitOfWork {
     private ILedger applyBlock(Block newBlock, Block prevBlock, ILedger ledger, IFork fork) throws ValidateException {
 
         ITimeProvider blockTimeProvider = new ImmutableTimeProvider(newBlock.getTimestamp());
-        TransactionValidator transactionValidator = TransactionValidator.getAllValidators(fork, blockTimeProvider);
+        TransactionValidator transactionValidator = transactionValidatorFabric.getAllValidators(blockTimeProvider);
 
         ILedger newLedger = ledger;
 
-        LedgerActionContext ctx = new LedgerActionContext(newBlock.getTimestamp(), fork);
+        LedgerActionContext ctx = new LedgerActionContext(newBlock.getTimestamp());
         Transaction[] sortedTransactions = newBlock.getTransactions().toArray(new Transaction[0]);
 
         long totalFee = 0;
         for (Transaction tx : sortedTransactions) {
-            int difficulty = fork.getDifficulty(tx, newBlock.getTimestamp());
+            int difficulty = estimator.estimate(tx);
             tx.setLength(difficulty);
             totalFee += tx.getFee();
         }
         Arrays.sort(sortedTransactions, new TransactionComparator());
 
+        ITransactionParser parser = fork.getParser(newBlock.getTimestamp());
         for (Transaction tx : sortedTransactions) {
 
-            if (currentBlockchain.containsTransaction(tx)) {
-                throw new ValidateException("Transaction already exist in blockchain.");
+            if (transactionMapper.getBlockID(tx, currentBlockchain) != null) {
+                throw new ValidateException("Transaction (or any nested) already exist in blockchain.");
+            }
+            if (tx.hasNestedTransactions()) {
+                for (Transaction nestedTx : tx.getNestedTransactions().values()) {
+                    if (transactionMapper.getBlockID(nestedTx, currentBlockchain) != null) {
+                        throw new ValidateException("Nested transaction already exist in blockchain.");
+                    }
+                }
             }
 
             ValidationResult r = transactionValidator.validate(tx, newLedger);
@@ -209,7 +237,7 @@ public class UnitOfWork implements IUnitOfWork {
                 throw r.cause;
             }
 
-            ILedgerAction[] actions = TransactionParser.parse(tx);
+            ILedgerAction[] actions = parser.parse(tx);
 
             for (ILedgerAction action : actions) {
                 newLedger = action.run(newLedger, ctx);
@@ -218,7 +246,7 @@ public class UnitOfWork implements IUnitOfWork {
 
         if (totalFee != 0) {
             Account creator = newLedger.getAccount(newBlock.getSenderID());
-            creator = fork.reward(creator, totalFee, newBlock.getTimestamp());
+            creator = accountHelper.reward(creator, totalFee, newBlock.getTimestamp());
             newLedger = newLedger.putAccount(creator);
         }
 

@@ -57,7 +57,7 @@ public class ConfirmationsValidationRuleTest extends AbstractValidationRuleTest 
         }});
 
         // required confirmations: delegate1 or (delegate 1 and delegate2)
-        Mockito.when(fork.getConfirmingAccounts(ArgumentMatchers.any(), ArgumentMatchers.anyInt()))
+        Mockito.when(accountHelper.getConfirmingAccounts(ArgumentMatchers.any(), ArgumentMatchers.anyInt()))
                .then(new Answer<Object>() {
                    @Override
                    public Object answer(InvocationOnMock invocation) throws Throwable {
@@ -72,21 +72,23 @@ public class ConfirmationsValidationRuleTest extends AbstractValidationRuleTest 
                    }
                });
 
-        Mockito.when(fork.validConfirmation(ArgumentMatchers.any(),
-                                            ArgumentMatchers.anyMap(),
-                                            ArgumentMatchers.anyInt())).then(new Answer<Object>() {
+        Mockito.when(accountHelper.validConfirmation(ArgumentMatchers.any(),
+                                                     ArgumentMatchers.anyMap(),
+                                                     ArgumentMatchers.anyInt())).then(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
+                Transaction tx = invocation.getArgument(0);
                 Map<AccountID, Account> map = invocation.getArgument(1);
-                if (map.size() == 3 || map.containsKey(delegate1Account.getID())) {
-                    return true;
+
+                if (tx.getSenderID().equals(senderAccount.getID())) {
+                    return map.containsKey(senderAccount.getID()) && map.containsKey(delegate1Account.getID());
                 }
 
-                return false;
+                throw new IllegalArgumentException();
             }
         });
 
-        rule = new ConfirmationsValidationRule(fork, timeProvider);
+        rule = new ConfirmationsValidationRule(timeProvider, accountHelper);
     }
 
     @Test
@@ -101,17 +103,6 @@ public class ConfirmationsValidationRuleTest extends AbstractValidationRuleTest 
     }
 
     @Test
-    public void unset_mfa() throws Exception {
-        expectedException.expect(ValidateException.class);
-        expectedException.expectMessage("Invalid use of the confirmation field.");
-
-        Transaction tx = Builder.newTransaction(timeProvider).build(networkID, delegate1, new ISigner[] {
-                sender, delegate2
-        });
-        validate(tx);
-    }
-
-    @Test
     public void unknown_delegate() throws Exception {
         expectedException.expect(ValidateException.class);
         expectedException.expectMessage("Unknown account " + delegate1Account.getID());
@@ -119,18 +110,6 @@ public class ConfirmationsValidationRuleTest extends AbstractValidationRuleTest 
         Mockito.when(ledger.getAccount(delegate1Account.getID())).thenReturn(null);
 
         Transaction tx = Builder.newTransaction(timeProvider).build(networkID, sender, new ISigner[] {delegate1});
-        validate(tx);
-    }
-
-    @Test
-    public void unspecified_delegate() throws Exception {
-        ISigner unknown = new Signer("33445566778899aabbccddeeff00112233445566778899aabbccddeeff001122");
-        AccountID id = new AccountID(unknown.getPublicKey());
-
-        expectedException.expect(ValidateException.class);
-        expectedException.expectMessage("Account '" + id + "' can not sign transaction.");
-
-        Transaction tx = Builder.newTransaction(timeProvider).build(networkID, sender, new ISigner[] {unknown});
         validate(tx);
     }
 
@@ -185,6 +164,17 @@ public class ConfirmationsValidationRuleTest extends AbstractValidationRuleTest 
         }
 
         Transaction tx = Builder.newTransaction(timeProvider).build(networkID, sender, signers);
+        validate(tx);
+    }
+
+    @Test
+    public void unspecified_delegate() throws Exception {
+        ISigner unknown = new Signer("33445566778899aabbccddeeff00112233445566778899aabbccddeeff001122");
+        Account unknownAccount = Mockito.spy(new TestAccount(new AccountID(unknown.getPublicKey())));
+        ledger.putAccount(unknownAccount);
+
+        Transaction tx = Builder.newTransaction(timeProvider)
+                                .build(networkID, sender, new ISigner[] {unknown, delegate1, delegate2});
         validate(tx);
     }
 }

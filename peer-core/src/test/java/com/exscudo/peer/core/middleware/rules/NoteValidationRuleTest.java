@@ -12,8 +12,6 @@ import com.exscudo.peer.core.middleware.AbstractValidationRuleTest;
 import com.exscudo.peer.core.middleware.IValidationRule;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentMatchers;
-import org.mockito.Mockito;
 
 public class NoteValidationRuleTest extends AbstractValidationRuleTest {
     private final static String alphabet = "0123456789 abcdefghijklmnoprstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ #@*-_";
@@ -30,24 +28,12 @@ public class NoteValidationRuleTest extends AbstractValidationRuleTest {
     public void setUp() throws Exception {
         super.setUp();
 
-        rule = new NoteValidationRule(fork, timeProvider);
+        rule = new NoteValidationRule();
     }
 
     @Test
     public void forbidden_note_success() throws Exception {
-        Mockito.when(fork.getMaxNoteLength(ArgumentMatchers.anyInt())).thenReturn(0);
-
         Transaction tx = Builder.newTransaction(timeProvider).build(networkID, sender);
-        validate(tx);
-    }
-
-    @Test
-    public void forbidden_note_invalid() throws Exception {
-        expectedException.expect(ValidateException.class);
-        expectedException.expectMessage("Invalid note");
-
-        Mockito.when(fork.getMaxNoteLength(ArgumentMatchers.anyInt())).thenReturn(0);
-        Transaction tx = Builder.newTransaction(timeProvider).note("Note").build(networkID, sender);
         validate(tx);
     }
 

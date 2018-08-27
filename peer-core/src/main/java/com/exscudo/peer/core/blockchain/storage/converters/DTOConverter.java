@@ -69,6 +69,7 @@ public class DTOConverter {
         dbTx.setReference(BaseIdentifier.getValueOrRef(transaction.getReference()));
         dbTx.setType(transaction.getType());
         dbTx.setSignature(Format.convert(transaction.getSignature()));
+        dbTx.setPayerID(BaseIdentifier.getValueOrRef(transaction.getPayer()));
         if (transaction.getData() != null) {
             Bencode bencode = new Bencode();
             byte[] encoded = bencode.encode(transaction.getData());
@@ -108,6 +109,9 @@ public class DTOConverter {
         tx.setSenderID(new AccountID(dbTransaction.getSenderID()));
         tx.setFee(dbTransaction.getFee());
         tx.setSignature(Format.convert(dbTransaction.getSignature()));
+        if (dbTransaction.getPayerID() != 0L) {
+            tx.setPayer(new AccountID(dbTransaction.getPayerID()));
+        }
 
         Map<String, Object> data = null;
         String attachmentText = dbTransaction.getAttachment();

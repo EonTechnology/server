@@ -1,5 +1,7 @@
 package com.exscudo.peer.core.middleware;
 
+import java.util.Collection;
+
 import com.exscudo.peer.core.common.exceptions.ValidateException;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.identifier.AccountID;
@@ -12,5 +14,5 @@ public interface ITransactionParser {
 
     ILedgerAction[] parse(Transaction transaction) throws ValidateException;
 
-    AccountID getRecipient(Transaction transaction) throws ValidateException;
+    Collection<AccountID> getDependencies(Transaction transaction) throws ValidateException;
 }

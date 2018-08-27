@@ -1,5 +1,6 @@
 package com.exscudo.peer.eon.midleware.parsers;
 
+import java.util.Collection;
 import java.util.Map;
 
 import com.exscudo.peer.core.common.exceptions.ValidateException;
@@ -23,7 +24,7 @@ public class QuorumParser implements ITransactionParser {
         }
 
         Map<String, Object> data = transaction.getData();
-        if (data == null) {
+        if (data.isEmpty()) {
             throw new ValidateException(Resources.ATTACHMENT_UNKNOWN_TYPE);
         }
 
@@ -69,12 +70,12 @@ public class QuorumParser implements ITransactionParser {
         }
 
         return new ILedgerAction[] {
-                new FeePaymentAction(transaction.getSenderID(), transaction.getFee()), action
+                new FeePaymentAction(transaction.getSenderID(), transaction.getPayer(), transaction.getFee()), action
         };
     }
 
     @Override
-    public AccountID getRecipient(Transaction transaction) throws ValidateException {
+    public Collection<AccountID> getDependencies(Transaction transaction) throws ValidateException {
         return null;
     }
 }

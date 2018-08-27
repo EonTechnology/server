@@ -6,11 +6,13 @@ import java.util.Comparator;
 import java.util.List;
 
 import com.exscudo.peer.core.blockchain.storage.DbBlock;
+import com.exscudo.peer.core.blockchain.storage.DbTransaction;
 import com.exscudo.peer.core.blockchain.storage.converters.DTOConverter;
 import com.exscudo.peer.core.common.exceptions.DataAccessException;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.identifier.AccountID;
 import com.exscudo.peer.core.data.identifier.BlockID;
+import com.exscudo.peer.core.data.identifier.TransactionID;
 import com.exscudo.peer.core.storage.Storage;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
@@ -35,6 +37,9 @@ public class BlockService {
 
     private QueryBuilder<DbBlock, Long> getByAccountIdBuilder = null;
     private ArgumentHolder vAccountID = new ThreadLocalSelectArg();
+
+    private QueryBuilder<DbBlock, Long> getBlockByTxIdBuilder;
+    private ArgumentHolder vTransactionID = new ThreadLocalSelectArg();
 
     public BlockService(Storage storage) {
         this.storage = storage;
@@ -193,6 +198,42 @@ public class BlockService {
         } catch (SQLException e) {
             throw new DataAccessException();
         }
+    }
+
+    public Block getBlockWithTransaction(TransactionID transactionID) {
+
+        Block block = null;
+
+        try {
+
+            if (getBlockByTxIdBuilder == null) {
+                Dao<DbTransaction, Long> txDao =
+                        DaoManager.createDao(storage.getConnectionSource(), DbTransaction.class);
+                QueryBuilder<DbTransaction, Long> getTransactionByIdBuilder = txDao.queryBuilder();
+                getTransactionByIdBuilder.selectColumns("block_id")
+                                         .where()
+                                         .eq("id", transactionID.getValue())
+                                         .and()
+                                         .eq("tag", 1);
+
+                Dao<DbBlock, Long> blockDao = DaoManager.createDao(storage.getConnectionSource(), DbBlock.class);
+                getBlockByTxIdBuilder = blockDao.queryBuilder();
+                getBlockByTxIdBuilder.where().in("id", getTransactionByIdBuilder);
+            }
+
+            vTransactionID.setValue(transactionID.getValue());
+
+            DbBlock dbBlock = getBlockByTxIdBuilder.queryForFirst();
+
+            if (dbBlock != null) {
+
+                block = DTOConverter.convert(dbBlock, storage);
+            }
+        } catch (SQLException e) {
+            throw new DataAccessException(e);
+        }
+
+        return block;
     }
 
     private static class BlockComparator implements Comparator<Block> {

@@ -48,7 +48,7 @@ public class SignatureValidationRuleTest extends AbstractValidationRuleTest {
         Account delegate2Account = Mockito.spy(new TestAccount(new AccountID(delegate2.getPublicKey())));
         ledger.putAccount(delegate2Account);
 
-        rule = new SignatureValidationRule(fork, timeProvider);
+        rule = new SignatureValidationRule(timeProvider, accountHelper);
     }
 
     @Test
@@ -101,10 +101,10 @@ public class SignatureValidationRuleTest extends AbstractValidationRuleTest {
         expectedException.expect(ValidateException.class);
         expectedException.expectMessage("Illegal signature.");
 
-        Mockito.when(fork.verifySignature(ArgumentMatchers.any(),
-                                          ArgumentMatchers.any(),
-                                          ArgumentMatchers.any(),
-                                          ArgumentMatchers.anyInt())).thenReturn(false);
+        Mockito.when(accountHelper.verifySignature(ArgumentMatchers.any(),
+                                                   ArgumentMatchers.any(),
+                                                   ArgumentMatchers.any(),
+                                                   ArgumentMatchers.anyInt())).thenReturn(false);
         Transaction tx = Builder.newTransaction(timeProvider).build(new BlockID(100500L), sender);
         validate(tx);
     }
@@ -133,10 +133,10 @@ public class SignatureValidationRuleTest extends AbstractValidationRuleTest {
     @Test
     public void illegal_confirmation() throws Exception {
         expectedException.expect(IllegalSignatureException.class);
-        Mockito.when(fork.verifySignature(ArgumentMatchers.any(),
-                                          ArgumentMatchers.any(),
-                                          ArgumentMatchers.any(),
-                                          ArgumentMatchers.anyInt())).thenAnswer(new Answer<Boolean>() {
+        Mockito.when(accountHelper.verifySignature(ArgumentMatchers.any(),
+                                                   ArgumentMatchers.any(),
+                                                   ArgumentMatchers.any(),
+                                                   ArgumentMatchers.anyInt())).thenAnswer(new Answer<Boolean>() {
             @Override
             public Boolean answer(InvocationOnMock invocationOnMock) throws Throwable {
                 Account account = invocationOnMock.getArgument(2);

@@ -26,4 +26,5 @@ class Constants {
     static final String GENERATOR = "generator";
     static final String ID = "id";
     static final String LAST_BLOCK_ID = "last";
+    static final String PAYER = "payer";
 }

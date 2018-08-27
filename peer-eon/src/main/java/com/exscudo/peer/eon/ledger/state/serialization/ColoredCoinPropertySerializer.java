@@ -7,6 +7,7 @@ import com.exscudo.peer.core.data.Account;
 import com.exscudo.peer.core.data.AccountProperty;
 import com.exscudo.peer.eon.PropertyType;
 import com.exscudo.peer.eon.ledger.AccountPropertySerializer;
+import com.exscudo.peer.eon.ledger.state.ColoredCoinEmitMode;
 import com.exscudo.peer.eon.ledger.state.ColoredCoinProperty;
 
 public class ColoredCoinPropertySerializer extends AccountPropertySerializer<ColoredCoinProperty> {
@@ -18,12 +19,21 @@ public class ColoredCoinPropertySerializer extends AccountPropertySerializer<Col
     @Override
     public Account doSerialize(ColoredCoinProperty coloredCoin, Account account) throws IOException {
 
-        if (coloredCoin.getMoneySupply() != 0) {
+        if (coloredCoin.getAttributes() != null) {
+
             HashMap<String, Object> data = new HashMap<>();
+
             data.put("supply", coloredCoin.getMoneySupply());
-            data.put("decimal", coloredCoin.getDecimalPoint());
+
+            ColoredCoinProperty.Attributes attributes = coloredCoin.getAttributes();
+            data.put("decimal", attributes.decimalPoint);
             // Sets only on money creation
-            data.put("timestamp", coloredCoin.getTimestamp());
+            data.put("timestamp", attributes.timestamp);
+
+            ColoredCoinEmitMode emitMode = coloredCoin.getEmitMode();
+            if (emitMode != ColoredCoinEmitMode.PRESET) {
+                data.put("mode", emitMode.toString());
+            }
 
             return account.putProperty(new AccountProperty(PropertyType.COLORED_COIN, data));
         } else {

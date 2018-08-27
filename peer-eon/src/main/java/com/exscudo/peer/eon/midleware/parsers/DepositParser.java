@@ -1,5 +1,6 @@
 package com.exscudo.peer.eon.midleware.parsers;
 
+import java.util.Collection;
 import java.util.Map;
 
 import com.exscudo.peer.core.common.exceptions.ValidateException;
@@ -21,7 +22,7 @@ public class DepositParser implements ITransactionParser {
         }
 
         Map<String, Object> data = transaction.getData();
-        if (data == null || data.size() != 1) {
+        if (data.size() != 1) {
             throw new ValidateException(Resources.ATTACHMENT_UNKNOWN_TYPE);
         }
 
@@ -36,12 +37,12 @@ public class DepositParser implements ITransactionParser {
 
         return new ILedgerAction[] {
                 new DepositAction(transaction.getSenderID(), amount),
-                new FeePaymentAction(transaction.getSenderID(), transaction.getFee())
+                new FeePaymentAction(transaction.getSenderID(), transaction.getPayer(), transaction.getFee())
         };
     }
 
     @Override
-    public AccountID getRecipient(Transaction transaction) throws ValidateException {
+    public Collection<AccountID> getDependencies(Transaction transaction) throws ValidateException {
         return null;
     }
 }

@@ -7,13 +7,13 @@ import java.util.Map;
 
 import com.exscudo.peer.Signer;
 import com.exscudo.peer.TestAccount;
+import com.exscudo.peer.TestSignature;
 import com.exscudo.peer.core.Constant;
 import com.exscudo.peer.core.common.exceptions.ValidateException;
 import com.exscudo.peer.core.crypto.ISigner;
 import com.exscudo.peer.core.data.Account;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.identifier.AccountID;
-import com.exscudo.peer.core.middleware.ITransactionParser;
 import com.exscudo.peer.eon.ledger.AccountProperties;
 import com.exscudo.peer.eon.ledger.state.BalanceProperty;
 import com.exscudo.peer.eon.ledger.state.RegistrationDataProperty;
@@ -26,13 +26,10 @@ import com.exscudo.peer.tx.midleware.builders.PublicationBuilder;
 import com.exscudo.peer.tx.midleware.builders.TransactionBuilder;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 public class PublicationTransactionTest extends AbstractTransactionTest {
-    private PublicationParser parser = new PublicationParser();
+    private PublicationParser parser;
 
     private String seed = "112233445566778899aabbccddeeff00112233445566778899aabbccddeeff00";
     private String seed_1 = "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff";
@@ -42,29 +39,12 @@ public class PublicationTransactionTest extends AbstractTransactionTest {
 
     private Account account;
 
-    @Override
-    protected ITransactionParser getParser() {
-        return parser;
-    }
-
     @Before
     @Override
     public void setUp() throws Exception {
         super.setUp();
 
-        Mockito.when(fork.getPublicKeyBySeed(ArgumentMatchers.any(String.class), ArgumentMatchers.anyInt()))
-               .thenAnswer(new Answer<Object>() {
-                   @Override
-                   public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                       Signer s;
-                       try {
-                           s = new Signer(invocationOnMock.getArgument(0));
-                       } catch (Exception e) {
-                           throw new IllegalArgumentException();
-                       }
-                       return s.getPublicKey();
-                   }
-               });
+        parser = new PublicationParser(new TestSignature());
 
         account = Mockito.spy(new TestAccount(new AccountID(signer.getPublicKey())));
         AccountProperties.setProperty(account, new RegistrationDataProperty(signer.getPublicKey()));
@@ -86,7 +66,7 @@ public class PublicationTransactionTest extends AbstractTransactionTest {
         Map<String, Object> map = new HashMap<>();
         map.put("param", "value");
         Transaction tx = new TransactionBuilder(TransactionType.Registration, map).build(networkID, signer);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -95,7 +75,7 @@ public class PublicationTransactionTest extends AbstractTransactionTest {
         expectedException.expectMessage(Resources.ATTACHMENT_UNKNOWN_TYPE);
 
         Transaction tx = new TransactionBuilder(TransactionType.Registration, new HashMap<>()).build(networkID, signer);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -106,7 +86,7 @@ public class PublicationTransactionTest extends AbstractTransactionTest {
         Map<String, Object> map = new HashMap<>();
         map.put("seed", null);
         Transaction tx = new TransactionBuilder(TransactionType.Registration, map).build(networkID, signer);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -115,7 +95,7 @@ public class PublicationTransactionTest extends AbstractTransactionTest {
         expectedException.expectMessage(Resources.PUBLIC_ACCOUNT_SEED_NOT_MATCH);
 
         Transaction tx = PublicationBuilder.createNew(seed).build(networkID, signer_1);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -125,7 +105,7 @@ public class PublicationTransactionTest extends AbstractTransactionTest {
         expectedException.expectMessage(Resources.PUBLIC_ACCOUNT_INVALID_WEIGHT);
 
         Transaction tx = PublicationBuilder.createNew(seed).build(networkID, signer);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -139,7 +119,7 @@ public class PublicationTransactionTest extends AbstractTransactionTest {
         AccountProperties.setProperty(account, validationMode);
 
         Transaction tx = PublicationBuilder.createNew(seed).build(networkID, signer);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -160,7 +140,7 @@ public class PublicationTransactionTest extends AbstractTransactionTest {
                 PublicationBuilder.createNew(seed).validity(timestamp1 - 30 * 60, 60 * 60).build(networkID, signer);
 
         when(timeProvider.get()).thenReturn(timestamp1 - 1);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -179,7 +159,7 @@ public class PublicationTransactionTest extends AbstractTransactionTest {
                 PublicationBuilder.createNew(seed).validity(timestamp1 - 30 * 60, 60 * 60).build(networkID, signer);
 
         when(timeProvider.get()).thenReturn(timestamp1 + 1);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -200,7 +180,7 @@ public class PublicationTransactionTest extends AbstractTransactionTest {
                 PublicationBuilder.createNew(seed).validity(timestamp1 - 30 * 60, 60 * 60).build(networkID, signer);
 
         when(timeProvider.get()).thenReturn(timestamp1 + 1);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -224,7 +204,7 @@ public class PublicationTransactionTest extends AbstractTransactionTest {
                 PublicationBuilder.createNew(seed).validity(timestamp1 - 30 * 60, 60 * 60).build(networkID, signer);
 
         when(timeProvider.get()).thenReturn(timestamp1 + 1);
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -238,7 +218,7 @@ public class PublicationTransactionTest extends AbstractTransactionTest {
                                            .addNested(innerTx)
                                            .build(networkID, signer);
 
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -256,6 +236,6 @@ public class PublicationTransactionTest extends AbstractTransactionTest {
                 PublicationBuilder.createNew(seed).validity(timestamp1 - 30 * 60, 60 * 60).build(networkID, signer);
 
         when(timeProvider.get()).thenReturn(timestamp1 + 1);
-        validate(tx);
+        validate(parser, tx);
     }
 }

@@ -11,8 +11,6 @@ import com.exscudo.peer.core.middleware.AbstractValidationRuleTest;
 import com.exscudo.peer.core.middleware.IValidationRule;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentMatchers;
-import org.mockito.Mockito;
 
 public class TypeValidationRuleTest extends AbstractValidationRuleTest {
     private TypeValidationRule rule;
@@ -28,11 +26,9 @@ public class TypeValidationRuleTest extends AbstractValidationRuleTest {
     public void setUp() throws Exception {
         super.setUp();
 
-        Mockito.when(fork.getTransactionTypes(ArgumentMatchers.anyInt())).thenReturn(new HashSet<Integer>() {{
+        rule = new TypeValidationRule(new HashSet<Integer>() {{
             add(10);
         }});
-
-        rule = new TypeValidationRule(fork, timeProvider);
     }
 
     @Test

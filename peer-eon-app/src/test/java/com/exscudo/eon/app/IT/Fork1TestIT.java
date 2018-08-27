@@ -2,16 +2,16 @@ package com.exscudo.eon.app.IT;
 
 import java.time.Instant;
 
-import com.exscudo.eon.app.cfg.Fork;
-import com.exscudo.eon.app.cfg.PeerStarter;
-import com.exscudo.eon.app.cfg.forks.Item;
 import com.exscudo.peer.core.Constant;
+import com.exscudo.peer.core.IFork;
 import com.exscudo.peer.core.common.TimeProvider;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.identifier.AccountID;
 import com.exscudo.peer.core.data.identifier.BlockID;
 import com.exscudo.peer.core.env.Peer;
+import com.exscudo.peer.eon.midleware.parsers.PaymentParser;
+import com.exscudo.peer.tx.TransactionType;
 import com.exscudo.peer.tx.midleware.builders.PaymentBuilder;
 import org.junit.Assert;
 import org.junit.Before;
@@ -35,8 +35,6 @@ public class Fork1TestIT {
     protected static int END2 = Constant.BLOCK_PERIOD * END_H2;
     protected static int FORK = 2;
     protected TimeProvider mockTimeProvider;
-    protected Fork forkState1;
-    protected Fork forkState2;
     protected PeerContext ctx1;
     protected PeerContext ctx2;
 
@@ -45,33 +43,29 @@ public class Fork1TestIT {
 
         mockTimeProvider = Mockito.mock(TimeProvider.class);
 
-        PeerStarter peerStarter1 = PeerStarterFactory.create(GENERATOR, mockTimeProvider);
-        long timestamp = Utils.getLastBlock(peerStarter1.getStorage()).getTimestamp();
+        long timestamp = Utils.getGenesisBlockTimestamp();
 
         String i1_begin = getTimeString(timestamp - 1);
         String i2_begin = getTimeString(timestamp + Fork1TestIT.BEGIN);
         String i3_begin = getTimeString(timestamp + Fork1TestIT.END);
         String i4_begin = getTimeString(timestamp + Fork1TestIT.END2);
 
-        forkState1 = new Fork(Utils.getGenesisBlockID(peerStarter1.getStorage()), new Item[] {
-                new Utils.TestItem(Fork1TestIT.FORK - 1, i1_begin), new Utils.TestItem(Fork1TestIT.FORK, i2_begin)
-        }, i3_begin);
-        forkState1.setMinDepositSize(Utils.MIN_DEPOSIT_SIZE);
-        peerStarter1.setFork(forkState1);
+        ctx1 = new PeerContext(PeerStarterFactory.create()
+                                                 .beginFork(Fork1TestIT.FORK - 1, i1_begin)
+                                                 .nextItem(Fork1TestIT.FORK, i2_begin)
+                                                 .endFork(i3_begin)
+                                                 .route(TransactionType.Payment, new PaymentParser())
+                                                 .seed(GENERATOR)
+                                                 .build(mockTimeProvider));
 
-        ctx1 = new PeerContext(peerStarter1);
-
-        PeerStarter peerStarter2 = PeerStarterFactory.create(GENERATOR2, mockTimeProvider);
-
-        BlockID networkID2 = Utils.getGenesisBlockID(peerStarter2.getStorage());
-        forkState2 = new Fork(Utils.getGenesisBlockID(peerStarter2.getStorage()), new Item[] {
-                new Utils.TestItem(Fork1TestIT.FORK - 1, i1_begin),
-                new Utils.TestItem(Fork1TestIT.FORK, i2_begin),
-                new Utils.TestItem(Fork1TestIT.FORK + 1, i3_begin)
-        }, i4_begin);
-        forkState2.setMinDepositSize(Utils.MIN_DEPOSIT_SIZE);
-        peerStarter2.setFork(forkState2);
-        ctx2 = new PeerContext(peerStarter2);
+        ctx2 = new PeerContext(PeerStarterFactory.create()
+                                                 .beginFork(Fork1TestIT.FORK - 1, i1_begin)
+                                                 .nextItem(Fork1TestIT.FORK, i2_begin)
+                                                 .nextItem(Fork1TestIT.FORK + 1, i3_begin)
+                                                 .endFork(i4_begin)
+                                                 .route(TransactionType.Payment, new PaymentParser())
+                                                 .seed(GENERATOR2)
+                                                 .build(mockTimeProvider));
     }
 
     private String getTimeString(long timestamp) {
@@ -81,6 +75,7 @@ public class Fork1TestIT {
     @Test
     public void step_1_1_isCome() throws Exception {
         Block lastBlock = ctx1.blockExplorerService.getLastBlock();
+        IFork forkState1 = ctx1.fork;
 
         Assert.assertFalse("Before fork", forkState1.isCome(lastBlock.getTimestamp() + BEGIN - 50));
         Assert.assertTrue("On fork", forkState1.isCome(lastBlock.getTimestamp() + BEGIN + 50));
@@ -91,6 +86,7 @@ public class Fork1TestIT {
     @Test
     public void step_1_2_isPassed() throws Exception {
         Block lastBlock = ctx1.blockExplorerService.getLastBlock();
+        IFork forkState1 = ctx1.fork;
 
         Assert.assertFalse("Before fork", forkState1.isPassed(lastBlock.getTimestamp() + BEGIN - 50));
         Assert.assertFalse("On fork", forkState1.isPassed(lastBlock.getTimestamp() + BEGIN + 50));
@@ -101,6 +97,7 @@ public class Fork1TestIT {
     @Test
     public void step_1_3_getNumber() throws Exception {
         Block lastBlock = ctx1.blockExplorerService.getLastBlock();
+        IFork forkState1 = ctx1.fork;
 
         Assert.assertEquals("Before fork", 1, forkState1.getNumber(lastBlock.getTimestamp() + BEGIN - 50));
         Assert.assertEquals("On fork", 2, forkState1.getNumber(lastBlock.getTimestamp() + BEGIN + 50));
@@ -112,6 +109,7 @@ public class Fork1TestIT {
     public void step_2_1_CheckGeneratorIsDisabled() throws Exception {
 
         Block lastBlock = ctx1.blockExplorerService.getLastBlock();
+        IFork forkState1 = ctx1.fork;
         BlockID lastBlockID;
 
         do {
@@ -139,6 +137,7 @@ public class Fork1TestIT {
 
         Block lastBlock = ctx2.blockExplorerService.getLastBlock();
         BlockID lastBlockID;
+        IFork forkState2 = ctx2.fork;
 
         do {
             lastBlockID = lastBlock.getID();
@@ -166,6 +165,9 @@ public class Fork1TestIT {
         ctx1.setPeerToConnect(ctx2);
 
         Block lastBlock = ctx2.blockExplorerService.getLastBlock();
+        IFork forkState2 = ctx2.fork;
+        IFork forkState1 = ctx1.fork;
+
         BlockID lastBlockID;
 
         do {
@@ -224,6 +226,8 @@ public class Fork1TestIT {
         ctx2.setPeerToConnect(ctx1);
 
         Block lastBlock = ctx2.blockExplorerService.getLastBlock();
+        IFork forkState2 = ctx2.fork;
+        IFork forkState1 = ctx1.fork;
         BlockID lastBlockID;
 
         do {
@@ -281,6 +285,9 @@ public class Fork1TestIT {
     public void step_5_CheckPeerConnected() throws Exception {
 
         Block lastBlock = ctx2.blockExplorerService.getLastBlock();
+
+        IFork forkState2 = ctx2.fork;
+        IFork forkState1 = ctx1.fork;
 
         ctx1.setPeerToConnect(ctx2);
         ctx2.setPeerToConnect(ctx1);

@@ -22,7 +22,7 @@ public class ColoredBalanceProperty implements Iterable<ColoredCoinID> {
         coloredBalances = new TreeMap<>(ext);
     }
 
-    public void setBalance(long amount, ColoredCoinID color) {
+    public ColoredBalanceProperty setBalance(long amount, ColoredCoinID color) {
         if (amount < 0) {
             throw new IllegalArgumentException("amount");
         }
@@ -31,6 +31,7 @@ public class ColoredBalanceProperty implements Iterable<ColoredCoinID> {
         } else {
             coloredBalances.remove(color.toString());
         }
+        return this;
     }
 
     public long getBalance(ColoredCoinID color) {

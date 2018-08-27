@@ -70,7 +70,11 @@ public class TaskFactory {
                                      starter.getBlockGenerator(),
                                      starter.getTimeProvider(),
                                      starter.getLedgerProvider(),
-                                     starter.getBlockchainProvider());
+                                     starter.getBlockchainProvider(),
+                                     starter.getTransactionValidatorFabric(),
+                                     starter.getEstimator(),
+                                     starter.getAccountHelper(),
+                                     starter.getTransactionMapper());
     }
 
     public SyncBlockListTask getSyncBlockListTask() throws SQLException, IOException, ClassNotFoundException {
@@ -80,7 +84,11 @@ public class TaskFactory {
                                      starter.getExecutionContext(),
                                      starter.getBlockchainProvider(),
                                      starter.getTimeProvider(),
-                                     starter.getLedgerProvider());
+                                     starter.getLedgerProvider(),
+                                     starter.getTransactionValidatorFabric(),
+                                     starter.getEstimator(),
+                                     starter.getAccountHelper(),
+                                     starter.getTransactionMapper());
     }
 
     public AnalyzeTask getAnalyzeTask() throws SQLException, IOException, ClassNotFoundException {
@@ -100,7 +108,8 @@ public class TaskFactory {
                                     starter.getExecutionContext(),
                                     starter.getFork(),
                                     starter.getBlockchainProvider(),
-                                    starter.getLedgerProvider());
+                                    starter.getLedgerProvider(),
+                                    starter.getAccountHelper());
     }
 
     public NestedTransactionCleanupTask getNestedTransactionCleanupTask() throws SQLException, IOException, ClassNotFoundException {

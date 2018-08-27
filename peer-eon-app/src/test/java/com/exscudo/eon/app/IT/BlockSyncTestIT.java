@@ -11,6 +11,8 @@ import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.identifier.AccountID;
 import com.exscudo.peer.core.ledger.ILedger;
 import com.exscudo.peer.core.ledger.LedgerProvider;
+import com.exscudo.peer.eon.midleware.parsers.PaymentParser;
+import com.exscudo.peer.tx.TransactionType;
 import com.exscudo.peer.tx.midleware.builders.PaymentBuilder;
 import org.junit.Assert;
 import org.junit.Before;
@@ -37,8 +39,15 @@ public class BlockSyncTestIT {
     @Before
     public void setUp() throws Exception {
         mockTimeProvider = Mockito.mock(TimeProvider.class);
-        ctx1 = new PeerContext(PeerStarterFactory.create(GENERATOR, mockTimeProvider));
-        ctx2 = new PeerContext(PeerStarterFactory.create(GENERATOR2, mockTimeProvider));
+
+        ctx1 = new PeerContext(PeerStarterFactory.create()
+                                                 .route(TransactionType.Payment, new PaymentParser())
+                                                 .seed(GENERATOR)
+                                                 .build(mockTimeProvider));
+        ctx2 = new PeerContext(PeerStarterFactory.create()
+                                                 .route(TransactionType.Payment, new PaymentParser())
+                                                 .seed(GENERATOR2)
+                                                 .build(mockTimeProvider));
 
         ctx1.syncBlockPeerService = Mockito.spy(ctx1.syncBlockPeerService);
         ctx2.syncBlockPeerService = Mockito.spy(ctx2.syncBlockPeerService);
@@ -261,7 +270,11 @@ public class BlockSyncTestIT {
         final Block invalidBlock = lastBlock;
         ctx1.generateBlockForNow();
 
-        PeerStarter ps = PeerStarterFactory.create(GENERATOR2, mockTimeProvider);
+        PeerStarter ps = PeerStarterFactory.create()
+                                           .route(TransactionType.Payment, new PaymentParser())
+                                           .seed(GENERATOR2)
+                                           .build(mockTimeProvider);
+
         LedgerProvider ledgerProvider = ps.getLedgerProvider();
         LedgerProvider mockLedgerProvider = Mockito.mock(LedgerProvider.class);
         Mockito.when(mockLedgerProvider.getLedger(ArgumentMatchers.any())).thenAnswer(new Answer<Object>() {
@@ -283,6 +296,7 @@ public class BlockSyncTestIT {
             }
         });
         ps.setLedgerProvider(mockLedgerProvider);
+
         PeerContext ctx2 = new PeerContext(ps);
 
         ctx2.setPeerToConnect(ctx1);

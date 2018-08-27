@@ -1,5 +1,6 @@
 package com.exscudo.peer.eon;
 
+import java.util.Collection;
 import java.util.HashMap;
 
 import com.exscudo.peer.Signer;
@@ -25,17 +26,12 @@ public class CompositeTransactionTransactionTest extends AbstractTransactionTest
                 }
 
                 @Override
-                public AccountID getRecipient(Transaction transaction) throws ValidateException {
+                public Collection<AccountID> getDependencies(Transaction transaction) throws ValidateException {
                     return null;
                 }
             }).build();
 
     private Transaction tx;
-
-    @Override
-    protected ITransactionParser getParser() {
-        return parser;
-    }
 
     @Before
     @Override
@@ -63,7 +59,7 @@ public class CompositeTransactionTransactionTest extends AbstractTransactionTest
         byte[] signature = signer.sign(tx, new BlockID(0L));
         tx.setSignature(signature);
 
-        validate(tx);
+        validate(parser, tx);
     }
 
     @Test
@@ -84,6 +80,6 @@ public class CompositeTransactionTransactionTest extends AbstractTransactionTest
         byte[] signature = signer.sign(tx, new BlockID(0L));
         tx.setSignature(signature);
 
-        validate(tx);
+        validate(parser, tx);
     }
 }

@@ -1,5 +1,7 @@
 package com.exscudo.peer.eon.midleware.parsers;
 
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 
 import com.exscudo.peer.core.common.exceptions.ValidateException;
@@ -22,7 +24,7 @@ public class DelegateParser implements ITransactionParser {
         }
 
         final Map<String, Object> data = transaction.getData();
-        if (data == null || data.size() < 1) {
+        if (data.size() < 1) {
             throw new ValidateException(Resources.ATTACHMENT_UNKNOWN_TYPE);
         }
 
@@ -49,12 +51,22 @@ public class DelegateParser implements ITransactionParser {
         }
 
         return new ILedgerAction[] {
-                new FeePaymentAction(transaction.getSenderID(), transaction.getFee()), action
+                new FeePaymentAction(transaction.getSenderID(), transaction.getPayer(), transaction.getFee()), action
         };
     }
 
     @Override
-    public AccountID getRecipient(Transaction transaction) throws ValidateException {
-        return null;
+    public Collection<AccountID> getDependencies(Transaction transaction) throws ValidateException {
+        HashSet<AccountID> accSet = new HashSet<>();
+
+        for (String s : transaction.getData().keySet()) {
+            try {
+                accSet.add(new AccountID(s));
+            } catch (Exception e) {
+                throw new ValidateException(Resources.ACCOUNT_ID_INVALID_FORMAT);
+            }
+        }
+
+        return accSet;
     }
 }

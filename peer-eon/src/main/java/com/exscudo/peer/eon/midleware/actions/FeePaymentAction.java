@@ -12,21 +12,34 @@ import com.exscudo.peer.eon.midleware.Resources;
 
 public class FeePaymentAction implements ILedgerAction {
     private final AccountID senderID;
+    private final AccountID payerID;
     private final long fee;
 
-    public FeePaymentAction(AccountID senderID, long fee) {
+    public FeePaymentAction(AccountID senderID, AccountID payerID, long fee) {
         this.senderID = senderID;
+        this.payerID = payerID;
         this.fee = fee;
     }
 
     private void ensureValidState(ILedger ledger) throws ValidateException {
-        Account sender = ledger.getAccount(senderID);
-        if (sender == null) {
-            throw new ValidateException(Resources.SENDER_ACCOUNT_NOT_FOUND);
+        Account payer;
+        if (payerID != null) {
+            payer = ledger.getAccount(payerID);
+
+            if (payer == null) {
+                throw new ValidateException(Resources.PAYER_ACCOUNT_NOT_FOUND);
+            }
+        } else {
+            payer = ledger.getAccount(senderID);
+
+            if (payer == null) {
+                throw new ValidateException(Resources.SENDER_ACCOUNT_NOT_FOUND);
+            }
         }
-        BalanceProperty balance = AccountProperties.getBalance(sender);
+
+        BalanceProperty balance = AccountProperties.getBalance(payer);
         if (balance.getValue() < fee) {
-            throw new ValidateException(Resources.NOT_ENOUGH_FUNDS);
+            throw new ValidateException(Resources.NOT_ENOUGH_FEE);
         }
     }
 
@@ -35,11 +48,16 @@ public class FeePaymentAction implements ILedgerAction {
 
         ensureValidState(ledger);
 
-        // Update sender account
-        Account sender = ledger.getAccount(senderID);
-        BalanceProperty newSenderBalance = AccountProperties.getBalance(sender).withdraw(fee);
-        sender = AccountProperties.setProperty(sender, newSenderBalance);
+        // Update payer account
+        Account payer;
+        if (payerID != null) {
+            payer = ledger.getAccount(payerID);
+        } else {
+            payer = ledger.getAccount(senderID);
+        }
+        BalanceProperty newSenderBalance = AccountProperties.getBalance(payer).withdraw(fee);
+        payer = AccountProperties.setProperty(payer, newSenderBalance);
 
-        return ledger.putAccount(sender);
+        return ledger.putAccount(payer);
     }
 }
