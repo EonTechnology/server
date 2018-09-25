@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+## 0.13.4 - 2018-09-26 - MainNet fork 7 / TestNet3 fork 7
+### Changed
+- End date of the fork.
+
 ## 0.13.3 - 2018-08-29 - MainNet fork 6 / TestNet3 fork 6
 ### Added
 - Auto-emission mode for colored coins (in MainNet).
