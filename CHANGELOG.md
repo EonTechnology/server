@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+## 0.13.5 - 2018-10-31 - MainNet fork 8 / TestNet3 fork 8
+### Changed
+- End date of the fork.
+
 ## 0.13.4 - 2018-09-26 - MainNet fork 7 / TestNet3 fork 7
 ### Changed
 - End date of the fork.
