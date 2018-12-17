@@ -1,7 +1,10 @@
 package com.exscudo.eon.app.IT;
 
+import static org.mockito.Mockito.spy;
+
 import java.io.IOException;
 
+import com.exscudo.eon.app.cfg.PeerStarter;
 import com.exscudo.peer.core.common.TimeProvider;
 import com.exscudo.peer.core.common.exceptions.RemotePeerException;
 import com.exscudo.peer.core.data.Block;
@@ -28,8 +31,14 @@ public class AddPeerTestIT {
     public void setUp() throws Exception {
         mockTimeProvider = Mockito.mock(TimeProvider.class);
 
-        ctx1 = new PeerContext(PeerStarterFactory.create().seed(GENERATOR).build(mockTimeProvider));
-        ctx2 = new PeerContext(PeerStarterFactory.create().seed(GENERATOR2).build(mockTimeProvider));
+        PeerStarter starter = PeerStarterFactory.create().seed(GENERATOR).build(mockTimeProvider);
+        PeerStarter starter2 = PeerStarterFactory.create().seed(GENERATOR2).build(mockTimeProvider);
+
+        starter.setFork(spy(starter.getFork()));
+        starter2.setFork(spy(starter2.getFork()));
+
+        ctx1 = new PeerContext(starter);
+        ctx2 = new PeerContext(starter2);
 
         ctx1.setPeerToConnect(ctx2);
         ctx2.setPeerToConnect(ctx1);

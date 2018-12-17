@@ -15,8 +15,4 @@ public class DelegateBuilder extends TransactionBuilder<DelegateBuilder> {
     public static DelegateBuilder createNew(AccountID accountID, int weight) {
         return new DelegateBuilder().withParam(accountID.toString(), weight);
     }
-
-    public static DelegateBuilder createNew(AccountID accountID) {
-        return createNew(accountID, 0);
-    }
 }

@@ -23,6 +23,7 @@ import com.exscudo.peer.core.blockchain.TransactionMapper;
 import com.exscudo.peer.core.blockchain.events.BlockchainEventManager;
 import com.exscudo.peer.core.common.Format;
 import com.exscudo.peer.core.common.IAccountHelper;
+import com.exscudo.peer.core.common.ITimeProvider;
 import com.exscudo.peer.core.common.ITransactionEstimator;
 import com.exscudo.peer.core.common.TimeProvider;
 import com.exscudo.peer.core.crypto.CryptoProvider;
@@ -66,7 +67,7 @@ public class PeerStarter {
     private final Config config;
     private ExecutionContext executionContext = null;
     private Storage storage = null;
-    private TimeProvider timeProvider = null;
+    private ITimeProvider timeProvider = null;
     private Backlog backlog = null;
     private BlockchainProvider blockchainProvider = null;
     private Fork fork = null;
@@ -244,14 +245,14 @@ public class PeerStarter {
         this.storage = storage;
     }
 
-    public TimeProvider getTimeProvider() {
+    public ITimeProvider getTimeProvider() {
         if (timeProvider == null) {
             setTimeProvider(new TimeProvider());
         }
         return timeProvider;
     }
 
-    public void setTimeProvider(TimeProvider timeProvider) {
+    public void setTimeProvider(ITimeProvider timeProvider) {
         this.timeProvider = timeProvider;
     }
 

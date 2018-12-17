@@ -1,5 +1,8 @@
 package com.exscudo.eon.app.IT;
 
+import static org.mockito.Mockito.spy;
+
+import com.exscudo.eon.app.cfg.PeerStarter;
 import com.exscudo.peer.core.common.TimeProvider;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Transaction;
@@ -31,14 +34,20 @@ public class TransactionNetworkTestIT {
     public void setUp() throws Exception {
         mockTimeProvider = Mockito.mock(TimeProvider.class);
 
-        ctx1 = new PeerContext(PeerStarterFactory.create()
+        PeerStarter starter1 = PeerStarterFactory.create()
                                                  .route(TransactionType.Payment, new PaymentParser())
                                                  .seed(GENERATOR)
-                                                 .build(mockTimeProvider));
-        ctx2 = new PeerContext(PeerStarterFactory.create()
+                                                 .build(mockTimeProvider);
+        PeerStarter starter2 = PeerStarterFactory.create()
                                                  .route(TransactionType.Payment, new PaymentParser())
                                                  .seed(GENERATOR2)
-                                                 .build(mockTimeProvider));
+                                                 .build(mockTimeProvider);
+
+        starter1.setFork(spy(starter1.getFork()));
+        starter2.setFork(spy(starter2.getFork()));
+
+        ctx1 = new PeerContext(starter1);
+        ctx2 = new PeerContext(starter2);
     }
 
     @Test

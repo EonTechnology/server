@@ -33,8 +33,8 @@ import com.exscudo.peer.core.blockchain.services.BlockService;
 import com.exscudo.peer.core.blockchain.services.TransactionService;
 import com.exscudo.peer.core.blockchain.tasks.BlockCleanerTask;
 import com.exscudo.peer.core.blockchain.tasks.NestedTransactionCleanupTask;
+import com.exscudo.peer.core.common.ITimeProvider;
 import com.exscudo.peer.core.common.Loggers;
-import com.exscudo.peer.core.common.TimeProvider;
 import com.exscudo.peer.core.common.exceptions.RemotePeerException;
 import com.exscudo.peer.core.crypto.ISigner;
 import com.exscudo.peer.core.data.Account;
@@ -54,6 +54,7 @@ import com.exscudo.peer.core.importer.tasks.SyncSnapshotTask;
 import com.exscudo.peer.core.ledger.LedgerProvider;
 import com.exscudo.peer.core.ledger.tasks.NodesCleanupTask;
 import com.exscudo.peer.core.storage.Storage;
+import com.exscudo.peer.core.storage.tasks.AnalyzeTask;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 class PeerContext {
@@ -65,7 +66,7 @@ class PeerContext {
     BacklogCleaner backlogCleaner;
 
     ExecutionContext context;
-    TimeProvider timeProvider;
+    ITimeProvider timeProvider;
 
     PeerRemoveTask peerRemoveTask;
     PeerConnectTask peerConnectTask;
@@ -78,6 +79,7 @@ class PeerContext {
     BlockCleanerTask branchesCleanupTask;
     NodesCleanupTask nodesCleanupTask;
     NestedTransactionCleanupTask nestedTransactionCleanupTask;
+    AnalyzeTask analyzeTask;
 
     IBlockSynchronizationService syncBlockPeerService;
     IMetadataService syncMetadataPeerService;
@@ -151,6 +153,7 @@ class PeerContext {
         nodesCleanupTask = taskFactory.getNodesCleanupTask();
         syncSnapshotTask = taskFactory.getSyncSnapshotTask();
         nestedTransactionCleanupTask = taskFactory.getNestedTransactionCleanupTask();
+        analyzeTask = taskFactory.getAnalyzeTask();
 
         syncTransactionPeerService = new ITransactionSynchronizationService() {
 
@@ -307,6 +310,7 @@ class PeerContext {
 
             generator.allowGenerate();
             generateBlockTask.run();
+            analyzeTask.run();
 
             lastBlock = blockchain.getLastBlock();
         } while (lastBlock.getTimestamp() + Constant.BLOCK_PERIOD < timeProvider.get() &&
@@ -318,6 +322,7 @@ class PeerContext {
         do {
             lastBlockID = blockchain.getLastBlock().getID();
             syncBlockListTask.run();
+            analyzeTask.run();
         } while (!blockchain.getLastBlock().getID().equals(lastBlockID));
     }
 

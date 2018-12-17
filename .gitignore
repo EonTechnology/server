@@ -17,6 +17,7 @@ bin
 # Maven
 log/
 target/
+/repository/
 
 # Project
 *.log

@@ -7,6 +7,7 @@ import java.util.Set;
 import com.exscudo.peer.core.Constant;
 import com.exscudo.peer.core.common.IAccountHelper;
 import com.exscudo.peer.core.common.ITimeProvider;
+import com.exscudo.peer.core.common.exceptions.ValidateException;
 import com.exscudo.peer.core.data.Account;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.identifier.AccountID;
@@ -33,7 +34,7 @@ public class ConfirmationsValidationRule implements IValidationRule {
 
         Set<AccountID> accounts = accountHelper.getConfirmingAccounts(sender, timeProvider.get());
 
-        if (accounts != null) {
+        if (accounts != null || tx.getConfirmations() != null) {
 
             // check signatures
             Map<AccountID, Account> set = new HashMap<>();
@@ -63,8 +64,12 @@ public class ConfirmationsValidationRule implements IValidationRule {
                 }
             }
 
-            if (!accountHelper.validConfirmation(tx, set, timeProvider.get())) {
-                return ValidationResult.error("The quorum is not exist.");
+            try {
+                if (!accountHelper.validConfirmation(tx, set, timeProvider.get())) {
+                    return ValidationResult.error("The quorum is not exist.");
+                }
+            } catch (ValidateException e) {
+                return ValidationResult.error(e);
             }
         }
 

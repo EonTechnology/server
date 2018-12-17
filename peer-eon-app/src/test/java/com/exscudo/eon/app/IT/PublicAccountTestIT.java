@@ -106,13 +106,36 @@ public class PublicAccountTestIT {
         timestamp = mockTimeProvider.get();
         Mockito.when(mockTimeProvider.get()).thenReturn(timestamp + 180 + 1);
 
-        Transaction tx = DelegateBuilder.createNew(new AccountID(ctx.getSigner().getPublicKey()))
+        Transaction tx = DelegateBuilder.createNew(new AccountID(ctx.getSigner().getPublicKey()), 0)
                                         .validity(timestamp, 3600)
                                         .build(ctx.getNetworkID(), ctx.getSigner());
 
         ctx.transactionBotService.putTransaction(tx);
 
         ctx.generateBlockForNow();
+    }
+
+    @Test
+    public void step_0_PrePublicAccCanNotSign() throws Exception {
+
+        Block lastBlock = ctx.blockExplorerService.getLastBlock();
+        int timestamp = lastBlock.getTimestamp();
+
+        // Pre-public account in fee payer not allowed
+        AccountID publicAccId = new AccountID(ctx.getSigner().getPublicKey());
+        Transaction tx5 = PaymentBuilder.createNew(10, publicAccId)
+                                        .validity(timestamp, 3600)
+                                        .payedBy(publicAccId)
+                                        .build(ctx.getNetworkID(), delegate_1, new ISigner[] {ctx.getSigner()});
+
+        try {
+            ctx.transactionBotService.putTransaction(tx5);
+            Assert.fail();
+        } catch (Exception ex) {
+            Assert.assertEquals("Account " +
+                                        new AccountID(ctx.getSigner().getPublicKey()) +
+                                        " can not confirm a transaction.", ex.getCause().getMessage());
+        }
     }
 
     @Test
@@ -150,9 +173,9 @@ public class PublicAccountTestIT {
 
         try {
             ctx.transactionBotService.putTransaction(tx2);
-            Assert.assertTrue(false);
-        } catch (Exception ignored) {
-            Assert.assertTrue(true);
+            Assert.fail();
+        } catch (Exception ex) {
+            Assert.assertEquals("Action is forbidden for public account.", ex.getCause().getMessage());
         }
 
         // Weight up
@@ -162,10 +185,35 @@ public class PublicAccountTestIT {
 
         try {
             ctx.transactionBotService.putTransaction(tx3);
-            Assert.assertTrue(false);
-        } catch (Exception ignored) {
-            Assert.assertTrue(true);
+            Assert.fail();
+        } catch (Exception ex) {
+            Assert.assertEquals("Action is forbidden for public account.", ex.getCause().getMessage());
         }
+
+        // Public account in fee payer not allowed
+        AccountID publicAccId = new AccountID(ctx.getSigner().getPublicKey());
+        Transaction tx5 = PaymentBuilder.createNew(10, publicAccId)
+                                        .validity(timestamp, 3600)
+                                        .payedBy(publicAccId)
+                                        .build(ctx.getNetworkID(), delegate_1, new ISigner[] {ctx.getSigner()});
+
+        try {
+            ctx.transactionBotService.putTransaction(tx5);
+            Assert.fail();
+        } catch (Exception ex) {
+            Assert.assertEquals("Account " +
+                                        new AccountID(ctx.getSigner().getPublicKey()) +
+                                        " can not confirm a transaction.", ex.getCause().getMessage());
+        }
+
+        // Check tx normal processing
+        Transaction tx4 = PaymentBuilder.createNew(10L, new AccountID(delegate_1.getPublicKey()))
+                                        .validity(timestamp, 3600)
+                                        .build(ctx.getNetworkID(), ctx.getSigner(), new ISigner[] {delegate_1});
+
+        ctx.transactionBotService.putTransaction(tx4);
+
+        ctx.generateBlockForNow();
     }
 
     @Test
@@ -189,8 +237,11 @@ public class PublicAccountTestIT {
 
         try {
             ctx.transactionBotService.putTransaction(tx);
-            Assert.assertTrue(false);
-        } catch (Exception ignored) {
+            Assert.fail();
+        } catch (Exception ex) {
+            Assert.assertEquals(
+                    "The confirmation mode has been changed less than the 24 hours period. Do not use this seed more for personal operations.",
+                    ex.getCause().getMessage());
         }
 
         ctx.generateBlockForNow();
@@ -230,8 +281,11 @@ public class PublicAccountTestIT {
                                             .build(ctx.getNetworkID(), ctx.getSigner(), new ISigner[] {delegate_1});
         try {
             ctx.transactionBotService.putTransaction(tx2);
-            Assert.assertTrue(false);
-        } catch (Exception ignored) {
+            Assert.fail();
+        } catch (Exception ex) {
+            Assert.assertEquals(
+                    "A public account must not confirm transactions of other accounts. Do not use this seed more for personal operations.",
+                    ex.getCause().getMessage());
         }
 
         ctx.generateBlockForNow();
@@ -271,8 +325,10 @@ public class PublicAccountTestIT {
                                             .build(ctx.getNetworkID(), ctx.getSigner(), new ISigner[] {delegate_1});
         try {
             ctx.transactionBotService.putTransaction(tx2);
-            Assert.assertTrue(false);
-        } catch (Exception ignored) {
+            Assert.fail();
+        } catch (Exception ex) {
+            Assert.assertEquals("Illegal validation mode. Do not use this seed more for personal operations.",
+                                ex.getCause().getMessage());
         }
 
         ctx.generateBlockForNow();

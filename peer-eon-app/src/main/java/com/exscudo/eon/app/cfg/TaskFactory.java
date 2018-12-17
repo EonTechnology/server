@@ -7,6 +7,7 @@ import com.exscudo.peer.core.backlog.tasks.SyncForkedTransactionListTask;
 import com.exscudo.peer.core.backlog.tasks.SyncTransactionListTask;
 import com.exscudo.peer.core.blockchain.tasks.BlockCleanerTask;
 import com.exscudo.peer.core.blockchain.tasks.NestedTransactionCleanupTask;
+import com.exscudo.peer.core.common.TimeProvider;
 import com.exscudo.peer.core.common.tasks.SyncTimeTask;
 import com.exscudo.peer.core.env.tasks.PeerConnectTask;
 import com.exscudo.peer.core.env.tasks.PeerDistributeTask;
@@ -54,7 +55,7 @@ public class TaskFactory {
     }
 
     public SyncTimeTask getSyncTimeTask() {
-        return new SyncTimeTask(starter.getTimeProvider());
+        return new SyncTimeTask((TimeProvider) starter.getTimeProvider());
     }
 
     public SyncTransactionListTask getSyncTransactionListTask() throws SQLException, IOException, ClassNotFoundException {

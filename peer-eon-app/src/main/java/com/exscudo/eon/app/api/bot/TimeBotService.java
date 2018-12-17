@@ -1,14 +1,14 @@
 package com.exscudo.eon.app.api.bot;
 
-import com.exscudo.peer.core.common.TimeProvider;
+import com.exscudo.peer.core.common.ITimeProvider;
 
 /**
  * Current peer time service
  */
 public class TimeBotService {
-    private final TimeProvider timeProvider;
+    private final ITimeProvider timeProvider;
 
-    public TimeBotService(TimeProvider timeProvider) {
+    public TimeBotService(ITimeProvider timeProvider) {
         this.timeProvider = timeProvider;
     }
 

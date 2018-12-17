@@ -12,11 +12,10 @@ import com.exscudo.eon.app.cfg.Config;
 import com.exscudo.eon.app.cfg.Fork;
 import com.exscudo.eon.app.cfg.PeerStarter;
 import com.exscudo.eon.app.cfg.forks.ForkItem;
-import com.exscudo.peer.core.common.TimeProvider;
+import com.exscudo.peer.core.common.ITimeProvider;
 import com.exscudo.peer.core.env.ExecutionContext;
 import com.exscudo.peer.core.middleware.ITransactionParser;
 import com.exscudo.peer.core.storage.Storage;
-import org.mockito.Mockito;
 
 class PeerStarterFactory {
     public static final long MIN_DEPOSIT_SIZE = 500000000L;
@@ -62,14 +61,14 @@ class PeerStarterFactory {
             return this;
         }
 
-        public PeerStarter build(TimeProvider timeProvider) throws SQLException, IOException, ClassNotFoundException {
+        public PeerStarter build(ITimeProvider timeProvider) throws SQLException, IOException, ClassNotFoundException {
             PeerStarter starter = new PeerStarter(createDefaultConfig(seed, fullSync));
 
             // context
             ExecutionContext context = starter.getExecutionContext();
             context.connectPeer(context.getAnyPeerToConnect(), 0);
-            context = Mockito.spy(context);
-            starter.setExecutionContext(Mockito.spy(context));
+            // context = Mockito.spy(context);
+            // starter.setExecutionContext(Mockito.spy(context));
 
             // time provider
             starter.setTimeProvider(timeProvider);
@@ -118,7 +117,8 @@ class PeerStarterFactory {
             Fork fork = new Fork(Utils.getGenesisBlockID(), items, endFork);
             fork.setMinDepositSize(minDepositSize);
 
-            starter.setFork(Mockito.spy(fork));
+            starter.setFork(fork);
+            //starter.setFork(Mockito.spy(fork));
             starter.initialize();
 
             return starter;

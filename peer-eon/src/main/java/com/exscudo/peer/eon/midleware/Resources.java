@@ -51,6 +51,7 @@ public class Resources {
     public final static String COLORED_COIN_NOT_ENOUGH_FUNDS = "Insufficient number of colored coins on the balance.";
     public final static String COLORED_COIN_INCOMPLETE_MONEY_SUPPLY =
             "The entire amount of funds must be on the balance.";
+    public final static String PRE_PUBLIC_ACCOUNT_CANNOT_CONFIRM = "Account %s can not confirm a transaction.";
     public final static String PUBLIC_ACCOUNT_PROHIBITED_ACTION = "Action is forbidden for public account.";
     public final static String PUBLIC_ACCOUNT_INVALID_SEED = "Invalid seed.";
     public final static String PUBLIC_ACCOUNT_SEED_NOT_MATCH =

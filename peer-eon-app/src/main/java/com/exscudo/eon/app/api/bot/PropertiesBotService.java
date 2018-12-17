@@ -1,6 +1,6 @@
 package com.exscudo.eon.app.api.bot;
 
-import com.exscudo.peer.core.common.TimeProvider;
+import com.exscudo.peer.core.common.ITimeProvider;
 import com.exscudo.peer.core.data.identifier.BlockID;
 
 /**
@@ -8,9 +8,9 @@ import com.exscudo.peer.core.data.identifier.BlockID;
  */
 public class PropertiesBotService {
     private final BlockID genesisBlockId;
-    private final TimeProvider timeProvider;
+    private final ITimeProvider timeProvider;
 
-    public PropertiesBotService(BlockID genesisBlockId, TimeProvider timeProvider) {
+    public PropertiesBotService(BlockID genesisBlockId, ITimeProvider timeProvider) {
         this.genesisBlockId = genesisBlockId;
         this.timeProvider = timeProvider;
     }

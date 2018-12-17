@@ -17,7 +17,7 @@
           "ColoredCoinRegistration": "com.exscudo.peer.eon.midleware.parsers.ColoredCoinRegistrationParserV2",
           "ColoredCoinPayment": "com.exscudo.peer.eon.midleware.parsers.ColoredCoinPaymentParser",
           "ColoredCoinSupply": "com.exscudo.peer.eon.midleware.parsers.ColoredCoinSupplyParserV2",
-          "ComplexPayment": "com.exscudo.peer.eon.midleware.parsers.ComplexPaymentParserV2",
+          "ComplexPayment": "com.exscudo.peer.eon.midleware.parsers.ComplexPaymentParserV3",
           "ColoredCoinRemove": "com.exscudo.peer.eon.midleware.parsers.ColoredCoinRemoveParser"
         }
       },

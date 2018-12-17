@@ -19,9 +19,9 @@ import com.exscudo.peer.core.blockchain.BlockchainProvider;
 import com.exscudo.peer.core.blockchain.ITransactionMapper;
 import com.exscudo.peer.core.blockchain.storage.converters.StorageTransactionMapper;
 import com.exscudo.peer.core.common.IAccountHelper;
+import com.exscudo.peer.core.common.ITimeProvider;
 import com.exscudo.peer.core.common.ITransactionEstimator;
 import com.exscudo.peer.core.common.Loggers;
-import com.exscudo.peer.core.common.TimeProvider;
 import com.exscudo.peer.core.common.exceptions.LifecycleException;
 import com.exscudo.peer.core.common.exceptions.ProtocolException;
 import com.exscudo.peer.core.common.exceptions.RemotePeerException;
@@ -55,7 +55,7 @@ public final class SyncBlockListTask implements Runnable {
     private final ExecutionContext context;
     private final BlockchainProvider blockchainProvider;
     private final IFork fork;
-    private final TimeProvider timeProvider;
+    private final ITimeProvider timeProvider;
     private final Backlog backlog;
     private final TransactionValidatorFabric transactionValidatorFabric;
     private final ITransactionEstimator estimator;
@@ -68,7 +68,7 @@ public final class SyncBlockListTask implements Runnable {
                              Storage storage,
                              ExecutionContext context,
                              BlockchainProvider blockchainProvider,
-                             TimeProvider timeProvider,
+                             ITimeProvider timeProvider,
                              LedgerProvider ledgerProvider,
                              TransactionValidatorFabric transactionValidatorFabric,
                              ITransactionEstimator estimator,

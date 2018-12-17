@@ -10,7 +10,7 @@ import com.exscudo.peer.core.IFork;
 import com.exscudo.peer.core.api.ITransactionSynchronizationService;
 import com.exscudo.peer.core.backlog.IBacklog;
 import com.exscudo.peer.core.blockchain.IBlockchainProvider;
-import com.exscudo.peer.core.common.TimeProvider;
+import com.exscudo.peer.core.common.ITimeProvider;
 import com.exscudo.peer.core.common.exceptions.RemotePeerException;
 import com.exscudo.peer.core.data.Transaction;
 import com.exscudo.peer.core.data.identifier.BlockID;
@@ -28,11 +28,11 @@ public class SyncTransactionService extends BaseService implements ITransactionS
 
     private final IBlockchainProvider blockchain;
     private final IFork fork;
-    private final TimeProvider timeProvider;
+    private final ITimeProvider timeProvider;
     private final IBacklog backlog;
 
     public SyncTransactionService(IFork fork,
-                                  TimeProvider timeProvider,
+                                  ITimeProvider timeProvider,
                                   IBacklog backlog,
                                   IBlockchainProvider blockchain) {
         this.blockchain = blockchain;

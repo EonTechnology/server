@@ -7,7 +7,7 @@
 
     <groupId>com.exscudo</groupId>
     <artifactId>peer-all</artifactId>
-    <version>0.13.5-SNAPSHOT</version>
+    <version>0.13.6-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <modules>
@@ -32,12 +32,11 @@
             <artifactId>log4j-core</artifactId>
             <version>2.11.0</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-nop -->
+        <!-- https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-slf4j-impl -->
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-nop</artifactId>
-            <version>1.8.0-beta2</version>
-            <scope>test</scope>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-slf4j-impl</artifactId>
+            <version>2.11.1</version>
         </dependency>
 
         <!-- Test -->

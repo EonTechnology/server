@@ -10,6 +10,7 @@ import java.util.Set;
 import com.exscudo.peer.core.Constant;
 import com.exscudo.peer.core.common.Format;
 import com.exscudo.peer.core.common.IAccountHelper;
+import com.exscudo.peer.core.common.exceptions.ValidateException;
 import com.exscudo.peer.core.crypto.CryptoProvider;
 import com.exscudo.peer.core.data.Account;
 import com.exscudo.peer.core.data.Block;
@@ -19,6 +20,7 @@ import com.exscudo.peer.eon.ledger.AccountProperties;
 import com.exscudo.peer.eon.ledger.state.BalanceProperty;
 import com.exscudo.peer.eon.ledger.state.GeneratingBalanceProperty;
 import com.exscudo.peer.eon.ledger.state.ValidationModeProperty;
+import com.exscudo.peer.eon.midleware.Resources;
 
 public class AccountHelper implements IAccountHelper {
 
@@ -68,7 +70,7 @@ public class AccountHelper implements IAccountHelper {
         });
 
         // Decimal points in 1 EON - 1000000L
-        Long scale = AccountProperties.getDeposit(generator).getValue() / 1000000L;
+        long scale = AccountProperties.getDeposit(generator).getValue() / 1000000L;
         if (scale != 0) {
             hit = hit.divide(BigInteger.valueOf(scale));
         }
@@ -102,7 +104,9 @@ public class AccountHelper implements IAccountHelper {
     }
 
     @Override
-    public boolean validConfirmation(Transaction transaction, Map<AccountID, Account> set, int timestamp) {
+    public boolean validConfirmation(Transaction transaction,
+                                     Map<AccountID, Account> set,
+                                     int timestamp) throws ValidateException {
         Account sender = set.get(transaction.getSenderID());
         if (sender == null) {
             throw new IllegalArgumentException();
@@ -114,6 +118,13 @@ public class AccountHelper implements IAccountHelper {
         for (Map.Entry<AccountID, Account> e : set.entrySet()) {
 
             AccountID id = e.getKey();
+
+            ValidationModeProperty signerValidationMode = AccountProperties.getValidationMode(e.getValue());
+            if (!transaction.getSenderID().equals(id) &&
+                    signerValidationMode.getBaseWeight() == ValidationModeProperty.MIN_WEIGHT) {
+                String msg = String.format(Resources.PRE_PUBLIC_ACCOUNT_CANNOT_CONFIRM, id);
+                throw new ValidateException(msg);
+            }
 
             if (transaction.getSenderID().equals(id)) {
                 maxWeight += validationMode.getBaseWeight();

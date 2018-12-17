@@ -4,6 +4,7 @@ import java.math.BigInteger;
 import java.util.Map;
 import java.util.Set;
 
+import com.exscudo.peer.core.common.exceptions.ValidateException;
 import com.exscudo.peer.core.data.Account;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.data.Transaction;
@@ -58,7 +59,9 @@ public interface IAccountHelper {
      * @param timestamp
      * @return
      */
-    boolean validConfirmation(Transaction transaction, Map<AccountID, Account> set, int timestamp);
+    boolean validConfirmation(Transaction transaction,
+                              Map<AccountID, Account> set,
+                              int timestamp) throws ValidateException;
 
     /**
      * Performs signature validation for the object.

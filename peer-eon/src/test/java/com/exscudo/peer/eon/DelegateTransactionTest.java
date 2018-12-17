@@ -203,7 +203,7 @@ public class DelegateTransactionTest extends AbstractTransactionTest {
         AccountProperties.setProperty(senderAccount, validationMode);
 
         AccountID id = new AccountID(delegate_1.getPublicKey());
-        Transaction tx = DelegateBuilder.createNew(id).build(networkID, sender);
+        Transaction tx = DelegateBuilder.createNew(id, 0).build(networkID, sender);
         validate(parser, tx);
     }
 

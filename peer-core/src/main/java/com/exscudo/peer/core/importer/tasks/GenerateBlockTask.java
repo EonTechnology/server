@@ -6,9 +6,9 @@ import com.exscudo.peer.core.api.Difficulty;
 import com.exscudo.peer.core.blockchain.BlockchainProvider;
 import com.exscudo.peer.core.blockchain.ITransactionMapper;
 import com.exscudo.peer.core.common.IAccountHelper;
+import com.exscudo.peer.core.common.ITimeProvider;
 import com.exscudo.peer.core.common.ITransactionEstimator;
 import com.exscudo.peer.core.common.Loggers;
-import com.exscudo.peer.core.common.TimeProvider;
 import com.exscudo.peer.core.common.exceptions.ValidateException;
 import com.exscudo.peer.core.data.Block;
 import com.exscudo.peer.core.importer.BlockGenerator;
@@ -27,7 +27,7 @@ public final class GenerateBlockTask implements Runnable {
 
     private final BlockGenerator generator;
     private final IFork fork;
-    private final TimeProvider timeProvider;
+    private final ITimeProvider timeProvider;
     private final TransactionValidatorFabric transactionValidatorFabric;
     private final ITransactionEstimator estimator;
     private final IAccountHelper accountHelper;
@@ -42,7 +42,7 @@ public final class GenerateBlockTask implements Runnable {
 
     public GenerateBlockTask(IFork fork,
                              BlockGenerator generator,
-                             TimeProvider timeProvider,
+                             ITimeProvider timeProvider,
                              LedgerProvider ledgerProvider,
                              BlockchainProvider blockchainProvider,
                              TransactionValidatorFabric transactionValidatorFabric,
@@ -140,9 +140,7 @@ public final class GenerateBlockTask implements Runnable {
                         throw e;
                     }
                 } else {
-                    // Could not create block with better cumulative
-                    // difficulty.
-                    Loggers.info(GenerateBlockTask.class, "Unable to add new block. Illegal state.");
+                    Loggers.info(GenerateBlockTask.class, "Could not create block with better cumulative difficulty.");
                 }
             }
         } catch (Exception e) {

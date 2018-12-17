@@ -13,8 +13,8 @@ import com.exscudo.peer.core.api.IMetadataService;
 import com.exscudo.peer.core.api.SalientAttributes;
 import com.exscudo.peer.core.backlog.IBacklog;
 import com.exscudo.peer.core.blockchain.IBlockchainProvider;
+import com.exscudo.peer.core.common.ITimeProvider;
 import com.exscudo.peer.core.common.Loggers;
-import com.exscudo.peer.core.common.TimeProvider;
 import com.exscudo.peer.core.common.exceptions.RemotePeerException;
 import com.exscudo.peer.core.common.exceptions.ValidateException;
 import com.exscudo.peer.core.data.Block;
@@ -34,12 +34,12 @@ public final class SyncForkedTransactionListTask implements Runnable {
     private final IFork fork;
     private final ExecutionContext context;
     private final IBlockchainProvider blockchainService;
-    private final TimeProvider timeProvider;
+    private final ITimeProvider timeProvider;
     private final IBacklog backlogService;
 
     public SyncForkedTransactionListTask(IFork fork,
                                          ExecutionContext context,
-                                         TimeProvider timeProvider,
+                                         ITimeProvider timeProvider,
                                          IBacklog backlogService,
                                          IBlockchainProvider blockchainService) {
         this.fork = fork;

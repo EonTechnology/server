@@ -6,8 +6,8 @@ import com.exscudo.peer.core.IFork;
 import com.exscudo.peer.core.api.IMetadataService;
 import com.exscudo.peer.core.api.SalientAttributes;
 import com.exscudo.peer.core.blockchain.IBlockchainProvider;
+import com.exscudo.peer.core.common.ITimeProvider;
 import com.exscudo.peer.core.common.Loggers;
-import com.exscudo.peer.core.common.TimeProvider;
 import com.exscudo.peer.core.common.exceptions.RemotePeerException;
 import com.exscudo.peer.core.env.ExecutionContext;
 import com.exscudo.peer.core.env.Peer;
@@ -27,11 +27,11 @@ public final class PeerConnectTask implements Runnable {
     private final IFork fork;
     private final ExecutionContext context;
     private final IBlockchainProvider blockchain;
-    private final TimeProvider timeProvider;
+    private final ITimeProvider timeProvider;
 
     public PeerConnectTask(IFork fork,
                            ExecutionContext context,
-                           TimeProvider timeProvider,
+                           ITimeProvider timeProvider,
                            IBlockchainProvider blockchain) {
 
         this.fork = fork;

@@ -21,7 +21,6 @@ import com.exscudo.peer.core.blockchain.storage.DbTransaction;
 import com.exscudo.peer.core.common.ITimeProvider;
 import com.exscudo.peer.core.common.ITransactionEstimator;
 import com.exscudo.peer.core.common.ImmutableTimeProvider;
-import com.exscudo.peer.core.common.TimeProvider;
 import com.exscudo.peer.core.common.exceptions.DataAccessException;
 import com.exscudo.peer.core.common.exceptions.ValidateException;
 import com.exscudo.peer.core.data.Account;
@@ -60,7 +59,7 @@ public class Backlog implements IBacklog {
 
     private final IBlockchainProvider blockchain;
     private final LedgerProvider ledgerProvider;
-    private final TimeProvider timeProvider;
+    private final ITimeProvider timeProvider;
     private final IFork fork;
     private final TransactionValidatorFabric transactionValidatorFabric;
     private final ITransactionEstimator estimator;
@@ -87,7 +86,7 @@ public class Backlog implements IBacklog {
                    Storage storage,
                    IBlockchainProvider blockchain,
                    LedgerProvider ledgerProvider,
-                   TimeProvider timeProvider,
+                   ITimeProvider timeProvider,
                    TransactionValidatorFabric transactionValidatorFabric,
                    ITransactionEstimator estimator) {
 
