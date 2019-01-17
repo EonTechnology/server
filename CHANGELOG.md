@@ -6,7 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
-## 0.13.6 - 2018-12-12
+## 0.13.7 - 2019-01-30
+- Transaction type "600 - ComplexPayment" - new mechanism of complex transaction (in MainNet).
+
+## 0.13.6 - 2018-12-17
 ### Changed
 - Transaction type "600 - ComplexPayment" - new mechanism of complex transaction (in TestNet3).
 - Fix public account usages.
