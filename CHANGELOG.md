@@ -6,7 +6,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
-## 0.13.7 - 2019-01-30
+## 0.14.0 - 2019-03-06 - MainNet fork 10 / TestNet3 fork 10
+### Changed
+- New format forks.json file.
+- New package name (and maven group ID).
+
+## 0.13.7 - 2019-01-30 - MainNet fork 9 / TestNet3 fork 9
+### Changed
 - Transaction type "600 - ComplexPayment" - new mechanism of complex transaction (in MainNet).
 
 ## 0.13.6 - 2018-12-17

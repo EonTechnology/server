@@ -5,13 +5,13 @@
         xmlns="http://maven.apache.org/POM/4.0.0">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>com.exscudo</groupId>
+        <groupId>org.eontechology.and</groupId>
         <artifactId>peer-all</artifactId>
-        <version>0.13.7-SNAPSHOT</version>
+        <version>0.14.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>peer-eon</artifactId>
-    <version>0.13.7-SNAPSHOT</version>
+    <version>0.14.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>peer-eon</name>
@@ -29,21 +29,21 @@
         <!-- Exscudo -->
 
         <dependency>
-            <groupId>com.exscudo</groupId>
+            <groupId>org.eontechology.and</groupId>
             <artifactId>peer-core</artifactId>
-            <version>0.13.7-SNAPSHOT</version>
+            <version>0.14.0-SNAPSHOT</version>
         </dependency>
 
         <dependency>
-            <groupId>com.exscudo</groupId>
+            <groupId>org.eontechology.and</groupId>
             <artifactId>peer-eon-tx-builders</artifactId>
-            <version>0.13.7-SNAPSHOT</version>
+            <version>0.14.0-SNAPSHOT</version>
         </dependency>
 
         <dependency>
-            <groupId>com.exscudo</groupId>
+            <groupId>org.eontechology.and</groupId>
             <artifactId>peer-crypto</artifactId>
-            <version>0.13.7-SNAPSHOT</version>
+            <version>0.14.0-SNAPSHOT</version>
         </dependency>
 
     </dependencies>

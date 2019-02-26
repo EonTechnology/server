@@ -1,0 +1,14 @@
+{
+  "min_deposit_size": 500000000,
+  "forks": [
+    {
+      "number": 1,
+      "date_end": "2018-05-25T12:00:00.00Z",
+      "parser_TYPO_ERROR": [
+        "Registration",
+        "Payment",
+        "Deposit"
+      ]
+    }
+  ]
+}

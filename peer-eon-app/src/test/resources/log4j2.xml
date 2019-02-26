@@ -8,7 +8,7 @@
     </Appenders>
 
     <Loggers>
-        <Logger name="com.exscudo.jsonrpc.JrpcService" level="DEBUG" additivity="true">
+        <Logger name="org.eontechology.and.jsonrpc.JrpcService" level="DEBUG" additivity="true">
             <AppenderRef ref="console"/>
         </Logger>
         <Logger name="com.j256.ormlite" level="INFO" additivity="true">
