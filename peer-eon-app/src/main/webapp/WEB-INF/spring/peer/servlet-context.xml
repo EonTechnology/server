@@ -3,11 +3,11 @@
        xmlns="http://www.springframework.org/schema/beans"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-    <bean id="peerServiceFactory" class="org.eontechology.and.eon.app.cfg.PeerServiceFactory">
+    <bean id="peerServiceFactory" class="org.eontechnology.and.eon.app.cfg.PeerServiceFactory">
         <constructor-arg ref="peerStarter"/>
     </bean>
 
-    <bean name="Service" class="org.eontechology.and.eon.app.jsonrpc.EonService">
+    <bean name="Service" class="org.eontechnology.and.eon.app.jsonrpc.EonService">
         <constructor-arg>
             <map key-type="java.lang.String">
                 <!-- Transaction Synchronization Service -->

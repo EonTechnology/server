@@ -13,7 +13,7 @@
     </context-param>
 
     <!-- <context-param> <param-name>contextInitializerClasses</param-name>
-        <param-value>org.eontechology.and.eon.AppInitializer</param-value> </context-param> -->
+        <param-value>org.eontechnologyy.and.eon.AppInitializer</param-value> </context-param> -->
 
     <listener>
         <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
@@ -23,7 +23,7 @@
 
     <servlet>
         <servlet-name>peerServlet</servlet-name>
-        <servlet-class>org.eontechology.and.eon.app.PeerServlet</servlet-class>
+        <servlet-class>org.eontechnology.and.eon.app.PeerServlet</servlet-class>
         <init-param>
             <param-name>contextConfigLocation</param-name>
             <param-value>WEB-INF/spring/peer/servlet-context.xml</param-value>
@@ -40,7 +40,7 @@
 
     <servlet>
         <servlet-name>BotServlet</servlet-name>
-        <servlet-class>org.eontechology.and.eon.app.BotServlet</servlet-class>
+        <servlet-class>org.eontechnology.and.eon.app.BotServlet</servlet-class>
         <init-param>
             <param-name>contextConfigLocation</param-name>
             <param-value>WEB-INF/spring/bot/servlet-context.xml</param-value>
@@ -57,7 +57,7 @@
 
     <servlet>
         <servlet-name>explorerServlet</servlet-name>
-        <servlet-class>org.eontechology.and.eon.app.BotServlet</servlet-class>
+        <servlet-class>org.eontechnology.and.eon.app.BotServlet</servlet-class>
         <init-param>
             <param-name>contextConfigLocation</param-name>
             <param-value>WEB-INF/spring/explorer/servlet-context.xml</param-value>
@@ -75,7 +75,7 @@
 
     <servlet>
         <servlet-name>monitorServlet</servlet-name>
-        <servlet-class>org.eontechology.and.eon.app.PrometheusServlet</servlet-class>
+        <servlet-class>org.eontechnology.and.eon.app.PrometheusServlet</servlet-class>
         <init-param>
             <param-name>contextConfigLocation</param-name>
             <param-value>WEB-INF/spring/prometheus/servlet-context.xml</param-value>

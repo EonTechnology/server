@@ -4,8 +4,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>peer-all</artifactId>
-        <groupId>org.eontechology.and</groupId>
-        <version>0.14.0-SNAPSHOT</version>
+        <groupId>org.eontechnology.and</groupId>
+        <version>0.14.1-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -14,9 +14,9 @@
 
         <!-- Exscudo -->
         <dependency>
-            <groupId>org.eontechology.and</groupId>
+            <groupId>org.eontechnology.and</groupId>
             <artifactId>peer-core</artifactId>
-            <version>0.14.0-SNAPSHOT</version>
+            <version>0.14.1-SNAPSHOT</version>
         </dependency>
 
     </dependencies>

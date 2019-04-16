@@ -3,7 +3,7 @@
        xmlns="http://www.springframework.org/schema/beans"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-    <bean id="verifier" class="org.eontechology.and.eon.app.utils.ConfigHelper" factory-method="verifyNetwork">
+    <bean id="verifier" class="org.eontechnology.and.eon.app.utils.ConfigHelper" factory-method="verifyNetwork">
         <constructor-arg type="java.lang.String" value="#{systemEnvironment['EON_NETWORK']}"/>
     </bean>
 
@@ -20,7 +20,7 @@
         </property>
     </bean>
 
-    <bean id="config" class="org.eontechology.and.eon.app.cfg.Config">
+    <bean id="config" class="org.eontechnology.and.eon.app.cfg.Config">
 
         <property name="dbUrl" value="${network.database}"/>
         <property name="genesisFile" value="${network.genesis}"/>
@@ -42,7 +42,7 @@
         <property name="version" value="${version}"/>
 
         <property name="publicPeers">
-            <bean class="org.eontechology.and.eon.app.utils.ConfigHelper" factory-method="getStringsFromLastExists">
+            <bean class="org.eontechnology.and.eon.app.utils.ConfigHelper" factory-method="getStringsFromLastExists">
                 <constructor-arg value=";"/>
                 <constructor-arg>
                     <list>
@@ -53,7 +53,7 @@
             </bean>
         </property>
         <property name="innerPeers">
-            <bean class="org.eontechology.and.eon.app.utils.ConfigHelper" factory-method="getStringsFromLastExists">
+            <bean class="org.eontechnology.and.eon.app.utils.ConfigHelper" factory-method="getStringsFromLastExists">
                 <constructor-arg type="java.lang.String" value=";"/>
                 <constructor-arg>
                     <list>
@@ -65,12 +65,12 @@
         </property>
     </bean>
 
-    <bean id="peerStarter" class="org.eontechology.and.eon.app.cfg.PeerStarter" factory-method="create">
+    <bean id="peerStarter" class="org.eontechnology.and.eon.app.cfg.PeerStarter" factory-method="create">
         <constructor-arg ref="config"/>
     </bean>
 
     <!-- Run tasks -->
-    <bean id="engine" factory-method="init" destroy-method="destory" class="org.eontechology.and.eon.app.cfg.Engine">
+    <bean id="engine" factory-method="init" destroy-method="destory" class="org.eontechnology.and.eon.app.cfg.Engine">
         <constructor-arg ref="peerStarter"/>
     </bean>
 

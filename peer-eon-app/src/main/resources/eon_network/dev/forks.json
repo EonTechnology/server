@@ -6,36 +6,36 @@
       "date_end": "2018-05-23T12:00:00.00Z",
       "parser": {
         "add": {
-          "Registration": "org.eontechology.and.peer.eon.midleware.parsers.RegistrationParser",
-          "Payment": "org.eontechology.and.peer.eon.midleware.parsers.PaymentParser",
-          "Deposit": "org.eontechology.and.peer.eon.midleware.parsers.DepositParser",
-          "Delegate": "org.eontechology.and.peer.eon.midleware.parsers.DelegateParser",
-          "Quorum": "org.eontechology.and.peer.eon.midleware.parsers.QuorumParser",
-          "Rejection": "org.eontechology.and.peer.eon.midleware.parsers.RejectionParser",
-          "Publication": "org.eontechology.and.peer.eon.midleware.parsers.PublicationParser",
-          "ColoredCoinRegistration": "org.eontechology.and.peer.eon.midleware.parsers.ColoredCoinRegistrationParserV2",
-          "ColoredCoinPayment": "org.eontechology.and.peer.eon.midleware.parsers.ColoredCoinPaymentParser",
-          "ColoredCoinSupply": "org.eontechology.and.peer.eon.midleware.parsers.ColoredCoinSupplyParserV2",
-          "ComplexPayment": "org.eontechology.and.peer.eon.midleware.parsers.ComplexPaymentParserV3",
-          "ColoredCoinRemove": "org.eontechology.and.peer.eon.midleware.parsers.ColoredCoinRemoveParser"
+          "Registration": "org.eontechnology.and.peer.eon.midleware.parsers.RegistrationParser",
+          "Payment": "org.eontechnology.and.peer.eon.midleware.parsers.PaymentParser",
+          "Deposit": "org.eontechnology.and.peer.eon.midleware.parsers.DepositParser",
+          "Delegate": "org.eontechnology.and.peer.eon.midleware.parsers.DelegateParser",
+          "Quorum": "org.eontechnology.and.peer.eon.midleware.parsers.QuorumParser",
+          "Rejection": "org.eontechnology.and.peer.eon.midleware.parsers.RejectionParser",
+          "Publication": "org.eontechnology.and.peer.eon.midleware.parsers.PublicationParser",
+          "ColoredCoinRegistration": "org.eontechnology.and.peer.eon.midleware.parsers.ColoredCoinRegistrationParserV2",
+          "ColoredCoinPayment": "org.eontechnology.and.peer.eon.midleware.parsers.ColoredCoinPaymentParser",
+          "ColoredCoinSupply": "org.eontechnology.and.peer.eon.midleware.parsers.ColoredCoinSupplyParserV2",
+          "ComplexPayment": "org.eontechnology.and.peer.eon.midleware.parsers.ComplexPaymentParserV3",
+          "ColoredCoinRemove": "org.eontechnology.and.peer.eon.midleware.parsers.ColoredCoinRemoveParser"
         }
       },
       "validator": {
         "add": [
-          "org.eontechology.and.peer.core.middleware.rules.DeadlineValidationRule",
-          "org.eontechology.and.peer.core.middleware.rules.LengthValidationRule",
-          "org.eontechology.and.peer.core.middleware.rules.ReferencedTransactionValidationRule",
-          "org.eontechology.and.peer.core.middleware.rules.FeePerByteValidationRule",
-          "org.eontechology.and.peer.core.middleware.rules.VersionValidationRule",
-          "org.eontechology.and.peer.core.middleware.rules.NoteValidationRule",
-          "org.eontechology.and.peer.core.middleware.rules.PayerValidationRule",
-          "org.eontechology.and.peer.core.middleware.rules.TypeValidationRule",
-          "org.eontechology.and.peer.core.middleware.rules.ExpiredTimestampValidationRule",
-          "org.eontechology.and.peer.core.middleware.rules.FutureTimestampValidationRule",
-          "org.eontechology.and.peer.core.middleware.rules.ConfirmationsSetValidationRule",
-          "org.eontechology.and.peer.core.middleware.rules.ConfirmationsValidationRule",
-          "org.eontechology.and.peer.core.middleware.rules.SignatureValidationRule",
-          "org.eontechology.and.peer.core.middleware.rules.NestedTransactionsValidationRule"
+          "org.eontechnology.and.peer.core.middleware.rules.DeadlineValidationRule",
+          "org.eontechnology.and.peer.core.middleware.rules.LengthValidationRule",
+          "org.eontechnology.and.peer.core.middleware.rules.ReferencedTransactionValidationRule",
+          "org.eontechnology.and.peer.core.middleware.rules.FeePerByteValidationRule",
+          "org.eontechnology.and.peer.core.middleware.rules.VersionValidationRule",
+          "org.eontechnology.and.peer.core.middleware.rules.NoteValidationRuleV2",
+          "org.eontechnology.and.peer.core.middleware.rules.PayerValidationRule",
+          "org.eontechnology.and.peer.core.middleware.rules.TypeValidationRule",
+          "org.eontechnology.and.peer.core.middleware.rules.ExpiredTimestampValidationRule",
+          "org.eontechnology.and.peer.core.middleware.rules.FutureTimestampValidationRule",
+          "org.eontechnology.and.peer.core.middleware.rules.ConfirmationsSetValidationRule",
+          "org.eontechnology.and.peer.core.middleware.rules.ConfirmationsValidationRule",
+          "org.eontechnology.and.peer.core.middleware.rules.SignatureValidationRule",
+          "org.eontechnology.and.peer.core.middleware.rules.NestedTransactionsValidationRule"
         ]
       }
     },
@@ -74,6 +74,10 @@
     {
       "number": 10,
       "date_end": "2019-04-24T12:00:00.00Z"
+    },
+    {
+      "number": 11,
+      "date_end": "2019-07-24T12:00:00.00Z"
     }
   ]
 }

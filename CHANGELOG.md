@@ -6,12 +6,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
-## 0.14.0 - 2019-03-06 - MainNet fork 10 / TestNet3 fork 10
+## 0.14.1 - 2019-04-24 - MainNet / TestNet3 fork 11
+### Changed
+- New transaction note format (URL support).
+- Fix typos in package name (and maven group ID).
+
+## 0.14.0 - 2019-03-06 - MainNet / TestNet3 fork 10
 ### Changed
 - New format forks.json file.
 - New package name (and maven group ID).
 
-## 0.13.7 - 2019-01-30 - MainNet fork 9 / TestNet3 fork 9
+## 0.13.7 - 2019-01-30 - MainNet / TestNet3 fork 9
 ### Changed
 - Transaction type "600 - ComplexPayment" - new mechanism of complex transaction (in MainNet).
 
@@ -20,15 +25,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Transaction type "600 - ComplexPayment" - new mechanism of complex transaction (in TestNet3).
 - Fix public account usages.
 
-## 0.13.5 - 2018-10-31 - MainNet fork 8 / TestNet3 fork 8
+## 0.13.5 - 2018-10-31 - MainNet / TestNet3 fork 8
 ### Changed
 - End date of the fork.
 
-## 0.13.4 - 2018-09-26 - MainNet fork 7 / TestNet3 fork 7
+## 0.13.4 - 2018-09-26 - MainNet / TestNet3 fork 7
 ### Changed
 - End date of the fork.
 
-## 0.13.3 - 2018-08-29 - MainNet fork 6 / TestNet3 fork 6
+## 0.13.3 - 2018-08-29 - MainNet / TestNet3 fork 6
 ### Added
 - Auto-emission mode for colored coins (in MainNet).
 - Transaction type "530 - ColoredCoinRemove" - removing a colored coins (in MainNet).
@@ -64,20 +69,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Removed
 - Transaction type "600 - ComplexPayment".
 
-## 0.12.3 - 2018-06-27 - MainNet fork 4 / TestNet3 fork 4
+## 0.12.3 - 2018-06-27 - MainNet / TestNet3 fork 4
 ### Changed
 - End date of the fork.
 - Fix converting the Bencode-string to upper case.
 
-## 0.12.2 - 2018-05-30 - MainNet fork 3 / TestNet3 fork 3
+## 0.12.2 - 2018-05-30 - MainNet / TestNet3 fork 3
 ### Changed
 - End date of the fork.
 
-## 0.12.1 - 2018-05-23 - MainNet fork 2 / TestNet3 fork 2
+## 0.12.1 - 2018-05-23 - MainNet / TestNet3 fork 2
 ### Changed
 - The transactions verification during block import has been changed. The transactions which have the full copy on current node are checked by the simple scheme.
 
-## 0.12.0 - 2018-05-14 - MainNet fork 1 / TestNet3 fork 1
+## 0.12.0 - 2018-05-14 - MainNet / TestNet3 fork 1
 ### Added
 - EON_NETWORK environment variable must be specified for select network (dev/test3/main).
 - Load fork settings from external file.
