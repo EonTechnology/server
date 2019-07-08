@@ -7,11 +7,11 @@
     <parent>
         <groupId>org.eontechnology.and</groupId>
         <artifactId>peer-all</artifactId>
-        <version>0.14.1-SNAPSHOT</version>
+        <version>0.14.2-SNAPSHOT</version>
     </parent>
 
     <artifactId>peer-eon</artifactId>
-    <version>0.14.1-SNAPSHOT</version>
+    <version>0.14.2-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>peer-eon</name>
@@ -31,19 +31,19 @@
         <dependency>
             <groupId>org.eontechnology.and</groupId>
             <artifactId>peer-core</artifactId>
-            <version>0.14.1-SNAPSHOT</version>
+            <version>0.14.2-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>org.eontechnology.and</groupId>
             <artifactId>peer-eon-tx-builders</artifactId>
-            <version>0.14.1-SNAPSHOT</version>
+            <version>0.14.2-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>org.eontechnology.and</groupId>
             <artifactId>peer-crypto</artifactId>
-            <version>0.14.1-SNAPSHOT</version>
+            <version>0.14.2-SNAPSHOT</version>
         </dependency>
 
     </dependencies>

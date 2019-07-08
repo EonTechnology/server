@@ -6,6 +6,7 @@ import org.eontechnology.and.peer.core.Builder;
 import org.eontechnology.and.peer.core.Signer;
 import org.eontechnology.and.peer.core.crypto.ISigner;
 import org.eontechnology.and.peer.core.data.Transaction;
+import org.eontechnology.and.peer.core.data.identifier.AccountID;
 import org.eontechnology.and.peer.core.data.identifier.BlockID;
 import org.junit.Assert;
 import org.junit.Before;
@@ -67,10 +68,13 @@ public class TransactionComparatorTest {
     public void check_id() throws Exception {
 
         int length = 100;
-        Transaction tx1 = Builder.newTransaction(timeProvider).forFee(1L).build(networkID, signer);
+        Mockito.when(timeProvider.get()).thenReturn(12345);
+        Transaction tx1 =
+                Builder.newTransaction(timeProvider).forFee(1L).payedBy(new AccountID(0)).build(networkID, signer);
         tx1.setLength(length);
 
-        Transaction tx2 = Builder.newTransaction(timeProvider).forFee(1L).build(networkID, signer);
+        Transaction tx2 =
+                Builder.newTransaction(timeProvider).forFee(1L).payedBy(new AccountID(1)).build(networkID, signer);
         tx2.setLength(length);
 
         Transaction[] transactions = new Transaction[] {tx1, tx2};

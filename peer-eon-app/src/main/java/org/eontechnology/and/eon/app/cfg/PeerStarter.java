@@ -199,7 +199,7 @@ public class PeerStarter {
         Blockchain blockchain = blockchainProvider.createBlockchain();
         blockchain.addBlock(ZERO_BLOCK);
         blockchain.addBlock(block);
-        blockchainProvider.initialize(blockchain, block.getID(), 0);
+        blockchainProvider.initialize(blockchain, block.getID(), -1);
     }
 
     public ExecutionContext getExecutionContext() throws SQLException, IOException, ClassNotFoundException {

@@ -26,7 +26,7 @@ public class NestedTransactionsValidationRule implements IValidationRule {
                 new LengthValidationRule(),
                 new DeadlineValidationRule(),
                 new VersionValidationRule(),
-                new NoteValidationRule(),
+                new NoteValidationRuleV2(),
                 new TypeValidationRule(allowedTypes),
                 new ExpiredTimestampValidationRule(timeProvider),
                 new ConfirmationsSetValidationRule(timeProvider, accountHelper) {{
