@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+## 0.14.3 - 2019-10-16 - MainNet / TestNet3 fork 13
+### Changed
+- Fix memory leak when the tree of state cleaning.
+
 ## 0.14.2 - 2019-07-24 - MainNet / TestNet3 fork 12
 ### Changed
 - Fix partial synchronisation.

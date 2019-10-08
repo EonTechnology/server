@@ -5,11 +5,11 @@
     <parent>
         <groupId>org.eontechnology.and</groupId>
         <artifactId>peer-all</artifactId>
-        <version>0.14.2-SNAPSHOT</version>
+        <version>0.14.3-SNAPSHOT</version>
     </parent>
 
     <artifactId>peer-eon-app</artifactId>
-    <version>0.14.2-SNAPSHOT</version>
+    <version>0.14.3-SNAPSHOT</version>
     <packaging>war</packaging>
 
     <name>peer-eon-app</name>
@@ -27,31 +27,31 @@
         <dependency>
             <groupId>org.eontechnology.and</groupId>
             <artifactId>peer-eon</artifactId>
-            <version>0.14.2-SNAPSHOT</version>
+            <version>0.14.3-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>org.eontechnology.and</groupId>
             <artifactId>peer-eon-tx-builders</artifactId>
-            <version>0.14.2-SNAPSHOT</version>
+            <version>0.14.3-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>org.eontechnology.and</groupId>
             <artifactId>peer-core</artifactId>
-            <version>0.14.2-SNAPSHOT</version>
+            <version>0.14.3-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>org.eontechnology.and</groupId>
             <artifactId>peer-crypto</artifactId>
-            <version>0.14.2-SNAPSHOT</version>
+            <version>0.14.3-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>org.eontechnology.and</groupId>
             <artifactId>json-rpc</artifactId>
-            <version>0.14.2-SNAPSHOT</version>
+            <version>0.14.3-SNAPSHOT</version>
         </dependency>
 
         <!-- Spring -->

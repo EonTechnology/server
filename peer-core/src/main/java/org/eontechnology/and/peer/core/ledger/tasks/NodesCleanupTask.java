@@ -92,27 +92,33 @@ public class NodesCleanupTask implements Runnable {
         LinkedList<Long> nodes = new LinkedList<>();
         goDepth(key, nodes);
 
-        UpdateBuilder<DbNode, Long> builder = dao.updateBuilder();
-        builder.updateColumnValue("color", 1);
+        final int LIMIT = 1000;
+        StringBuilder sqlBuilder = new StringBuilder("UPDATE `nodes` SET `color` = 1 WHERE `index` in (?");
+        for (int i = 1; i < LIMIT; i++) {
+            sqlBuilder.append(",?");
+        }
+        sqlBuilder.append(")");
+
+        final String sql = sqlBuilder.toString();
 
         storage.callInTransaction(new Callable<Object>() {
             @Override
             public Object call() throws Exception {
-                LinkedList<Long> tmp = new LinkedList<>();
+                LinkedList<String> tmp = new LinkedList<>();
 
                 for (Long index : nodes) {
-                    tmp.add(index);
-                    if (tmp.size() > 1000) {
-                        builder.where().reset();
-                        builder.where().in("index", tmp);
-                        builder.update();
+                    tmp.add(Long.toString(index));
+                    if (tmp.size() == LIMIT) {
+                        dao.updateRaw(sql, tmp.toArray(new String[0]));
                         tmp.clear();
                     }
                 }
 
-                builder.where().reset();
-                builder.where().in("index", tmp);
-                builder.update();
+                while (tmp.size() < LIMIT) {
+                    tmp.add("0");
+                }
+
+                dao.updateRaw(sql, tmp.toArray(new String[0]));
 
                 return null;
             }
