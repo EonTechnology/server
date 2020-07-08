@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+## 0.14.7 - 2020-07-22
+### Changed
+- Update Jetty version to 9.4.30.v20200611.
+
 ## 0.14.6 - 2020-04-22
 ### Changed
 - End date of the fork.

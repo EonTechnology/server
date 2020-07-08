@@ -7,7 +7,7 @@
 
     <groupId>org.eontechnology.and</groupId>
     <artifactId>peer-all</artifactId>
-    <version>0.14.6-SNAPSHOT</version>
+    <version>0.14.7-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <modules>
@@ -83,7 +83,7 @@
             <plugin>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-maven-plugin</artifactId>
-                <version>9.4.7.v20170914</version>
+                <version>9.4.30.v20200611</version>
                 <configuration>
                     <skip>true</skip>
                 </configuration>
