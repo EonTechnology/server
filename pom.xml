@@ -7,7 +7,7 @@
 
     <groupId>org.eontechnology.and</groupId>
     <artifactId>peer-all</artifactId>
-    <version>0.14.7-SNAPSHOT</version>
+    <version>0.14.8-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <modules>
