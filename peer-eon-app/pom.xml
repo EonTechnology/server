@@ -17,7 +17,7 @@
 
     <properties>
         <org.springframework-version>5.0.7.RELEASE</org.springframework-version>
-        <org.springsecurity-version>5.0.6.RELEASE</org.springsecurity-version>
+        <org.springsecurity-version>5.2.10.RELEASE</org.springsecurity-version>
     </properties>
 
     <dependencies>
