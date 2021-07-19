@@ -5,7 +5,7 @@
     <parent>
         <artifactId>peer-all</artifactId>
         <groupId>org.eontechnology.and</groupId>
-        <version>0.14.10-SNAPSHOT</version>
+        <version>0.14.11-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -25,15 +25,15 @@
         <dependency>
             <groupId>org.eontechnology.and</groupId>
             <artifactId>peer-core</artifactId>
-            <version>0.14.10-SNAPSHOT</version>
+            <version>0.14.11-SNAPSHOT</version>
         </dependency>
 
         <!-- Crypto -->
 
         <dependency>
-            <groupId>com.github.EonTechnology</groupId>
+            <groupId>io.github.instantwebp2p</groupId>
             <artifactId>tweetnacl-java</artifactId>
-            <version>master-1.1.1-g56febad-19</version>
+            <version>1.1.2</version>
         </dependency>
 
     </dependencies>

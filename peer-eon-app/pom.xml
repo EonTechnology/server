@@ -5,19 +5,19 @@
     <parent>
         <groupId>org.eontechnology.and</groupId>
         <artifactId>peer-all</artifactId>
-        <version>0.14.10-SNAPSHOT</version>
+        <version>0.14.11-SNAPSHOT</version>
     </parent>
 
     <artifactId>peer-eon-app</artifactId>
-    <version>0.14.10-SNAPSHOT</version>
+    <version>0.14.11-SNAPSHOT</version>
     <packaging>war</packaging>
 
     <name>peer-eon-app</name>
     <url>http://maven.apache.org</url>
 
     <properties>
-        <org.springframework-version>5.0.7.RELEASE</org.springframework-version>
-        <org.springsecurity-version>5.0.6.RELEASE</org.springsecurity-version>
+        <org.springframework-version>5.2.13.RELEASE</org.springframework-version>
+        <org.springsecurity-version>5.2.10.RELEASE</org.springsecurity-version>
     </properties>
 
     <dependencies>
@@ -27,31 +27,31 @@
         <dependency>
             <groupId>org.eontechnology.and</groupId>
             <artifactId>peer-eon</artifactId>
-            <version>0.14.10-SNAPSHOT</version>
+            <version>0.14.11-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>org.eontechnology.and</groupId>
             <artifactId>peer-eon-tx-builders</artifactId>
-            <version>0.14.10-SNAPSHOT</version>
+            <version>0.14.11-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>org.eontechnology.and</groupId>
             <artifactId>peer-core</artifactId>
-            <version>0.14.10-SNAPSHOT</version>
+            <version>0.14.11-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>org.eontechnology.and</groupId>
             <artifactId>peer-crypto</artifactId>
-            <version>0.14.10-SNAPSHOT</version>
+            <version>0.14.11-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>org.eontechnology.and</groupId>
             <artifactId>json-rpc</artifactId>
-            <version>0.14.10-SNAPSHOT</version>
+            <version>0.14.11-SNAPSHOT</version>
         </dependency>
 
         <!-- Spring -->
@@ -90,7 +90,7 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.9.10</version>
+            <version>2.12.4</version>
         </dependency>
 
     </dependencies>
@@ -204,6 +204,11 @@
                     <keystoreFile>${project.build.directory}/jetty-ssl.keystore</keystoreFile>
                     <keystorePass>jetty8</keystorePass>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.2.0</version>
             </plugin>
 
         </plugins>

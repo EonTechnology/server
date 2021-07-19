@@ -25,7 +25,7 @@ COPY peer-crypto/pom.xml /app/peer-crypto/pom.xml
 COPY peer-eon-tx-builders/pom.xml /app/peer-eon-tx-builders/pom.xml
 
 # Cache depedences
-RUN mvn -Dmaven.repo.local=/repository dependency:go-offline package jetty:help clean --fail-never
+RUN mvn -Dmaven.repo.local=/repository install jetty:help
 
 # Copy additional files
 COPY peer-eon-app/jetty.xml /app/peer-eon-app/jetty.xml

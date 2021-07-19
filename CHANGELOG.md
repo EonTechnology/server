@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+## 0.14.11 - 2021-07-21
+### Changed
+- Update dependencies.
+- Simplify Dockerfile.
+- End date of the fork.
+
 ## 0.14.10 - 2021-04-14
 ### Changed
 - End date of the fork.
