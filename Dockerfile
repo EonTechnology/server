@@ -1,7 +1,8 @@
 #FROM maven:3-jdk-8-slim
 #FROM maven:3-jdk-9-slim
 #FROM maven:3-jdk-10-slim
-FROM maven:3-jdk-11-slim
+#FROM maven:3-jdk-11-slim
+FROM maven:3.6-jdk-11-slim
 #FROM frekele/maven
 
 RUN mkdir /repository
