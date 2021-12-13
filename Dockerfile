@@ -50,7 +50,7 @@ RUN mvn -Dmaven.repo.local=/repository test
 VOLUME /app/peer-eon-app/src/main/webapp/WEB-INF
 EXPOSE 9443
 
-ENV MAVEN_OPTS "-XX:+HeapDumpOnOutOfMemoryError -verbose:gc -XX:+PrintGCDetails -XX:+PrintFlagsFinal -Xmx350m"
+ENV MAVEN_OPTS "-XX:+HeapDumpOnOutOfMemoryError -verbose:gc -XX:+PrintGCDetails -XX:+PrintFlagsFinal -Xmx350m -Dlog4j.formatMsgNoLookups=true"
 ENTRYPOINT mvn -o -Dmaven.repo.local=/repository jetty:run -DSECRET_SEED=$SECRET_SEED -Dblockchain.full=$FULL_BLOCKCHAIN -Dblockchain.clean=$CLEAN_BLOCKCHAIN -Dhost.inner=$INNER_PEER
 
 # For debug
