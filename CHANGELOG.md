@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+## 0.14.15 - 2022-04-20
+### Changed
+- End date of the fork.
+
 ## 0.14.14 - 2022-01-10
 ### Changed
 - End date of the fork.
