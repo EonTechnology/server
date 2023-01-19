@@ -1,11 +1,10 @@
 package org.eontechnology.and.eon.app.jsonrpc;
 
 class ProxyServiceImpl implements IProxyServiceInterface {
-    public ProxyServiceImpl() {
-    }
+  public ProxyServiceImpl() {}
 
-    @Override
-    public boolean method(int arg0, String arg1) {
-        return true;
-    }
+  @Override
+  public boolean method(int arg0, String arg1) {
+    return true;
+  }
 }

@@ -9,23 +9,23 @@ import org.eontechnology.and.peer.core.middleware.IValidationRule;
 import org.eontechnology.and.peer.core.middleware.ValidationResult;
 
 public class FutureTimestampValidationRule implements IValidationRule {
-    private final ITimeProvider timeProvider;
+  private final ITimeProvider timeProvider;
 
-    public FutureTimestampValidationRule(ITimeProvider timeProvider) {
-        this.timeProvider = timeProvider;
+  public FutureTimestampValidationRule(ITimeProvider timeProvider) {
+    this.timeProvider = timeProvider;
+  }
+
+  public FutureTimestampValidationRule(int timestamp) {
+    this(new ImmutableTimeProvider(timestamp));
+  }
+
+  @Override
+  public ValidationResult validate(Transaction tx, ILedger ledger) {
+
+    if (tx.isFuture(timeProvider.get())) {
+      return ValidationResult.error(new LifecycleException());
     }
 
-    public FutureTimestampValidationRule(int timestamp) {
-        this(new ImmutableTimeProvider(timestamp));
-    }
-
-    @Override
-    public ValidationResult validate(Transaction tx, ILedger ledger) {
-
-        if (tx.isFuture(timeProvider.get())) {
-            return ValidationResult.error(new LifecycleException());
-        }
-
-        return ValidationResult.success;
-    }
+    return ValidationResult.success;
+  }
 }

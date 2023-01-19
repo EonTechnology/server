@@ -1,7 +1,6 @@
 package org.eontechnology.and.peer.eon.midleware.actions;
 
 import java.util.ArrayList;
-
 import org.eontechnology.and.peer.core.common.exceptions.ValidateException;
 import org.eontechnology.and.peer.core.data.Account;
 import org.eontechnology.and.peer.core.data.identifier.AccountID;
@@ -13,67 +12,67 @@ import org.eontechnology.and.peer.eon.ledger.state.ValidationModeProperty;
 import org.eontechnology.and.peer.eon.midleware.Resources;
 
 public class QuorumAction implements ILedgerAction {
-    private final ArrayList<Item> quorumTyped = new ArrayList<>();
-    private final AccountID accountID;
-    private final int quorum;
+  private final ArrayList<Item> quorumTyped = new ArrayList<>();
+  private final AccountID accountID;
+  private final int quorum;
 
-    public QuorumAction(AccountID accountID, int quorum) {
-        this.accountID = accountID;
-        this.quorum = quorum;
+  public QuorumAction(AccountID accountID, int quorum) {
+    this.accountID = accountID;
+    this.quorum = quorum;
+  }
+
+  private void ensureValidState(ILedger ledger) throws ValidateException {
+    Account sender = ledger.getAccount(accountID);
+    if (sender == null) {
+      throw new ValidateException(Resources.SENDER_ACCOUNT_NOT_FOUND);
     }
 
-    private void ensureValidState(ILedger ledger) throws ValidateException {
-        Account sender = ledger.getAccount(accountID);
-        if (sender == null) {
-            throw new ValidateException(Resources.SENDER_ACCOUNT_NOT_FOUND);
-        }
-
-        int maxWeight = ValidationModeProperty.MAX_WEIGHT;
-        ValidationModeProperty validationMode = AccountProperties.getValidationMode(sender);
-        if (validationMode.isMultiFactor()) {
-            maxWeight = validationMode.getMaxWeight();
-        }
-
-        if (maxWeight < quorum) {
-            throw new ValidateException(Resources.QUORUM_CAN_NOT_BE_CHANGED);
-        }
-        for (Item item : quorumTyped) {
-            if (maxWeight < item.quorum) {
-                throw new ValidateException(Resources.QUORUM_FOR_TYPE_CAN_NOT_BE_CHANGED);
-            }
-        }
+    int maxWeight = ValidationModeProperty.MAX_WEIGHT;
+    ValidationModeProperty validationMode = AccountProperties.getValidationMode(sender);
+    if (validationMode.isMultiFactor()) {
+      maxWeight = validationMode.getMaxWeight();
     }
 
-    @Override
-    public ILedger run(ILedger ledger, LedgerActionContext context) throws ValidateException {
+    if (maxWeight < quorum) {
+      throw new ValidateException(Resources.QUORUM_CAN_NOT_BE_CHANGED);
+    }
+    for (Item item : quorumTyped) {
+      if (maxWeight < item.quorum) {
+        throw new ValidateException(Resources.QUORUM_FOR_TYPE_CAN_NOT_BE_CHANGED);
+      }
+    }
+  }
 
-        ensureValidState(ledger);
+  @Override
+  public ILedger run(ILedger ledger, LedgerActionContext context) throws ValidateException {
 
-        Account account = ledger.getAccount(accountID);
-        ValidationModeProperty validationMode = AccountProperties.getValidationMode(account);
+    ensureValidState(ledger);
 
-        validationMode.setQuorum(quorum);
-        for (Item qi : quorumTyped) {
-            validationMode.setQuorum(qi.type, qi.quorum);
-        }
+    Account account = ledger.getAccount(accountID);
+    ValidationModeProperty validationMode = AccountProperties.getValidationMode(account);
 
-        validationMode.setTimestamp(context.getTimestamp());
-        account = AccountProperties.setProperty(account, validationMode);
-
-        return ledger.putAccount(account);
+    validationMode.setQuorum(quorum);
+    for (Item qi : quorumTyped) {
+      validationMode.setQuorum(qi.type, qi.quorum);
     }
 
-    public void setQuorum(int type, int quorum) {
-        quorumTyped.add(new Item(type, quorum));
-    }
+    validationMode.setTimestamp(context.getTimestamp());
+    account = AccountProperties.setProperty(account, validationMode);
 
-    static class Item {
-        public final int type;
-        public final int quorum;
+    return ledger.putAccount(account);
+  }
 
-        public Item(int type, int quorum) {
-            this.type = type;
-            this.quorum = quorum;
-        }
+  public void setQuorum(int type, int quorum) {
+    quorumTyped.add(new Item(type, quorum));
+  }
+
+  static class Item {
+    public final int type;
+    public final int quorum;
+
+    public Item(int type, int quorum) {
+      this.type = type;
+      this.quorum = quorum;
     }
+  }
 }

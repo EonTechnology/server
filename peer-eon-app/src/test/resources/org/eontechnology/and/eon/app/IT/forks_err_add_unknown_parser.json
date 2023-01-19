@@ -4,6 +4,10 @@
     {
       "number": 1,
       "date_end": "2018-05-25T12:00:00.00Z",
+      "params": {
+        "block_period": 180,
+        "block_size": 1048576
+      },
       "parser": {
         "add": {
           "Registration": "org.eontechnology.and.peer.eon.midleware.parsers.RegistrationParserT",

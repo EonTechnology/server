@@ -7,11 +7,11 @@ import org.eontechnology.and.peer.core.middleware.ValidationResult;
 
 public class ReferencedTransactionValidationRule implements IValidationRule {
 
-    @Override
-    public ValidationResult validate(Transaction tx, ILedger ledger) {
-        if (tx.getReference() != null) {
-            return ValidationResult.error("Illegal reference.");
-        }
-        return ValidationResult.success;
+  @Override
+  public ValidationResult validate(Transaction tx, ILedger ledger) {
+    if (tx.getReference() != null) {
+      return ValidationResult.error("Illegal reference.");
     }
+    return ValidationResult.success;
+  }
 }

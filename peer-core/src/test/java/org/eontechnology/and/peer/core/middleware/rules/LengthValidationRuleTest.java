@@ -15,35 +15,36 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class LengthValidationRuleTest extends AbstractValidationRuleTest {
-    private LengthValidationRule rule;
-    private ISigner sender = new Signer("112233445566778899aabbccddeeff00112233445566778899aabbccddeeff00");
+  private LengthValidationRule rule;
+  private ISigner sender =
+      new Signer("112233445566778899aabbccddeeff00112233445566778899aabbccddeeff00");
 
-    @Override
-    protected IValidationRule getValidationRule() {
-        return rule;
-    }
+  @Override
+  protected IValidationRule getValidationRule() {
+    return rule;
+  }
 
-    @Before
-    @Override
-    public void setUp() throws Exception {
-        super.setUp();
+  @Before
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
 
-        rule = new LengthValidationRule();
-    }
+    rule = new LengthValidationRule();
+  }
 
-    @Test
-    public void success() throws Exception {
-        Transaction tx = Builder.newTransaction(timeProvider).build(networkID, sender);
-        validate(tx);
-    }
+  @Test
+  public void success() throws Exception {
+    Transaction tx = Builder.newTransaction(timeProvider).build(networkID, sender);
+    validate(tx);
+  }
 
-    @Test
-    public void length_exceeds_limit() throws Exception {
-        expectedException.expect(ValidateException.class);
-        expectedException.expectMessage("Invalid transaction length.");
+  @Test
+  public void length_exceeds_limit() throws Exception {
+    expectedException.expect(ValidateException.class);
+    expectedException.expectMessage("Invalid transaction length.");
 
-        Transaction tx = spy(Builder.newTransaction(timeProvider).build(networkID, sender));
-        when(tx.getLength()).thenReturn(Constant.TRANSACTION_MAX_PAYLOAD_LENGTH + 1);
-        validate(tx);
-    }
+    Transaction tx = spy(Builder.newTransaction(timeProvider).build(networkID, sender));
+    when(tx.getLength()).thenReturn(Constant.TRANSACTION_MAX_PAYLOAD_LENGTH + 1);
+    validate(tx);
+  }
 }

@@ -1,18 +1,14 @@
-# Eclipse
-.classpath
-.project
-.metadata
-.recommenders
-.settings
-bin
+.*
+!.gitignore
+!.dockerignore
 
 # Intellij
 .idea/
 *.iml
 *.iws
 
-# Mac
-.DS_Store
+# Maven wrapper
+!/.mvn/
 
 # Maven
 log/
@@ -24,9 +20,8 @@ target/
 log4j2-*
 
 # DB files
-/db/*.db
-/db/*.db-shm
-/db/*.db-wal
+/db/*
+!/db/.gitkeep
 backlog_snapshot.bak
 
 peer-inner-debug.list

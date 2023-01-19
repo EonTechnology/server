@@ -3,7 +3,6 @@ package org.eontechnology.and.eon.app.api.explorer;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
-
 import org.eontechnology.and.eon.app.api.data.BlockHeader;
 import org.eontechnology.and.peer.core.backlog.services.BacklogService;
 import org.eontechnology.and.peer.core.blockchain.services.BlockService;
@@ -16,58 +15,60 @@ import org.eontechnology.and.peer.core.data.identifier.BlockID;
 import org.eontechnology.and.peer.core.data.identifier.TransactionID;
 
 public class BlockchainExplorerService {
-    private static final int TRANSACTION_LAST_PAGE_SIZE = 10;
+  private static final int TRANSACTION_LAST_PAGE_SIZE = 10;
 
-    private final BacklogService backlogService;
-    private final TransactionService transactionService;
-    private final BlockService blockService;
+  private final BacklogService backlogService;
+  private final TransactionService transactionService;
+  private final BlockService blockService;
 
-    public BlockchainExplorerService(BacklogService backlogService,
-                                     TransactionService transactionService,
-                                     BlockService blockService) {
+  public BlockchainExplorerService(
+      BacklogService backlogService,
+      TransactionService transactionService,
+      BlockService blockService) {
 
-        this.transactionService = transactionService;
-        this.backlogService = backlogService;
-        this.blockService = blockService;
+    this.transactionService = transactionService;
+    this.backlogService = backlogService;
+    this.blockService = blockService;
+  }
+
+  public Collection<Transaction> getCommittedPage(String id, int page)
+      throws RemotePeerException, IOException {
+    return transactionService.getByAccountId(new AccountID(id), page);
+  }
+
+  public Collection<Transaction> getUncommitted(String id) throws RemotePeerException, IOException {
+    return backlogService.getForAccount(new AccountID(id));
+  }
+
+  public List<BlockHeader> getLastBlocks() throws RemotePeerException, IOException {
+    return BlockHeader.fromBlockList(blockService.getLastPage());
+  }
+
+  public List<BlockHeader> getLastBlocksFrom(int height) throws RemotePeerException, IOException {
+    return BlockHeader.fromBlockList(blockService.getPage(height));
+  }
+
+  public Block getBlockByHeight(int height) throws RemotePeerException, IOException {
+    return blockService.getByHeight(height);
+  }
+
+  public Block getBlockById(String blockId) throws RemotePeerException, IOException {
+    return blockService.getById(new BlockID(blockId));
+  }
+
+  public Transaction getTransactionById(String id) throws RemotePeerException, IOException {
+
+    TransactionID transactionID = new TransactionID(id);
+
+    // ATTENTION: Null may be returned even if the transaction exists (see BacklogCleaner)
+    Transaction tx = backlogService.get(transactionID);
+    if (tx == null) {
+      return transactionService.getById(transactionID);
     }
+    return tx;
+  }
 
-    public Collection<Transaction> getCommittedPage(String id, int page) throws RemotePeerException, IOException {
-        return transactionService.getByAccountId(new AccountID(id), page);
-    }
-
-    public Collection<Transaction> getUncommitted(String id) throws RemotePeerException, IOException {
-        return backlogService.getForAccount(new AccountID(id));
-    }
-
-    public List<BlockHeader> getLastBlocks() throws RemotePeerException, IOException {
-        return BlockHeader.fromBlockList(blockService.getLastPage());
-    }
-
-    public List<BlockHeader> getLastBlocksFrom(int height) throws RemotePeerException, IOException {
-        return BlockHeader.fromBlockList(blockService.getPage(height));
-    }
-
-    public Block getBlockByHeight(int height) throws RemotePeerException, IOException {
-        return blockService.getByHeight(height);
-    }
-
-    public Block getBlockById(String blockId) throws RemotePeerException, IOException {
-        return blockService.getById(new BlockID(blockId));
-    }
-
-    public Transaction getTransactionById(String id) throws RemotePeerException, IOException {
-
-        TransactionID transactionID = new TransactionID(id);
-
-        // ATTENTION: Null may be returned even if the transaction exists (see BacklogCleaner)
-        Transaction tx = backlogService.get(transactionID);
-        if (tx == null) {
-            return transactionService.getById(transactionID);
-        }
-        return tx;
-    }
-
-    public Collection<Transaction> getLastUncommittedTrs() throws RemotePeerException, IOException {
-        return backlogService.getLatest(TRANSACTION_LAST_PAGE_SIZE);
-    }
+  public Collection<Transaction> getLastUncommittedTrs() throws RemotePeerException, IOException {
+    return backlogService.getLatest(TRANSACTION_LAST_PAGE_SIZE);
+  }
 }

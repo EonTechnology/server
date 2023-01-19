@@ -6,16 +6,16 @@ import org.eontechnology.and.peer.core.crypto.IFormatter;
 import org.eontechnology.and.peer.core.data.Transaction;
 
 public class TransactionEstimator implements ITransactionEstimator {
-    private final IFormatter formatter;
+  private final IFormatter formatter;
 
-    public TransactionEstimator(IFormatter formatter) {
-        this.formatter = formatter;
-    }
+  public TransactionEstimator(IFormatter formatter) {
+    this.formatter = formatter;
+  }
 
-    @Override
-    public int estimate(Transaction tx) {
+  @Override
+  public int estimate(Transaction tx) {
 
-        byte[] bytes = formatter.getBytes(TransportTransactionMapper.convert(tx));
-        return bytes.length;
-    }
+    byte[] bytes = formatter.getBytes(TransportTransactionMapper.convert(tx));
+    return bytes.length;
+  }
 }

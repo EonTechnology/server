@@ -8,15 +8,15 @@ import org.eontechnology.and.peer.core.middleware.ValidationResult;
 
 public class FeePerByteValidationRule implements IValidationRule {
 
-    @Override
-    public ValidationResult validate(Transaction tx, ILedger ledger) {
+  @Override
+  public ValidationResult validate(Transaction tx, ILedger ledger) {
 
-        int length = tx.getLength();
-        long fee = tx.getFee();
-        if (fee < length * Constant.TRANSACTION_MIN_FEE_PER_BYTE) {
-            return ValidationResult.error("Invalid fee.");
-        }
-
-        return ValidationResult.success;
+    int length = tx.getLength();
+    long fee = tx.getFee();
+    if (fee < length * Constant.TRANSACTION_MIN_FEE_PER_BYTE) {
+      return ValidationResult.error("Invalid fee.");
     }
+
+    return ValidationResult.success;
+  }
 }

@@ -1,0 +1,16 @@
+{
+  "min_deposit_size": 500000000,
+  "forks": [
+    {
+      "number": 1,
+      "date_end": "2018-02-01T12:00:00.00Z",
+      "parser": {
+        "add": {
+          "Registration": "org.eontechnology.and.peer.eon.midleware.parsers.RegistrationParser",
+          "Payment": "org.eontechnology.and.peer.eon.midleware.parsers.PaymentParser",
+          "Deposit": "org.eontechnology.and.peer.eon.midleware.parsers.DepositParser"
+        }
+      }
+    }
+  ]
+}

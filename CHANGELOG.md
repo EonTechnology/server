@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+## 0.15.0 - 2023-01-25
+### Changed
+- End date of the fork.
+- New block period (60s).
+- Update dependency with security issue.
+
 ## 0.14.17 - 2022-10-19
 ### Changed
 - End date of the fork.

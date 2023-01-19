@@ -1,5 +1,5 @@
 package org.eontechnology.and.jsonrpc;
 
 public interface IInnerService {
-    InnerServiceMethod getMethod(String methodName);
+  InnerServiceMethod getMethod(String methodName);
 }

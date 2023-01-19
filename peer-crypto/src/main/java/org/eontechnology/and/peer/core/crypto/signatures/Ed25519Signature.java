@@ -1,44 +1,43 @@
 package org.eontechnology.and.peer.core.crypto.signatures;
 
-import java.util.Collections;
-import java.util.Map;
-
-import com.iwebpp.crypto.TweetNaclFast;
-import org.eontechnology.and.peer.core.common.CachedHashMap;
-import org.eontechnology.and.peer.core.common.Format;
 import org.eontechnology.and.peer.core.crypto.ISignature;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Ed25519Signature implements ISignature {
-    private final Map<String, TweetNaclFast.Signature> cache = Collections.synchronizedMap(new CachedHashMap<>(5000));
+  private static final Logger logger = LoggerFactory.getLogger(Ed25519Signature.class);
+  private static final ISignature signer;
 
-    @Override
-    public String getName() {
-        return "Ed25519";
+  static {
+    ISignature signerTmp;
+    try {
+      signerTmp = new Ed25519SignatureFast();
+      signerTmp.verify(new byte[0], new byte[0], new byte[0]);
+    } catch (Throwable ex) {
+      signerTmp = new Ed25519SignatureNative();
+      logger.error(
+          "Ed25519SignatureFast not loaded. Used Ed25519SignatureNative. {}", ex.getMessage());
     }
+    signer = signerTmp;
+  }
 
-    @Override
-    public KeyPair getKeyPair(byte[] seed) {
+  @Override
+  public String getName() {
+    return "Ed25519";
+  }
 
-        TweetNaclFast.Signature.KeyPair pair = TweetNaclFast.Signature.keyPair_fromSeed(seed);
-        return new KeyPair(pair.getSecretKey(), pair.getPublicKey());
-    }
+  @Override
+  public KeyPair getKeyPair(byte[] seed) {
+    return signer.getKeyPair(seed);
+  }
 
-    @Override
-    public boolean verify(byte[] message, byte[] signature, byte[] publicKey) {
+  @Override
+  public boolean verify(byte[] message, byte[] signature, byte[] publicKey) {
+    return signer.verify(message, signature, publicKey);
+  }
 
-        String key = Format.convert(publicKey);
-        TweetNaclFast.Signature sign = cache.get(key);
-        if (sign == null) {
-            sign = new TweetNaclFast.Signature(publicKey, null);
-            cache.put(key, sign);
-        }
-        return sign.detached_verify(message, signature);
-    }
-
-    @Override
-    public byte[] sign(byte[] messageToSign, byte[] secretKey) {
-
-        TweetNaclFast.Signature sign = new TweetNaclFast.Signature(null, secretKey);
-        return sign.detached(messageToSign);
-    }
+  @Override
+  public byte[] sign(byte[] messageToSign, byte[] secretKey) {
+    return signer.sign(messageToSign, secretKey);
+  }
 }

@@ -6,8 +6,8 @@ import org.eontechnology.and.peer.core.middleware.LedgerActionContext;
 
 public class EmptyAction implements ILedgerAction {
 
-    @Override
-    public ILedger run(ILedger ledger, LedgerActionContext context) {
-        return ledger;
-    }
+  @Override
+  public ILedger run(ILedger ledger, LedgerActionContext context) {
+    return ledger;
+  }
 }

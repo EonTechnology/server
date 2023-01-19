@@ -1,16 +1,17 @@
-//package org.eontechnology.and.peer.core.storage;
+// package org.eontechnology.and.peer.core.storage;
 //
-//import java.lang.reflect.InvocationTargetException;
-//import java.util.HashMap;
-//import java.util.Map;
-//import java.util.Objects;
+// import java.lang.reflect.InvocationTargetException;
+// import java.util.HashMap;
+// import java.util.Map;
+// import java.util.Objects;
 //
-//import com.j256.ormlite.support.ConnectionSource;
+// import com.j256.ormlite.support.ConnectionSource;
 //
-//public class CacheManager {
+// public class CacheManager {
 //    private volatile static Map<ConnectionSourceClass, Object> cacheMap = null;
 //
-//    public synchronized static <TCache> TCache createCache(ConnectionSource connectionSource, Class<TCache> clazz) {
+//    public synchronized static <TCache> TCache createCache(ConnectionSource connectionSource,
+// Class<TCache> clazz) {
 //        Objects.requireNonNull(connectionSource);
 //        Objects.requireNonNull(clazz);
 //
@@ -20,7 +21,8 @@
 //            try {
 //                cacheObj = clazz.getConstructor().newInstance();
 //                cacheMap.put(clazzKey, cacheObj);
-//            } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
+//            } catch (NoSuchMethodException | InstantiationException | IllegalAccessException |
+// InvocationTargetException e) {
 //                throw new RuntimeException(e);
 //            }
 //        }
@@ -29,7 +31,8 @@
 //        return castObj;
 //    }
 //
-//    public synchronized static <TCache> TCache lookupCache(ConnectionSource connectionSource, Class<TCache> clazz) {
+//    public synchronized static <TCache> TCache lookupCache(ConnectionSource connectionSource,
+// Class<TCache> clazz) {
 //        Objects.requireNonNull(connectionSource);
 //
 //        Object cacheObj = lookupCache(new ConnectionSourceClass(connectionSource, clazz));
@@ -87,4 +90,4 @@
 //            return true;
 //        }
 //    }
-//}
+// }

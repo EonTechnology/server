@@ -9,22 +9,22 @@ import org.eontechnology.and.peer.core.middleware.IValidationRule;
 import org.eontechnology.and.peer.core.middleware.ValidationResult;
 
 public class ExpiredTimestampValidationRule implements IValidationRule {
-    private final ITimeProvider timeProvider;
+  private final ITimeProvider timeProvider;
 
-    public ExpiredTimestampValidationRule(ITimeProvider timeProvider) {
-        this.timeProvider = timeProvider;
+  public ExpiredTimestampValidationRule(ITimeProvider timeProvider) {
+    this.timeProvider = timeProvider;
+  }
+
+  public ExpiredTimestampValidationRule(int timestamp) {
+    this(new ImmutableTimeProvider(timestamp));
+  }
+
+  @Override
+  public ValidationResult validate(Transaction tx, ILedger ledger) {
+    if (tx.isExpired(timeProvider.get())) {
+      return ValidationResult.error(new LifecycleException());
     }
 
-    public ExpiredTimestampValidationRule(int timestamp) {
-        this(new ImmutableTimeProvider(timestamp));
-    }
-
-    @Override
-    public ValidationResult validate(Transaction tx, ILedger ledger) {
-        if (tx.isExpired(timeProvider.get())) {
-            return ValidationResult.error(new LifecycleException());
-        }
-
-        return ValidationResult.success;
-    }
+    return ValidationResult.success;
+  }
 }

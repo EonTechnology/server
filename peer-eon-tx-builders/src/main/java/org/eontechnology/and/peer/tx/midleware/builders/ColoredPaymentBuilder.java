@@ -6,18 +6,20 @@ import org.eontechnology.and.peer.tx.TransactionType;
 
 /**
  * "Colored Coin Payment" transaction.
- * <p>
- * Transfers colored coins between accounts.
+ *
+ * <p>Transfers colored coins between accounts.
  */
 public class ColoredPaymentBuilder extends TransactionBuilder<ColoredPaymentBuilder> {
 
-    private ColoredPaymentBuilder() {
-        super(TransactionType.ColoredCoinPayment);
-    }
+  private ColoredPaymentBuilder() {
+    super(TransactionType.ColoredCoinPayment);
+  }
 
-    public static ColoredPaymentBuilder createNew(long amount, ColoredCoinID color, AccountID recipient) {
-        return new ColoredPaymentBuilder().withParam("amount", amount)
-                                          .withParam("recipient", recipient.toString())
-                                          .withParam("color", color.toString());
-    }
+  public static ColoredPaymentBuilder createNew(
+      long amount, ColoredCoinID color, AccountID recipient) {
+    return new ColoredPaymentBuilder()
+        .withParam("amount", amount)
+        .withParam("recipient", recipient.toString())
+        .withParam("color", color.toString());
+  }
 }

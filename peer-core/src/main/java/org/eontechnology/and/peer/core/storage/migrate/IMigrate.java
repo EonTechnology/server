@@ -5,11 +5,11 @@ import java.sql.SQLException;
 
 public interface IMigrate {
 
-    void migrateDataBase() throws IOException, SQLException;
+  void migrateDataBase() throws IOException, SQLException;
 
-    void migrateLogicalStructure() throws IOException, SQLException;
+  void migrateLogicalStructure() throws IOException, SQLException;
 
-    void cleanUp() throws IOException, SQLException;
+  void cleanUp() throws IOException, SQLException;
 
-    int getTargetVersion();
+  int getTargetVersion();
 }

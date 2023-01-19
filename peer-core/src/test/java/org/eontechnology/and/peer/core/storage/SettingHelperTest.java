@@ -9,29 +9,29 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class SettingHelperTest {
-    private Storage storage;
+  private Storage storage;
 
-    @Before
-    public void setUp() throws Exception {
-        storage = ConnectionUtils.create();
-    }
+  @Before
+  public void setUp() throws Exception {
+    storage = ConnectionUtils.create();
+  }
 
-    @After
-    public void after() throws Exception {
-        storage.destroy();
-    }
+  @After
+  public void after() throws Exception {
+    storage.destroy();
+  }
 
-    @Test
-    public void getNonExistentValue() throws Exception {
-        Storage.Metadata metadata = storage.metadata();
-        assertNull(metadata.getProperty("Setting_NonExistent"));
-    }
+  @Test
+  public void getNonExistentValue() throws Exception {
+    Storage.Metadata metadata = storage.metadata();
+    assertNull(metadata.getProperty("Setting_NonExistent"));
+  }
 
-    @Test
-    public void setAndGetValue() throws Exception {
-        Storage.Metadata metadata = storage.metadata();
-        assertNull(metadata.getProperty("Setting_2"));
-        metadata.setProperty("Setting_2", "Value_2");
-        assertEquals(metadata.getProperty("Setting_2"), "Value_2");
-    }
+  @Test
+  public void setAndGetValue() throws Exception {
+    Storage.Metadata metadata = storage.metadata();
+    assertNull(metadata.getProperty("Setting_2"));
+    metadata.setProperty("Setting_2", "Value_2");
+    assertEquals(metadata.getProperty("Setting_2"), "Value_2");
+  }
 }

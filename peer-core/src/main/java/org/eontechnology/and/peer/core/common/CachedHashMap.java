@@ -11,32 +11,32 @@ import java.util.concurrent.atomic.AtomicLong;
  * @param <V> type of value
  */
 public class CachedHashMap<K, V> extends LinkedHashMap<K, V> {
-    private static final long serialVersionUID = -1756745314063573436L;
+  private static final long serialVersionUID = -1756745314063573436L;
 
-    private final int size;
-    private volatile AtomicLong added = new AtomicLong();
-    private volatile AtomicLong removed = new AtomicLong();
+  private final int size;
+  private volatile AtomicLong added = new AtomicLong();
+  private volatile AtomicLong removed = new AtomicLong();
 
-    public CachedHashMap(int size) {
-        super(0, 0.75f, true);
-        this.size = size;
+  public CachedHashMap(int size) {
+    super(0, 0.75f, true);
+    this.size = size;
+  }
+
+  @Override
+  protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
+    added.incrementAndGet();
+    if (size() > size) {
+      removed.incrementAndGet();
+      return true;
     }
+    return false;
+  }
 
-    @Override
-    protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
-        added.incrementAndGet();
-        if (size() > size) {
-            removed.incrementAndGet();
-            return true;
-        }
-        return false;
-    }
+  public long getAdded() {
+    return added.get();
+  }
 
-    public long getAdded() {
-        return added.get();
-    }
-
-    public long getRemoved() {
-        return removed.get();
-    }
+  public long getRemoved() {
+    return removed.get();
+  }
 }

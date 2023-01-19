@@ -1,7 +1,6 @@
 package org.eontechnology.and.peer.core.blockchain.events;
 
 import java.util.EventObject;
-
 import org.eontechnology.and.peer.core.data.Block;
 
 /***
@@ -10,13 +9,13 @@ import org.eontechnology.and.peer.core.data.Block;
  *
  */
 public class BlockchainEvent extends EventObject {
-    private static final long serialVersionUID = 1045860526067590795L;
+  private static final long serialVersionUID = 1045860526067590795L;
 
-    public final Block block;
+  public final Block block;
 
-    public BlockchainEvent(Object source, Block block) {
-        super(source);
+  public BlockchainEvent(Object source, Block block) {
+    super(source);
 
-        this.block = block;
-    }
+    this.block = block;
+  }
 }

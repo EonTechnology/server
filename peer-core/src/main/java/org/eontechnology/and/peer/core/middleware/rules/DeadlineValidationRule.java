@@ -8,11 +8,11 @@ import org.eontechnology.and.peer.core.middleware.IValidationRule;
 import org.eontechnology.and.peer.core.middleware.ValidationResult;
 
 public class DeadlineValidationRule implements IValidationRule {
-    @Override
-    public ValidationResult validate(Transaction tx, ILedger ledger) {
-        if (tx.getDeadline() < 1 || tx.getDeadline() > Constant.TRANSACTION_MAX_LIFETIME) {
-            return ValidationResult.error(new LifecycleException());
-        }
-        return ValidationResult.success;
+  @Override
+  public ValidationResult validate(Transaction tx, ILedger ledger) {
+    if (tx.getDeadline() < 1 || tx.getDeadline() > Constant.TRANSACTION_MAX_LIFETIME) {
+      return ValidationResult.error(new LifecycleException());
     }
+    return ValidationResult.success;
+  }
 }

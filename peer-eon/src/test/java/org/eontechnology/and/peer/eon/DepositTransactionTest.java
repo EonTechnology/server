@@ -24,189 +24,193 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 public class DepositTransactionTest extends AbstractTransactionTest {
-    private DepositParser parser = new DepositParser();
+  private DepositParser parser = new DepositParser();
 
-    private ISigner senderSigner = new Signer("112233445566778899aabbccddeeff00112233445566778899aabbccddeeff00");
-    private Account sender;
+  private ISigner senderSigner =
+      new Signer("112233445566778899aabbccddeeff00112233445566778899aabbccddeeff00");
+  private Account sender;
 
-    @Before
-    @Override
-    public void setUp() throws Exception {
-        super.setUp();
+  @Before
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
 
-        sender = Mockito.spy(new TestAccount(new AccountID(senderSigner.getPublicKey())));
-        AccountProperties.setProperty(sender, new RegistrationDataProperty(senderSigner.getPublicKey()));
+    sender = Mockito.spy(new TestAccount(new AccountID(senderSigner.getPublicKey())));
+    AccountProperties.setProperty(
+        sender, new RegistrationDataProperty(senderSigner.getPublicKey()));
 
-        ledger.putAccount(sender);
-    }
+    ledger.putAccount(sender);
+  }
 
-    @Test
-    public void attachment_unknown_type() throws Exception {
-        expectedException.expect(ValidateException.class);
-        expectedException.expectMessage(Resources.ATTACHMENT_UNKNOWN_TYPE);
+  @Test
+  public void attachment_unknown_type() throws Exception {
+    expectedException.expect(ValidateException.class);
+    expectedException.expectMessage(Resources.ATTACHMENT_UNKNOWN_TYPE);
 
-        Transaction tx = new TransactionBuilder(TransactionType.Deposit).build(networkID, senderSigner);
-        validate(parser, tx);
-    }
+    Transaction tx = new TransactionBuilder(TransactionType.Deposit).build(networkID, senderSigner);
+    validate(parser, tx);
+  }
 
-    @Test
-    public void deposit_refill_with_invalid_attachment_is_error() throws Exception {
-        expectedException.expect(ValidateException.class);
-        expectedException.expectMessage(Resources.AMOUNT_INVALID_FORMAT);
+  @Test
+  public void deposit_refill_with_invalid_attachment_is_error() throws Exception {
+    expectedException.expect(ValidateException.class);
+    expectedException.expectMessage(Resources.AMOUNT_INVALID_FORMAT);
 
-        Transaction tx = DepositBuilder.createNew(999L).withParam("amount", "test").build(networkID, senderSigner);
-        validate(parser, tx);
-    }
+    Transaction tx =
+        DepositBuilder.createNew(999L).withParam("amount", "test").build(networkID, senderSigner);
+    validate(parser, tx);
+  }
 
-    @Test
-    public void deposit_refill_with_unknown_sender_is_error() throws Exception {
-        expectedException.expect(ValidateException.class);
-        expectedException.expectMessage(Resources.SENDER_ACCOUNT_NOT_FOUND);
+  @Test
+  public void deposit_refill_with_unknown_sender_is_error() throws Exception {
+    expectedException.expect(ValidateException.class);
+    expectedException.expectMessage(Resources.SENDER_ACCOUNT_NOT_FOUND);
 
-        Transaction tx = DepositBuilder.createNew(1L).build(networkID, senderSigner);
-        when(ledger.getAccount(eq(tx.getSenderID()))).thenReturn(null);
-        validate(parser, tx);
-    }
+    Transaction tx = DepositBuilder.createNew(1L).build(networkID, senderSigner);
+    when(ledger.getAccount(eq(tx.getSenderID()))).thenReturn(null);
+    validate(parser, tx);
+  }
 
-    @Test
-    public void deposit_refill_with_low_balance_is_error() throws Exception {
-        expectedException.expect(ValidateException.class);
-        expectedException.expectMessage(Resources.NOT_ENOUGH_FEE);
+  @Test
+  public void deposit_refill_with_low_balance_is_error() throws Exception {
+    expectedException.expect(ValidateException.class);
+    expectedException.expectMessage(Resources.NOT_ENOUGH_FEE);
 
-        long depositAmount = 999L;
-        Transaction tx = DepositBuilder.createNew(depositAmount).build(networkID, senderSigner);
+    long depositAmount = 999L;
+    Transaction tx = DepositBuilder.createNew(depositAmount).build(networkID, senderSigner);
 
-        AccountProperties.setProperty(sender, new BalanceProperty(depositAmount + tx.getFee() - 1L));
-        AccountProperties.setProperty(sender, new GeneratingBalanceProperty(0L, 0));
+    AccountProperties.setProperty(sender, new BalanceProperty(depositAmount + tx.getFee() - 1L));
+    AccountProperties.setProperty(sender, new GeneratingBalanceProperty(0L, 0));
 
-        validate(parser, tx);
-    }
+    validate(parser, tx);
+  }
 
-    @Test
-    public void deposit_fee_from_deposit() throws Exception {
-        Transaction tx = DepositBuilder.createNew(100L).build(networkID, senderSigner);
+  @Test
+  public void deposit_fee_from_deposit() throws Exception {
+    Transaction tx = DepositBuilder.createNew(100L).build(networkID, senderSigner);
 
-        AccountProperties.setProperty(sender, new BalanceProperty(0L));
-        AccountProperties.setProperty(sender, new GeneratingBalanceProperty(100L + tx.getFee(), 0));
+    AccountProperties.setProperty(sender, new BalanceProperty(0L));
+    AccountProperties.setProperty(sender, new GeneratingBalanceProperty(100L + tx.getFee(), 0));
 
-        validate(parser, tx);
-    }
+    validate(parser, tx);
+  }
 
-    @Test
-    public void deposit_fee_from_low_deposit() throws Exception {
-        expectedException.expect(ValidateException.class);
-        expectedException.expectMessage(Resources.NOT_ENOUGH_FEE);
+  @Test
+  public void deposit_fee_from_low_deposit() throws Exception {
+    expectedException.expect(ValidateException.class);
+    expectedException.expectMessage(Resources.NOT_ENOUGH_FEE);
 
-        Transaction tx = DepositBuilder.createNew(0L).forFee(10L).build(networkID, senderSigner);
+    Transaction tx = DepositBuilder.createNew(0L).forFee(10L).build(networkID, senderSigner);
 
-        AccountProperties.setProperty(sender, new BalanceProperty(0L));
-        AccountProperties.setProperty(sender, new GeneratingBalanceProperty(5L, 0));
+    AccountProperties.setProperty(sender, new BalanceProperty(0L));
+    AccountProperties.setProperty(sender, new GeneratingBalanceProperty(5L, 0));
 
-        validate(parser, tx);
-    }
+    validate(parser, tx);
+  }
 
-    @Test
-    public void deposit_refill_with_arbitrary_amount_is_ok() throws Exception {
-        long refillAmount = 900;
+  @Test
+  public void deposit_refill_with_arbitrary_amount_is_ok() throws Exception {
+    long refillAmount = 900;
 
-        Transaction tx = DepositBuilder.createNew(refillAmount).build(networkID, senderSigner);
+    Transaction tx = DepositBuilder.createNew(refillAmount).build(networkID, senderSigner);
 
-        AccountProperties.setProperty(sender, new BalanceProperty(refillAmount + tx.getFee()));
+    AccountProperties.setProperty(sender, new BalanceProperty(refillAmount + tx.getFee()));
 
-        validate(parser, tx);
-    }
+    validate(parser, tx);
+  }
 
-    @Test
-    public void deposit_already_set() throws Exception {
-        expectedException.expect(ValidateException.class);
-        expectedException.expectMessage(Resources.VALUE_ALREADY_SET);
+  @Test
+  public void deposit_already_set() throws Exception {
+    expectedException.expect(ValidateException.class);
+    expectedException.expectMessage(Resources.VALUE_ALREADY_SET);
 
-        long refillAmount = 900;
+    long refillAmount = 900;
 
-        Transaction tx = DepositBuilder.createNew(refillAmount).build(networkID, senderSigner);
+    Transaction tx = DepositBuilder.createNew(refillAmount).build(networkID, senderSigner);
 
-        AccountProperties.setProperty(sender, new BalanceProperty(refillAmount + tx.getFee()));
-        AccountProperties.setProperty(sender, new GeneratingBalanceProperty(refillAmount, 0));
+    AccountProperties.setProperty(sender, new BalanceProperty(refillAmount + tx.getFee()));
+    AccountProperties.setProperty(sender, new GeneratingBalanceProperty(refillAmount, 0));
 
-        validate(parser, tx);
-    }
+    validate(parser, tx);
+  }
 
-    @Test
-    public void deposit_refill_with_positive_deposit_is_ok() throws Exception {
+  @Test
+  public void deposit_refill_with_positive_deposit_is_ok() throws Exception {
 
-        long refillAmount = 100500;
-        long depositAmount = 1;
+    long refillAmount = 100500;
+    long depositAmount = 1;
 
-        Transaction tx = DepositBuilder.createNew(refillAmount).build(networkID, senderSigner);
+    Transaction tx = DepositBuilder.createNew(refillAmount).build(networkID, senderSigner);
 
-        AccountProperties.setProperty(sender, new BalanceProperty(refillAmount + tx.getFee()));
-        AccountProperties.setProperty(sender, new GeneratingBalanceProperty(depositAmount, 0));
+    AccountProperties.setProperty(sender, new BalanceProperty(refillAmount + tx.getFee()));
+    AccountProperties.setProperty(sender, new GeneratingBalanceProperty(depositAmount, 0));
 
-        validate(parser, tx);
-    }
+    validate(parser, tx);
+  }
 
-    @Test
-    public void deposit_reset() throws Exception {
-        Transaction tx = DepositBuilder.createNew(0L).build(networkID, senderSigner);
+  @Test
+  public void deposit_reset() throws Exception {
+    Transaction tx = DepositBuilder.createNew(0L).build(networkID, senderSigner);
 
-        AccountProperties.setProperty(sender, new BalanceProperty(tx.getFee()));
-        AccountProperties.setProperty(sender, new GeneratingBalanceProperty(100L, 0));
+    AccountProperties.setProperty(sender, new BalanceProperty(tx.getFee()));
+    AccountProperties.setProperty(sender, new GeneratingBalanceProperty(100L, 0));
 
-        validate(parser, tx);
-    }
+    validate(parser, tx);
+  }
 
-    @Test
-    public void deposit_less_zero() throws Exception {
-        expectedException.expect(ValidateException.class);
-        expectedException.expectMessage(Resources.AMOUNT_OUT_OF_RANGE);
+  @Test
+  public void deposit_less_zero() throws Exception {
+    expectedException.expect(ValidateException.class);
+    expectedException.expectMessage(Resources.AMOUNT_OUT_OF_RANGE);
 
-        Transaction tx = DepositBuilder.createNew(-10L).build(networkID, senderSigner);
-        AccountProperties.setProperty(sender, new BalanceProperty(tx.getFee()));
+    Transaction tx = DepositBuilder.createNew(-10L).build(networkID, senderSigner);
+    AccountProperties.setProperty(sender, new BalanceProperty(tx.getFee()));
 
-        validate(parser, tx);
-    }
+    validate(parser, tx);
+  }
 
-    @Test
-    public void invalid_nested_transaction() throws Exception {
-        expectedException.expect(ValidateException.class);
-        expectedException.expectMessage(Resources.NESTED_TRANSACTION_NOT_SUPPORTED);
+  @Test
+  public void invalid_nested_transaction() throws Exception {
+    expectedException.expect(ValidateException.class);
+    expectedException.expectMessage(Resources.NESTED_TRANSACTION_NOT_SUPPORTED);
 
-        Transaction innerTx = new TransactionBuilder(1).build(networkID, senderSigner);
-        Transaction tx = DepositBuilder.createNew(-10L).addNested(innerTx).build(networkID, senderSigner);
+    Transaction innerTx = new TransactionBuilder(1).build(networkID, senderSigner);
+    Transaction tx =
+        DepositBuilder.createNew(-10L).addNested(innerTx).build(networkID, senderSigner);
 
-        validate(parser, tx);
-    }
+    validate(parser, tx);
+  }
 
-    @Test
-    public void amount_error_null() throws Exception {
-        expectedException.expect(ValidateException.class);
-        expectedException.expectMessage(Resources.AMOUNT_INVALID_FORMAT);
+  @Test
+  public void amount_error_null() throws Exception {
+    expectedException.expect(ValidateException.class);
+    expectedException.expectMessage(Resources.AMOUNT_INVALID_FORMAT);
 
-        Transaction tx = DepositBuilder.createNew(1000L).build(networkID, senderSigner);
+    Transaction tx = DepositBuilder.createNew(1000L).build(networkID, senderSigner);
 
-        tx.getData().put("amount", null);
-        validate(parser, tx);
-    }
+    tx.getData().put("amount", null);
+    validate(parser, tx);
+  }
 
-    @Test
-    public void amount_error_string() throws Exception {
-        expectedException.expect(ValidateException.class);
-        expectedException.expectMessage(Resources.AMOUNT_INVALID_FORMAT);
+  @Test
+  public void amount_error_string() throws Exception {
+    expectedException.expect(ValidateException.class);
+    expectedException.expectMessage(Resources.AMOUNT_INVALID_FORMAT);
 
-        Transaction tx = DepositBuilder.createNew(1000L).build(networkID, senderSigner);
+    Transaction tx = DepositBuilder.createNew(1000L).build(networkID, senderSigner);
 
-        tx.getData().put("amount", "100");
-        validate(parser, tx);
-    }
+    tx.getData().put("amount", "100");
+    validate(parser, tx);
+  }
 
-    @Test
-    public void amount_error_decimal() throws Exception {
-        expectedException.expect(ValidateException.class);
-        expectedException.expectMessage(Resources.AMOUNT_INVALID_FORMAT);
+  @Test
+  public void amount_error_decimal() throws Exception {
+    expectedException.expect(ValidateException.class);
+    expectedException.expectMessage(Resources.AMOUNT_INVALID_FORMAT);
 
-        Transaction tx = DepositBuilder.createNew(1000L).build(networkID, senderSigner);
+    Transaction tx = DepositBuilder.createNew(1000L).build(networkID, senderSigner);
 
-        tx.getData().put("amount", 100.001);
-        validate(parser, tx);
-    }
+    tx.getData().put("amount", 100.001);
+    validate(parser, tx);
+  }
 }

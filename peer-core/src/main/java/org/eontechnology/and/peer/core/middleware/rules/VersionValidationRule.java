@@ -7,11 +7,11 @@ import org.eontechnology.and.peer.core.middleware.ValidationResult;
 
 public class VersionValidationRule implements IValidationRule {
 
-    @Override
-    public ValidationResult validate(Transaction tx, ILedger ledger) {
-        if (tx.getVersion() != 1) {
-            return ValidationResult.error("Version is not supported.");
-        }
-        return ValidationResult.success;
+  @Override
+  public ValidationResult validate(Transaction tx, ILedger ledger) {
+    if (tx.getVersion() != 1) {
+      return ValidationResult.error("Version is not supported.");
     }
+    return ValidationResult.success;
+  }
 }

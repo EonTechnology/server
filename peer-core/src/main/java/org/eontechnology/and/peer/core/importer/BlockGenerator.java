@@ -8,7 +8,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
-
 import org.eontechnology.and.peer.core.Constant;
 import org.eontechnology.and.peer.core.IFork;
 import org.eontechnology.and.peer.core.backlog.IBacklog;
@@ -41,229 +40,240 @@ import org.eontechnology.and.peer.core.middleware.TransactionValidator;
 import org.eontechnology.and.peer.core.middleware.TransactionValidatorFabric;
 import org.eontechnology.and.peer.core.middleware.ValidationResult;
 
-/**
- * Creates the next block for the chain.
- */
+/** Creates the next block for the chain. */
 public class BlockGenerator implements IPeerEventListener, IBlockchainEventListener {
 
-    private final AtomicBoolean isGenAllowed = new AtomicBoolean();
-    private final IBacklog backlog;
-    private final IBlockchainProvider blockchain;
-    private final IFork fork;
-    private final LedgerProvider ledgerProvider;
-    private final TransactionValidatorFabric transactionValidatorFabric;
-    private final ITransactionEstimator estimator;
-    private final IAccountHelper accountHelper;
-    private boolean useFastGeneration = false;
-    private ISigner signer;
+  private final AtomicBoolean isGenAllowed = new AtomicBoolean();
+  private final IBacklog backlog;
+  private final IBlockchainProvider blockchain;
+  private final IFork fork;
+  private final LedgerProvider ledgerProvider;
+  private final TransactionValidatorFabric transactionValidatorFabric;
+  private final ITransactionEstimator estimator;
+  private final IAccountHelper accountHelper;
+  private boolean useFastGeneration = false;
+  private ISigner signer;
 
-    public BlockGenerator(IFork fork,
-                          ISigner signer,
-                          IBacklog backlog,
-                          IBlockchainProvider blockchain,
-                          LedgerProvider ledgerProvider,
-                          TransactionValidatorFabric transactionValidatorFabric,
-                          ITransactionEstimator estimator,
-                          IAccountHelper accountHelper) {
-        this.backlog = backlog;
-        this.blockchain = blockchain;
-        this.signer = signer;
-        this.fork = fork;
-        this.ledgerProvider = ledgerProvider;
-        this.transactionValidatorFabric = transactionValidatorFabric;
-        this.estimator = estimator;
-        this.accountHelper = accountHelper;
+  public BlockGenerator(
+      IFork fork,
+      ISigner signer,
+      IBacklog backlog,
+      IBlockchainProvider blockchain,
+      LedgerProvider ledgerProvider,
+      TransactionValidatorFabric transactionValidatorFabric,
+      ITransactionEstimator estimator,
+      IAccountHelper accountHelper) {
+    this.backlog = backlog;
+    this.blockchain = blockchain;
+    this.signer = signer;
+    this.fork = fork;
+    this.ledgerProvider = ledgerProvider;
+    this.transactionValidatorFabric = transactionValidatorFabric;
+    this.estimator = estimator;
+    this.accountHelper = accountHelper;
+  }
+
+  public boolean isInitialized() {
+    return signer != null;
+  }
+
+  public ISigner getSigner() {
+    return signer;
+  }
+
+  public void setSigner(ISigner signer) {
+    this.signer = signer;
+  }
+
+  public boolean isUseFastGeneration() {
+    return useFastGeneration;
+  }
+
+  public void setUseFastGeneration(boolean useFastGeneration) {
+    this.useFastGeneration = useFastGeneration;
+  }
+
+  public Block createNextBlock(Block previousBlock) {
+
+    if (!isGenAllowed.get()) {
+      return null;
     }
 
-    public boolean isInitialized() {
-        return signer != null;
+    isGenAllowed.set(false);
+
+    int currentTimestamp = fork.getNextBlockTimestamp(previousBlock.getTimestamp());
+
+    Map<TransactionID, Transaction> map = new HashMap<>();
+    Iterator<TransactionID> indexes = backlog.iterator();
+    while (indexes.hasNext() && map.size() < Constant.BLOCK_TRANSACTION_LIMIT) {
+      TransactionID id = indexes.next();
+      Transaction tx = backlog.get(id);
+      if (tx != null && !tx.isFuture(currentTimestamp) && !tx.isExpired(currentTimestamp)) {
+        map.put(id, tx);
+      }
     }
 
-    public ISigner getSigner() {
-        return signer;
+    Block parallelBlock = blockchain.getBlockByHeight(previousBlock.getHeight() + 1);
+    while (parallelBlock != null) {
+      for (Transaction tx : parallelBlock.getTransactions()) {
+
+        if (!tx.isFuture(currentTimestamp) && !tx.isExpired(currentTimestamp)) {
+          int difficulty = estimator.estimate(tx);
+          tx.setLength(difficulty);
+          map.put(tx.getID(), tx);
+        }
+      }
+      parallelBlock = blockchain.getBlockByHeight(parallelBlock.getHeight() + 1);
     }
 
-    public void setSigner(ISigner signer) {
-        this.signer = signer;
+    return createBlock(previousBlock, map.values().toArray(new Transaction[0]));
+  }
+
+  private Block createBlock(Block previousBlock, Transaction[] transactions) {
+
+    int timestamp = fork.getNextBlockTimestamp(previousBlock.getTimestamp());
+    AccountID senderID = new AccountID(getSigner().getPublicKey());
+    int height = previousBlock.getHeight() + 1;
+
+    ILedger ledger = ledgerProvider.getLedger(previousBlock);
+    Account generator = ledger.getAccount(senderID);
+
+    // validate generator
+    if (!accountHelper.validateGenerator(generator, timestamp)) {
+      Loggers.warning(GenerateBlockTask.class, "Invalid generator");
+      return null;
     }
 
-    public boolean isUseFastGeneration() {
-        return useFastGeneration;
+    int version = fork.getBlockVersion(timestamp);
+    if (version < 0) {
+      Loggers.warning(GenerateBlockTask.class, "Invalid block version.");
+      return null;
     }
 
-    public void setUseFastGeneration(boolean useFastGeneration) {
-        this.useFastGeneration = useFastGeneration;
+    Block targetBlock = previousBlock;
+    if (timestamp - Constant.DIFFICULTY_DELAY_SECONDS > fork.getGenesisBlockTimestamp()) {
+      int targetHeight = fork.getTargetBlockHeight(timestamp - Constant.DIFFICULTY_DELAY_SECONDS);
+      targetBlock = blockchain.getBlockByHeight(targetHeight);
     }
 
-    public Block createNextBlock(Block previousBlock) {
+    String salt = null;
+    switch (fork.getGenerationSaltVersion(timestamp)) {
+      case 0:
+        break;
+      case 1:
+        salt = Integer.toString(height);
+        break;
+      default:
+        throw new UnsupportedOperationException();
+    }
 
-        if (!isGenAllowed.get()) {
-            return null;
+    Generation generation = new Generation(targetBlock.getGenerationSignature(), salt);
+    byte[] generationSignature = getSigner().sign(generation, fork.getGenesisBlockID());
+
+    LedgerActionContext ctx = new LedgerActionContext(timestamp);
+
+    ITimeProvider blockTimeProvider = new ImmutableTimeProvider(timestamp);
+    TransactionValidator transactionValidator =
+        transactionValidatorFabric.getAllValidators(blockTimeProvider);
+    ITransactionParser parser = fork.getParser(timestamp);
+
+    Arrays.sort(transactions, new TransactionComparator());
+    int payloadLength = 0;
+    List<Transaction> payload = new ArrayList<>(transactions.length);
+    for (Transaction tx : transactions) {
+      int txLength = tx.getLength();
+      if (payloadLength + txLength > fork.getBlockSize(timestamp)) {
+        break;
+      }
+
+      try {
+
+        ILedger newLedger = ledger;
+
+        ValidationResult r = transactionValidator.validate(tx, newLedger);
+        if (r.hasError) {
+          throw r.cause;
         }
 
-        isGenAllowed.set(false);
+        ILedgerAction[] actions = parser.parse(tx);
 
-        int currentTimestamp = previousBlock.getTimestamp() + Constant.BLOCK_PERIOD;
-
-        Map<TransactionID, Transaction> map = new HashMap<>();
-        Iterator<TransactionID> indexes = backlog.iterator();
-        while (indexes.hasNext() && map.size() < Constant.BLOCK_TRANSACTION_LIMIT) {
-            TransactionID id = indexes.next();
-            Transaction tx = backlog.get(id);
-            if (tx != null && !tx.isFuture(currentTimestamp) && !tx.isExpired(currentTimestamp)) {
-                map.put(id, tx);
-            }
+        for (ILedgerAction action : actions) {
+          newLedger = action.run(newLedger, ctx);
         }
 
-        Block parallelBlock = blockchain.getBlockByHeight(previousBlock.getHeight() + 1);
-        while (parallelBlock != null) {
-            for (Transaction tx : parallelBlock.getTransactions()) {
-
-                if (!tx.isFuture(currentTimestamp) && !tx.isExpired(currentTimestamp)) {
-                    int difficulty = estimator.estimate(tx);
-                    tx.setLength(difficulty);
-                    map.put(tx.getID(), tx);
-                }
-            }
-            parallelBlock = blockchain.getBlockByHeight(parallelBlock.getHeight() + 1);
-        }
-
-        return createBlock(previousBlock, map.values().toArray(new Transaction[0]));
+        ledger = newLedger;
+        payload.add(tx);
+        payloadLength += txLength;
+      } catch (Exception e) {
+        Loggers.info(
+            GenerateBlockTask.class,
+            "Excluding tr({}) from block generation payload: {}",
+            tx.getID(),
+            e.getMessage());
+      }
     }
 
-    private Block createBlock(Block previousBlock, Transaction[] transactions) {
-
-        int timestamp = previousBlock.getTimestamp() + Constant.BLOCK_PERIOD;
-        AccountID senderID = new AccountID(getSigner().getPublicKey());
-        int height = previousBlock.getHeight() + 1;
-
-        ILedger ledger = ledgerProvider.getLedger(previousBlock);
-        ledger = fork.convert(ledger, timestamp);
-        Account generator = ledger.getAccount(senderID);
-
-        // validate generator
-        if (!accountHelper.validateGenerator(generator, timestamp)) {
-            Loggers.warning(GenerateBlockTask.class, "Invalid generator");
-            return null;
-        }
-
-        int version = fork.getBlockVersion(timestamp);
-        if (version < 0) {
-            Loggers.warning(GenerateBlockTask.class, "Invalid block version.");
-            return null;
-        }
-
-        Block targetBlock = previousBlock;
-        if (height - Constant.DIFFICULTY_DELAY > 0) {
-            int targetHeight = height - Constant.DIFFICULTY_DELAY;
-            targetBlock = blockchain.getBlockByHeight(targetHeight);
-        }
-
-        Generation generation = new Generation(targetBlock.getGenerationSignature());
-        byte[] generationSignature = getSigner().sign(generation, fork.getGenesisBlockID());
-
-        LedgerActionContext ctx = new LedgerActionContext(timestamp);
-
-        ITimeProvider blockTimeProvider = new ImmutableTimeProvider(timestamp);
-        TransactionValidator transactionValidator = transactionValidatorFabric.getAllValidators(blockTimeProvider);
-        ITransactionParser parser = fork.getParser(timestamp);
-
-        Arrays.sort(transactions, new TransactionComparator());
-        int payloadLength = 0;
-        List<Transaction> payload = new ArrayList<>(transactions.length);
-        for (Transaction tx : transactions) {
-            int txLength = tx.getLength();
-            if (payloadLength + txLength > Constant.BLOCK_MAX_PAYLOAD_LENGTH) {
-                break;
-            }
-
-            try {
-
-                ILedger newLedger = ledger;
-
-                ValidationResult r = transactionValidator.validate(tx, newLedger);
-                if (r.hasError) {
-                    throw r.cause;
-                }
-
-                ILedgerAction[] actions = parser.parse(tx);
-
-                for (ILedgerAction action : actions) {
-                    newLedger = action.run(newLedger, ctx);
-                }
-
-                ledger = newLedger;
-                payload.add(tx);
-                payloadLength += txLength;
-            } catch (Exception e) {
-                Loggers.info(GenerateBlockTask.class,
-                             "Excluding tr({}) from block generation payload: {}",
-                             tx.getID(),
-                             e.getMessage());
-            }
-        }
-
-        long totalFee = 0;
-        for (Transaction tx : payload) {
-            totalFee += tx.getFee();
-        }
-
-        if (totalFee != 0) {
-            Account creator = ledger.getAccount(senderID);
-            creator = accountHelper.reward(creator, totalFee, timestamp);
-            ledger = ledger.putAccount(creator);
-        }
-
-        Block newBlock = new Block();
-        newBlock.setVersion(version);
-        newBlock.setHeight(height);
-        newBlock.setTimestamp(timestamp);
-        newBlock.setPreviousBlock(previousBlock.getID());
-        newBlock.setSenderID(senderID);
-        newBlock.setGenerationSignature(generationSignature);
-        newBlock.setTransactions(payload);
-        newBlock.setSnapshot(ledger.getHash());
-        newBlock.setSignature(getSigner().sign(newBlock, fork.getGenesisBlockID()));
-
-        BigInteger diff = accountHelper.getDifficultyAddition(newBlock, generator, timestamp);
-        BigInteger cumulativeDifficulty = previousBlock.getCumulativeDifficulty().add(diff);
-        newBlock.setCumulativeDifficulty(cumulativeDifficulty);
-
-        return newBlock;
+    long totalFee = 0;
+    for (Transaction tx : payload) {
+      totalFee += tx.getFee();
     }
 
-    // region IBlockchainEventListener members
-
-    @Override
-    public void onChanging(BlockchainEvent event) {
-        isGenAllowed.set(false);
+    if (totalFee != 0) {
+      Account creator = ledger.getAccount(senderID);
+      creator = accountHelper.reward(creator, totalFee, timestamp);
+      ledger = ledger.putAccount(creator);
     }
 
-    @Override
-    public void onChanged(UpdatedBlockchainEvent event) {
+    Block newBlock = new Block();
+    newBlock.setVersion(version);
+    newBlock.setHeight(height);
+    newBlock.setTimestamp(timestamp);
+    newBlock.setPreviousBlock(previousBlock.getID());
+    newBlock.setSenderID(senderID);
+    newBlock.setGenerationSignature(generationSignature);
+    newBlock.setTransactions(payload);
+    newBlock.setSnapshot(ledger.getHash());
+    newBlock.setSignature(getSigner().sign(newBlock, fork.getGenesisBlockID()));
 
-        if (useFastGeneration) {
-            isGenAllowed.set(true);
-        }
+    BigInteger diff = accountHelper.getDifficultyAddition(newBlock, generator, timestamp);
+    BigInteger cumulativeDifficulty = previousBlock.getCumulativeDifficulty().add(diff);
+    newBlock.setCumulativeDifficulty(cumulativeDifficulty);
+
+    return newBlock;
+  }
+
+  // region IBlockchainEventListener members
+
+  @Override
+  public void onChanging(BlockchainEvent event) {
+    isGenAllowed.set(false);
+  }
+
+  @Override
+  public void onChanged(UpdatedBlockchainEvent event) {
+
+    if (useFastGeneration) {
+      isGenAllowed.set(true);
     }
+  }
 
-    // endregion
+  // endregion
 
-    // region IPeerEventListener members
+  // region IPeerEventListener members
 
-    @Override
-    public void onSynchronized(PeerEvent event) {
-        // The blocks is synchronized with at least one env.
-        isGenAllowed.set(true);
-    }
+  @Override
+  public void onSynchronized(PeerEvent event) {
+    // The blocks is synchronized with at least one env.
+    isGenAllowed.set(true);
+  }
 
-    // endregion
+  // endregion
 
-    public boolean isGenerationAllowed() {
-        return isGenAllowed.get();
-    }
+  public boolean isGenerationAllowed() {
+    return isGenAllowed.get();
+  }
 
-    public void allowGenerate() {
-        isGenAllowed.set(true);
-    }
+  public void allowGenerate() {
+    isGenAllowed.set(true);
+  }
 }

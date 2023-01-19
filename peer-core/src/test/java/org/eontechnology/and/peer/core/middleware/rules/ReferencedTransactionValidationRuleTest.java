@@ -12,34 +12,38 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class ReferencedTransactionValidationRuleTest extends AbstractValidationRuleTest {
-    private ReferencedTransactionValidationRule rule;
-    private ISigner sender = new Signer("112233445566778899aabbccddeeff00112233445566778899aabbccddeeff00");
+  private ReferencedTransactionValidationRule rule;
+  private ISigner sender =
+      new Signer("112233445566778899aabbccddeeff00112233445566778899aabbccddeeff00");
 
-    @Override
-    protected IValidationRule getValidationRule() {
-        return rule;
-    }
+  @Override
+  protected IValidationRule getValidationRule() {
+    return rule;
+  }
 
-    @Before
-    @Override
-    public void setUp() throws Exception {
-        super.setUp();
+  @Before
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
 
-        rule = new ReferencedTransactionValidationRule();
-    }
+    rule = new ReferencedTransactionValidationRule();
+  }
 
-    @Test
-    public void success() throws Exception {
-        Transaction tx = Builder.newTransaction(timeProvider).build(networkID, sender);
-        validate(tx);
-    }
+  @Test
+  public void success() throws Exception {
+    Transaction tx = Builder.newTransaction(timeProvider).build(networkID, sender);
+    validate(tx);
+  }
 
-    @Test
-    public void success_without_note() throws Exception {
-        expectedException.expect(ValidateException.class);
-        expectedException.expectMessage("Illegal reference.");
+  @Test
+  public void success_without_note() throws Exception {
+    expectedException.expect(ValidateException.class);
+    expectedException.expectMessage("Illegal reference.");
 
-        Transaction tx = Builder.newTransaction(timeProvider).refBy(new TransactionID(12345L)).build(networkID, sender);
-        validate(tx);
-    }
+    Transaction tx =
+        Builder.newTransaction(timeProvider)
+            .refBy(new TransactionID(12345L))
+            .build(networkID, sender);
+    validate(tx);
+  }
 }

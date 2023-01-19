@@ -29,96 +29,106 @@ import org.mockito.Mockito;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class NestedTransactionCleanerTestIT {
 
-    private static final String ACCOUNT_SEED1 = "eba54bbb2dd6e55c466fac09707425145ca8560fe40de3fa3565883f4d48779e";
-    private static final String NEW_ACCOUNT = "2233445566778899aabbccddeeff00112233445566778899aabbccddeeff0000";
-    private TimeProvider timeProvider;
-    private PeerContext ctx;
+  private static final String ACCOUNT_SEED1 =
+      "eba54bbb2dd6e55c466fac09707425145ca8560fe40de3fa3565883f4d48779e";
+  private static final String NEW_ACCOUNT =
+      "2233445566778899aabbccddeeff00112233445566778899aabbccddeeff0000";
+  private TimeProvider timeProvider;
+  private PeerContext ctx;
 
-    @Before
-    public void setUp() throws Exception {
-        timeProvider = Mockito.mock(TimeProvider.class);
-        ctx = new PeerContext(PeerStarterFactory.create()
-                                                .route(TransactionType.Payment, new PaymentParser())
-                                                .route(TransactionType.Registration, new RegistrationParser())
-                                                .route(TransactionType.ComplexPayment, new ComplexPaymentParserV1())
-                                                .seed(ACCOUNT_SEED1)
-                                                .build(timeProvider));
-    }
+  @Before
+  public void setUp() throws Exception {
+    timeProvider = Mockito.mock(TimeProvider.class);
+    ctx =
+        new PeerContext(
+            PeerStarterFactory.create()
+                .route(TransactionType.Payment, new PaymentParser())
+                .route(TransactionType.Registration, new RegistrationParser())
+                .route(TransactionType.ComplexPayment, new ComplexPaymentParserV1())
+                .seed(ACCOUNT_SEED1)
+                .build(timeProvider));
+  }
 
-    @Test
-    public void step_1_cleaning() throws Exception {
+  @Test
+  public void step_1_cleaning() throws Exception {
 
-        ISigner newAccountSigner = new TestSigner(NEW_ACCOUNT);
-        AccountID newAccountID = new AccountID(newAccountSigner.getPublicKey());
+    ISigner newAccountSigner = new TestSigner(NEW_ACCOUNT);
+    AccountID newAccountID = new AccountID(newAccountSigner.getPublicKey());
 
-        AccountID accountID = new AccountID(ctx.getSigner().getPublicKey());
+    AccountID accountID = new AccountID(ctx.getSigner().getPublicKey());
 
-        Block lastBlock = ctx.blockExplorerService.getLastBlock();
-        Mockito.when(timeProvider.get()).thenReturn(lastBlock.getTimestamp());
+    Block lastBlock = ctx.blockExplorerService.getLastBlock();
+    Mockito.when(timeProvider.get()).thenReturn(lastBlock.getTimestamp());
 
-        // registration
+    // registration
 
-        Transaction tx1 = RegistrationBuilder.createNew(newAccountSigner.getPublicKey())
-                                             .validity(timeProvider.get(), 3600)
-                                             .build(ctx.getNetworkID(), ctx.getSigner());
-        ctx.transactionBotService.putTransaction(tx1);
+    Transaction tx1 =
+        RegistrationBuilder.createNew(newAccountSigner.getPublicKey())
+            .validity(timeProvider.get(), 3600)
+            .build(ctx.getNetworkID(), ctx.getSigner());
+    ctx.transactionBotService.putTransaction(tx1);
 
-        Mockito.when(timeProvider.get()).thenReturn(lastBlock.getTimestamp() + Constant.BLOCK_PERIOD + 1);
-        ctx.generateBlockForNow();
+    Mockito.when(timeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 + 1);
+    ctx.generateBlockForNow();
 
-        // payment
+    // payment
 
-        lastBlock = ctx.blockExplorerService.getLastBlock();
+    lastBlock = ctx.blockExplorerService.getLastBlock();
 
-        Transaction tx2 = PaymentBuilder.createNew(1000L, newAccountID)
-                                        .validity(timeProvider.get(), 3600)
-                                        .build(ctx.getNetworkID(), ctx.getSigner());
-        ctx.transactionBotService.putTransaction(tx2);
+    Transaction tx2 =
+        PaymentBuilder.createNew(1000L, newAccountID)
+            .validity(timeProvider.get(), 3600)
+            .build(ctx.getNetworkID(), ctx.getSigner());
+    ctx.transactionBotService.putTransaction(tx2);
 
-        Mockito.when(timeProvider.get()).thenReturn(lastBlock.getTimestamp() + Constant.BLOCK_PERIOD + 1);
-        ctx.generateBlockForNow();
+    Mockito.when(timeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 + 1);
+    ctx.generateBlockForNow();
 
-        // put complex transaction to backlog
+    // put complex transaction to backlog
 
-        lastBlock = ctx.blockExplorerService.getLastBlock();
-        Transaction nestedTx1 = PaymentBuilder.createNew(100L, newAccountID)
-                                              .validity(timeProvider.get() - 1, 3600)
-                                              .forFee(0L)
-                                              .build(ctx.getNetworkID(), ctx.getSigner());
-        Transaction nestedTx2 = PaymentBuilder.createNew(1L, accountID)
-                                              .validity(timeProvider.get() - 1, 3600)
-                                              .forFee(0L)
-                                              .refBy(nestedTx1.getID())
-                                              .build(ctx.getNetworkID(), newAccountSigner);
+    lastBlock = ctx.blockExplorerService.getLastBlock();
+    Transaction nestedTx1 =
+        PaymentBuilder.createNew(100L, newAccountID)
+            .validity(timeProvider.get() - 1, 3600)
+            .forFee(0L)
+            .build(ctx.getNetworkID(), ctx.getSigner());
+    Transaction nestedTx2 =
+        PaymentBuilder.createNew(1L, accountID)
+            .validity(timeProvider.get() - 1, 3600)
+            .forFee(0L)
+            .refBy(nestedTx1.getID())
+            .build(ctx.getNetworkID(), newAccountSigner);
 
-        Transaction tx4 = ComplexPaymentBuilder.createNew(new Transaction[] {nestedTx1, nestedTx2})
-                                               .validity(timeProvider.get(), 3600)
-                                               .forFee(30)
-                                               .build(ctx.getNetworkID(), newAccountSigner);
+    Transaction tx4 =
+        ComplexPaymentBuilder.createNew(new Transaction[] {nestedTx1, nestedTx2})
+            .validity(timeProvider.get(), 3600)
+            .forFee(30)
+            .build(ctx.getNetworkID(), newAccountSigner);
 
-        ctx.transactionBotService.putTransaction(tx4);
-        Mockito.when(timeProvider.get()).thenReturn(lastBlock.getTimestamp() + Constant.BLOCK_PERIOD + 1);
-        ctx.generateBlockForNow();
+    ctx.transactionBotService.putTransaction(tx4);
+    Mockito.when(timeProvider.get()).thenReturn(lastBlock.getTimestamp() + 180 + 1);
+    ctx.generateBlockForNow();
 
-        // check
+    // check
 
-        Dao<DbNestedTransaction, Long> dao =
-                DaoManager.createDao(ctx.storage.getConnectionSource(), DbNestedTransaction.class);
-        Assert.assertEquals(dao.countOf(), 2);
+    Dao<DbNestedTransaction, Long> dao =
+        DaoManager.createDao(ctx.storage.getConnectionSource(), DbNestedTransaction.class);
+    Assert.assertEquals(dao.countOf(), 2);
 
-        lastBlock = ctx.blockExplorerService.getLastBlock();
-        Mockito.when(timeProvider.get()).thenReturn(lastBlock.getTimestamp() + Constant.SECONDS_IN_DAY + 1);
-        ctx.generateBlockForNow();
+    lastBlock = ctx.blockExplorerService.getLastBlock();
+    Mockito.when(timeProvider.get())
+        .thenReturn(lastBlock.getTimestamp() + Constant.SECONDS_IN_DAY + 1);
+    ctx.generateBlockForNow();
 
-        ctx.nestedTransactionCleanupTask.run();
-        Assert.assertEquals(dao.countOf(), 2);
+    ctx.nestedTransactionCleanupTask.run();
+    Assert.assertEquals(dao.countOf(), 2);
 
-        lastBlock = ctx.blockExplorerService.getLastBlock();
-        Mockito.when(timeProvider.get())
-               .thenReturn(lastBlock.getTimestamp() + Constant.SECONDS_IN_DAY + Constant.BLOCK_PERIOD + 1);
-        ctx.generateBlockForNow();
+    lastBlock = ctx.blockExplorerService.getLastBlock();
+    Mockito.when(timeProvider.get())
+        .thenReturn(lastBlock.getTimestamp() + Constant.SECONDS_IN_DAY + 180 + 1);
+    ctx.generateBlockForNow();
 
-        ctx.nestedTransactionCleanupTask.run();
-        Assert.assertEquals(dao.countOf(), 0);
-    }
+    ctx.nestedTransactionCleanupTask.run();
+    Assert.assertEquals(dao.countOf(), 0);
+  }
 }

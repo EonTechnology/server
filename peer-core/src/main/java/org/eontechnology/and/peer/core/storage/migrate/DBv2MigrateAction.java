@@ -5,36 +5,32 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-/**
- * Initializing the structure of the first version DB.
- */
+/** Initializing the structure of the first version DB. */
 public class DBv2MigrateAction implements IMigrate {
 
-    private final Connection connection;
+  private final Connection connection;
 
-    public DBv2MigrateAction(Connection connection) {
+  public DBv2MigrateAction(Connection connection) {
 
-        this.connection = connection;
+    this.connection = connection;
+  }
+
+  @Override
+  public void migrateDataBase() throws IOException, SQLException {
+    try (Statement statement = connection.createStatement()) {
+      StatementUtils.runSqlScript(
+          statement, "/org/eontechnology/and/peer/store/sqlite/MigrateV2.sql");
     }
+  }
 
-    @Override
-    public void migrateDataBase() throws IOException, SQLException {
-        try (Statement statement = connection.createStatement()) {
-            StatementUtils.runSqlScript(statement, "/org/eontechnology/and/peer/store/sqlite/MigrateV2.sql");
-        }
-    }
+  @Override
+  public void migrateLogicalStructure() {}
 
-    @Override
-    public void migrateLogicalStructure() {
+  @Override
+  public void cleanUp() {}
 
-    }
-
-    @Override
-    public void cleanUp() {
-    }
-
-    @Override
-    public int getTargetVersion() {
-        return 2;
-    }
+  @Override
+  public int getTargetVersion() {
+    return 2;
+  }
 }

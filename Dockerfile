@@ -2,7 +2,7 @@
 #FROM maven:3-jdk-9-slim
 #FROM maven:3-jdk-10-slim
 #FROM maven:3-jdk-11-slim
-FROM maven:3.6-jdk-11-slim
+FROM maven:3
 #FROM frekele/maven
 
 RUN mkdir /repository
@@ -12,6 +12,12 @@ ENV CLEAN_BLOCKCHAIN false
 ENV INNER_PEER false
 
 ENV EON_NETWORK ""
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        libjffi-jni \
+        libsodium-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -41,7 +47,7 @@ COPY peer-eon/src /app/peer-eon/src
 COPY peer-crypto/src /app/peer-crypto/src
 COPY peer-eon-tx-builders/src /app/peer-eon-tx-builders/src
 
-# Compile files
+# Compile files (and check formatting)
 RUN mvn -Dmaven.repo.local=/repository package install -DskipTests
 
 # Run tests

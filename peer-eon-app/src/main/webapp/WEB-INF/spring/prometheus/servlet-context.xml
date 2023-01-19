@@ -8,5 +8,6 @@
     <bean id="backlog" factory-bean="peerStarter" factory-method="getBacklog"/>
     <bean id="blockchainProvider" factory-bean="peerStarter" factory-method="getBlockchainProvider"/>
     <bean id="storage" factory-bean="peerStarter" factory-method="getStorage"/>
+    <bean id="fork" factory-bean="peerStarter" factory-method="getFork"/>
 
 </beans>

@@ -2,40 +2,39 @@ package org.eontechnology.and.eon.app.utils.mapper;
 
 import java.util.HashMap;
 import java.util.Map;
-
 import org.eontechnology.and.peer.core.data.Account;
 import org.eontechnology.and.peer.core.data.AccountProperty;
 import org.eontechnology.and.peer.core.data.identifier.AccountID;
 
 public class AccountMapper {
 
-    public static Map<String, Object> convert(Account account) {
+  public static Map<String, Object> convert(Account account) {
 
-        HashMap<String, Object> map = new HashMap<>();
-        for (AccountProperty property : account.getProperties()) {
-            map.put(property.getType(), property.getData());
-        }
-
-        map.put(Constants.ID, account.getID().toString());
-        return map;
+    HashMap<String, Object> map = new HashMap<>();
+    for (AccountProperty property : account.getProperties()) {
+      map.put(property.getType(), property.getData());
     }
 
-    public static Account convert(Map<String, Object> map) {
+    map.put(Constants.ID, account.getID().toString());
+    return map;
+  }
 
-        AccountID id = new AccountID(String.valueOf(map.get(Constants.ID)));
-        Account account = new Account(id);
+  public static Account convert(Map<String, Object> map) {
 
-        for (String p : map.keySet()) {
+    AccountID id = new AccountID(String.valueOf(map.get(Constants.ID)));
+    Account account = new Account(id);
 
-            if (p.equals(Constants.ID)) {
-                continue;
-            }
+    for (String p : map.keySet()) {
 
-            Map<String, Object> data = (Map<String, Object>) map.get(p);
-            AccountProperty property = new AccountProperty(p, data);
-            account = account.putProperty(property);
-        }
+      if (p.equals(Constants.ID)) {
+        continue;
+      }
 
-        return account;
+      Map<String, Object> data = (Map<String, Object>) map.get(p);
+      AccountProperty property = new AccountProperty(p, data);
+      account = account.putProperty(property);
     }
+
+    return account;
+  }
 }

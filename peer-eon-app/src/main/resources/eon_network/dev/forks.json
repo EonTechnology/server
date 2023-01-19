@@ -4,6 +4,11 @@
     {
       "number": 1,
       "date_end": "2018-05-23T12:00:00.00Z",
+      "params": {
+        "block_period": 180,
+        "block_size": 1048576,
+        "generation_salt_version": 0
+      },
       "parser": {
         "add": {
           "Registration": "org.eontechnology.and.peer.eon.midleware.parsers.RegistrationParser",
@@ -134,6 +139,15 @@
     {
       "number": 25,
       "date_end": "2023-01-25T12:00:00.00Z"
+    },
+    {
+      "number": 26,
+      "date_end": "2023-02-15T12:00:00.00Z",
+      "params": {
+        "block_period": 60,
+        "block_size": 1048576,
+        "generation_salt_version": 1
+      }
     }
   ]
 }

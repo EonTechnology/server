@@ -6,7 +6,7 @@ import org.eontechnology.and.peer.core.data.identifier.BlockID;
 
 public interface ITransactionMapper {
 
-    BlockID getBlockID(Transaction transaction, Blockchain currentBlockchain);
+  BlockID getBlockID(Transaction transaction, Blockchain currentBlockchain);
 
-    void map(Block block);
+  void map(Block block);
 }

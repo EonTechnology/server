@@ -11,34 +11,35 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class VersionValidationRuleTest extends AbstractValidationRuleTest {
-    private VersionValidationRule rule;
-    private ISigner sender = new Signer("112233445566778899aabbccddeeff00112233445566778899aabbccddeeff00");
+  private VersionValidationRule rule;
+  private ISigner sender =
+      new Signer("112233445566778899aabbccddeeff00112233445566778899aabbccddeeff00");
 
-    @Override
-    protected IValidationRule getValidationRule() {
-        return rule;
-    }
+  @Override
+  protected IValidationRule getValidationRule() {
+    return rule;
+  }
 
-    @Before
-    @Override
-    public void setUp() throws Exception {
-        super.setUp();
+  @Before
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
 
-        rule = new VersionValidationRule();
-    }
+    rule = new VersionValidationRule();
+  }
 
-    @Test
-    public void success() throws Exception {
-        Transaction tx = Builder.newTransaction(timeProvider).build(networkID, sender);
-        validate(tx);
-    }
+  @Test
+  public void success() throws Exception {
+    Transaction tx = Builder.newTransaction(timeProvider).build(networkID, sender);
+    validate(tx);
+  }
 
-    @Test
-    public void unknown_version() throws Exception {
-        expectedException.expect(ValidateException.class);
-        expectedException.expectMessage("Version is not supported.");
+  @Test
+  public void unknown_version() throws Exception {
+    expectedException.expect(ValidateException.class);
+    expectedException.expectMessage("Version is not supported.");
 
-        Transaction tx = Builder.newTransaction(timeProvider).version(12345).build(networkID, sender);
-        validate(tx);
-    }
+    Transaction tx = Builder.newTransaction(timeProvider).version(12345).build(networkID, sender);
+    validate(tx);
+  }
 }

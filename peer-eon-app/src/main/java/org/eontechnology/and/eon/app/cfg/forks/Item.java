@@ -1,36 +1,39 @@
 package org.eontechnology.and.eon.app.cfg.forks;
 
 import java.util.Set;
-
 import org.eontechnology.and.peer.core.crypto.CryptoProvider;
 import org.eontechnology.and.peer.core.data.Account;
 import org.eontechnology.and.peer.core.middleware.ITransactionParser;
 
 public interface Item {
 
-    boolean isCome(int timestamp);
+  boolean isCome(int timestamp);
 
-    boolean isPassed(int timestamp);
+  boolean isPassed(int timestamp);
 
-    int getNumber();
+  int getNumber();
 
-    Set<Integer> getTransactionTypes();
+  Set<Integer> getTransactionTypes();
 
-    int getBlockVersion();
+  int getBlockVersion();
 
-    CryptoProvider getCryptoProvider();
+  CryptoProvider getCryptoProvider();
 
-    Account convert(Account account);
+  Account convert(Account account);
 
-    boolean needConvertAccounts();
+  long getBegin();
 
-    long getBegin();
+  void setBegin(long begin);
 
-    void setBegin(long begin);
+  long getEnd();
 
-    long getEnd();
+  void setEnd(long end);
 
-    void setEnd(long end);
+  ITransactionParser getParser();
 
-    ITransactionParser getParser();
+  int getBlockPeriod();
+
+  long getBlockSize();
+
+  int getGenerationSaltVersion();
 }

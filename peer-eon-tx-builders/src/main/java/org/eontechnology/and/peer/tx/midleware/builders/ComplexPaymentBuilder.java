@@ -5,15 +5,15 @@ import org.eontechnology.and.peer.tx.TransactionType;
 
 public class ComplexPaymentBuilder extends TransactionBuilder<ComplexPaymentBuilder> {
 
-    public ComplexPaymentBuilder() {
-        super(TransactionType.ComplexPayment);
-    }
+  public ComplexPaymentBuilder() {
+    super(TransactionType.ComplexPayment);
+  }
 
-    public static ComplexPaymentBuilder createNew(Transaction[] innerTransactions) {
-        ComplexPaymentBuilder builder = new ComplexPaymentBuilder();
-        for (Transaction tx : innerTransactions) {
-            builder.addNested(tx);
-        }
-        return builder;
+  public static ComplexPaymentBuilder createNew(Transaction[] innerTransactions) {
+    ComplexPaymentBuilder builder = new ComplexPaymentBuilder();
+    for (Transaction tx : innerTransactions) {
+      builder.addNested(tx);
     }
+    return builder;
+  }
 }
