@@ -184,6 +184,10 @@
         "block_size": 1048576,
         "generation_salt_version": 1
       }
+    },
+    {
+      "number": 27,
+      "date_end": "2023-05-23T12:00:00.00Z"
     }
   ]
 }

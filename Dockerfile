@@ -32,7 +32,7 @@ COPY peer-crypto/pom.xml /app/peer-crypto/pom.xml
 COPY peer-eon-tx-builders/pom.xml /app/peer-eon-tx-builders/pom.xml
 
 # Cache depedences
-RUN mvn -Dmaven.repo.local=/repository install jetty:help
+RUN mvn -Dmaven.repo.local=/repository install jetty:run || true
 
 # Copy additional files
 COPY peer-eon-app/jetty.xml /app/peer-eon-app/jetty.xml
@@ -47,10 +47,10 @@ COPY peer-eon/src /app/peer-eon/src
 COPY peer-crypto/src /app/peer-crypto/src
 COPY peer-eon-tx-builders/src /app/peer-eon-tx-builders/src
 
-# Compile files (and check formatting)
+# Compile files
 RUN mvn -Dmaven.repo.local=/repository package install -DskipTests
 
-# Run tests
+# Run tests (and check formatting)
 RUN mvn -Dmaven.repo.local=/repository test
 
 VOLUME /app/peer-eon-app/src/main/webapp/WEB-INF

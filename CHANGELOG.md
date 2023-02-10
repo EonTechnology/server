@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+## 0.15.1 - 2023-02-15
+### Changed
+- End date of the fork.
+- Refactor peer cleanup.
+
 ## 0.15.0 - 2023-01-25
 ### Changed
 - End date of the fork.
