@@ -32,7 +32,7 @@ COPY peer-crypto/pom.xml /app/peer-crypto/pom.xml
 COPY peer-eon-tx-builders/pom.xml /app/peer-eon-tx-builders/pom.xml
 
 # Cache depedences
-RUN mvn -Dmaven.repo.local=/repository install jetty:run || true
+RUN mvn -Dmaven.repo.local=/repository clean install jetty:run || true
 
 # Copy additional files
 COPY peer-eon-app/jetty.xml /app/peer-eon-app/jetty.xml
@@ -57,7 +57,7 @@ VOLUME /app/peer-eon-app/src/main/webapp/WEB-INF
 EXPOSE 9443
 
 ENV MAVEN_OPTS "-XX:+HeapDumpOnOutOfMemoryError -verbose:gc -XX:+PrintGCDetails -XX:+PrintFlagsFinal -Xmx350m -Dlog4j.formatMsgNoLookups=true"
-ENTRYPOINT mvn -o -Dmaven.repo.local=/repository jetty:run -DSECRET_SEED=$SECRET_SEED -Dblockchain.full=$FULL_BLOCKCHAIN -Dblockchain.clean=$CLEAN_BLOCKCHAIN -Dhost.inner=$INNER_PEER
+ENTRYPOINT mvn -o -Dmaven.repo.local=/repository clean jetty:run -DSECRET_SEED=$SECRET_SEED -Dblockchain.full=$FULL_BLOCKCHAIN -Dblockchain.clean=$CLEAN_BLOCKCHAIN -Dhost.inner=$INNER_PEER
 
 # For debug
 # ENTRYPOINT /bin/bash
